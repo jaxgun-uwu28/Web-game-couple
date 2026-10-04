@@ -1,0 +1,179 @@
+{
+  "slots": [
+    {
+      "folder": "backgrounds",
+      "name": "home-background",
+      "width": 1600,
+      "height": 1000
+    },
+    {
+      "folder": "backgrounds",
+      "name": "play-background",
+      "width": 1600,
+      "height": 1000
+    },
+    {
+      "folder": "backgrounds",
+      "name": "notes-background",
+      "width": 1600,
+      "height": 1000
+    },
+    {
+      "folder": "backgrounds",
+      "name": "memories-background",
+      "width": 1600,
+      "height": 1000
+    },
+    {
+      "folder": "backgrounds",
+      "name": "wishlist-background",
+      "width": 1600,
+      "height": 1000
+    },
+    {
+      "folder": "backgrounds",
+      "name": "night-background",
+      "width": 1600,
+      "height": 1000
+    },
+    {
+      "folder": "backgrounds",
+      "name": "anniversary-background",
+      "width": 1600,
+      "height": 1000
+    },
+    {
+      "folder": "couple",
+      "name": "couple-photo-main",
+      "width": 1000,
+      "height": 1000
+    },
+    {
+      "folder": "couple",
+      "name": "couple-photo-1",
+      "width": 1000,
+      "height": 1000
+    },
+    {
+      "folder": "couple",
+      "name": "couple-photo-2",
+      "width": 1000,
+      "height": 1000
+    },
+    {
+      "folder": "game-art",
+      "name": "tictactoe-cover",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "connect4-cover",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "drawing-cover",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "knowme-cover",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "trivia-cover",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "board-background",
+      "width": 1000,
+      "height": 1000
+    },
+    {
+      "folder": "game-art",
+      "name": "piece-cross",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "folder": "game-art",
+      "name": "piece-circle",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "folder": "stickers",
+      "name": "wishlist-cover-1",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "folder": "stickers",
+      "name": "wishlist-cover-2",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "folder": "mascot",
+      "name": "empty-mascot",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "mascot",
+      "name": "wishlist-empty-mascot",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "mascot",
+      "name": "wish-jar",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "app-icon",
+      "name": "icon-foreground",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "folder": "app-icon",
+      "name": "icon-background",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "folder": "app-icon",
+      "name": "splash",
+      "width": 1600,
+      "height": 1600
+    },
+    {
+      "folder": "sounds",
+      "name": "ambient",
+      "width": 0,
+      "height": 0
+    },
+    {
+      "folder": "sounds",
+      "name": "click",
+      "width": 0,
+      "height": 0
+    },
+    {
+      "folder": "sounds",
+      "name": "win",
+      "width": 0,
+      "height": 0
+    }
+  ],
+  "assets": {}
+}

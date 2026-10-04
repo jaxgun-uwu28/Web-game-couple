@@ -1,4 +1,4 @@
-import Arcade from "@/components/Arcade";
+import StageOne from "@/components/StageOne";
 export default function Page() {
-  return <Arcade />;
+  return <StageOne />;
 }

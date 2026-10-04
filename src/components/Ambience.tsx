@@ -1,7 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX, Moon, Sun, CloudRain } from "lucide-react";
+import { useAsset } from "./ArtSlots";
 export default function Ambience() {
+  const ambient = useAsset("ambient");
   const [sound, setSound] = useState(false),
     [soundLoading, setSoundLoading] = useState(false),
     [soundError, setSoundError] = useState(""),
@@ -86,7 +88,7 @@ export default function Ambience() {
     <div className="ambience">
       <audio
         ref={audio}
-        src="/audio/night-train.mp3"
+        src={ambient?.kind === "audio" ? ambient.src : "/audio/night-train.mp3"}
         loop
         preload="none"
         onPause={() => setSound(false)}

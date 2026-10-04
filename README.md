@@ -1,8 +1,19 @@
 # Our Little Arcade
 
-A private cabin scrapbook for Lance and Elaine, official since **September 6, 2025**. Next.js App Router, TypeScript, Supabase Auth/Postgres/Realtime, ready for Vercel.
+A private couples app. The active interface is **Stage 1 of the new pink brief**: responsive Home, anniversary setup/editing, artwork slots, private sign-in and optional music. Play, Memories and Notes are deferred. Earlier game modules remain in the repository for later integration. This stage pauses for visual approval.
 
-## Three stages
+## Current Stage 1
+
+- Run `npm run dev`, open http://localhost:3000 and choose “Review Stage 1 locally”. This button appears only in development. Preview dates persist in this browser; preview uploads stay in memory until reload. Production requires a provisioned private account.
+- Drop originals into `public/drop-in/`. Seven folders contain README.txt instructions with filenames and sizes. Dev watches files; build regenerates the manifest. Raster images become resized, metadata-free WebP. SVG/GIF/audio are copied. Originals stay untouched. Missing images use designed fallbacks.
+- Us lists artwork slots and permits image uploads. Signed-in uploads override folder artwork and use a private bucket after migration 002. Folder artwork is public static content: use private uploads for private photos. Future feature/icon slots are registered now; APK/PWA packaging is deferred.
+- Apply migration `002_stage_one.sql` once after reconciling migration 001 with the existing database. It preserves existing dates, removes the anniversary default for new couples and enables couple-scoped private artwork. New private Realtime topics are `art:<uuid>` and `anniversary:<uuid>`.
+- Home uses the saved anniversary or first-run setup; Us edits it. Night Train remains off by default and plays with the sound control.
+- Tests cover date/leap-day arithmetic, asset optimization/original preservation and migration access rules. Screenshots cover Home, Us, setup and sign-in on desktop, tablet and mobile, plus night palette. Hosted authentication, remote upload persistence, email delivery and Realtime still require owner setup and two-account verification. No live deployment or APK/PWA is claimed.
+
+The setup and architecture below document the **earlier cabin implementation**. Its games and activity modules are retained but are not active in the Stage 1 interface. The old local preview behavior described below applies to that earlier interface.
+
+## Earlier implementation stages
 
 1. Design and foundation: `DESIGN.md`, `PRODUCT.md`, assets and credits.
 2. App and database: five games, private daily questions, all-time scoreboard and shared activities.

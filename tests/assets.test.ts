@@ -1,0 +1,8 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,mkdir,readFile,writeFile,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import sharp from 'sharp';
+import {generateAssets} from '../scripts/generate-assets.mjs';
+test('drop-in pipeline accepts uppercase/numeric filenames and removes deleted manifest entries',async()=>{const root=await mkdtemp(path.join(tmpdir(),'arcade-art-'));try{const dropInRoot=path.join(root,'drop'),outputDir=path.join(root,'out'),manifestPath=path.join(root,'manifest.json');await mkdir(path.join(dropInRoot,'backgrounds'),{recursive:true});const file=path.join(dropInRoot,'backgrounds','HOME-BACKGROUND-9.PNG');await sharp({create:{width:2000,height:1200,channels:3,background:'#f8c9d8'}}).png().toFile(file);await generateAssets({dropInRoot,outputDir,manifestPath});let manifest=JSON.parse(await readFile(manifestPath,'utf8'));assert.match(manifest.assets['home-background'].src,/home-background.webp/);const image=await sharp(path.join(outputDir,'home-background.webp')).metadata();assert.ok(image.width!<=1600&&image.height!<=1000);assert.equal(image.exif,undefined);await rm(file);await generateAssets({dropInRoot,outputDir,manifestPath});manifest=JSON.parse(await readFile(manifestPath,'utf8'));assert.equal(manifest.assets['home-background'],undefined);assert.match(await readFile(path.join(dropInRoot,'couple','README.txt'),'utf8'),/couple-photo-main/);}finally{const resolved=path.resolve(root);assert.ok(resolved.startsWith(path.resolve(tmpdir())+path.sep));await rm(resolved,{recursive:true,force:true})}});

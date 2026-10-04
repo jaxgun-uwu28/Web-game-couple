@@ -1,5 +1,5 @@
-# Product truth
+# Our Little Arcade — Stage 1
 
-Private two-person arcade for Lance and Elaine. Official since September 6, 2025. Elaine likes earthy/light green, cats, dogs, sleep, art, sushi, burgers and bread. Lance likes black, JDM cars, games, science, computers and drawing. They watch horror/action and occasional romcom movies.
+Private two-person couples app. Current approved scope: pink design system, anniversary setup and Home, local drop-in artwork plus private Art Slots uploads. Stop for user design review before Stage 2. Later stages add navigation/game redesign, mood and nudges, wishlists/memories, PWA and Android.
 
-Next.js App Router, TypeScript, Supabase Auth/Postgres/Realtime, Vercel. No public signup. Owner provisions exactly two user profiles. All persistent mutations are validated SQL functions; no browser may overwrite game state. Daily answers stay hidden until both respond. Main surface mode: Operate, expressed as a cabin scrapbook. Complete in three stages: foundation, features, verification.
+No personal names, preferences or anniversary date are baked into the active UI. The date is entered in setup and editable in Us. Existing database data is preserved. Night Train stays opt-in. No paid services, analytics or advertising. Local development preview is explicitly device-local. Existing game code is retained for later migration; no APK/PWA/live deployment claim is made.
