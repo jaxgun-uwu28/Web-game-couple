@@ -28,10 +28,22 @@ export async function POST(req: Request) {
     const body = await req.text();
     if (body.length > 4096)
       return NextResponse.json({ error: "Move too large." }, { status: 400 });
-    const { id, action, kind } = JSON.parse(body);
+    const { id, action, kind, duration } = JSON.parse(body);
     const { data, error } = await db.rpc(
-      id ? "play_game" : "new_game",
-      id ? { gid: id, action } : { k: kind },
+      kind === "block"
+        ? id
+          ? "block_battle"
+          : "start_block_battle"
+        : id
+          ? "play_game"
+          : "new_game",
+      kind === "block"
+        ? id
+          ? { gid: id, action }
+          : { seconds: duration }
+        : id
+          ? { gid: id, action }
+          : { k: kind },
     );
     if (error)
       return NextResponse.json({ error: error.message }, { status: 400 });

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-04T11:19:58.5266317Z",
+  "generatedAt": "2026-10-04T12:17:06.8802981Z",
   "title": "Design System: Our Little Arcade — pink keepsake design",
   "extensions": {
     "colorMeta": {
@@ -225,7 +225,8 @@
         "Approved Stage 1 Home/setup and Us/Art Slots",
         "Play chooser, starts, Tic-Tac-Toe and Connect Four boards, HUD, result and scoreboard",
         "Private-account/couple handling and optional Us nickname",
-        "Honest Memories/Notes Stage 4 placeholder destinations"
+        "Honest Memories/Notes Stage 4 placeholder destinations",
+        "Block Hearts Duel start/duration, ready lobby, shared clock, separate 8 by 8 boards, tray/anchor controls, partner preview and result"
       ],
       "laterStages": [
         "Stage 3 mood/nudges",
@@ -314,6 +315,108 @@
       },
       "deferredDestinations": "Memories and Notes have explicit Stage 4 landing screens. Mood and nudges are Stage 3; wishlist/photos/notes Stage 4; packaging Stage 5; remaining games Stage 6.",
       "verificationBoundary": "Local-preview design handoff. Backend/API/private Realtime wiring is supplied; hosted account setup and live two-device play are unverified. No deployment, APK or PWA completion claim."
+    },
+    "blockHeartsDuel": {
+      "title": "Block Hearts Duel",
+      "direction": "Extend the approved pocket keepsake without replacing its pink palette or Fredoka/Nunito Sans/Caveat typography. Butter cartridge, peach start page, strawberry shared clock, berry blocks and lavender partner preview.",
+      "path": [
+        "Butter-yellow cartridge",
+        "Duration start page",
+        "Two-player ready lobby",
+        "Shared countdown",
+        "Separate 8 by 8 boards and common deadline",
+        "Score result and Battle again"
+      ],
+      "cartridge": {
+        "layout": "Full-width shelf entry, flex on desktop; block at 600px",
+        "background": "var(--butter)",
+        "foreground": "var(--pink-ink)",
+        "art": "220px basis and 150px height desktop, peach window; 140px basis tablet; 130px tall mobile",
+        "night": "Peach background and ink foreground"
+      },
+      "start": {
+        "background": "var(--peach)",
+        "maxWidth": "640px",
+        "radius": "30px",
+        "padding": "28px 40px; 22px mobile",
+        "heading": "36px desktop, 29px mobile",
+        "durationChoicesSeconds": [
+          60,
+          120,
+          180,
+          300
+        ],
+        "defaultDurationSeconds": 120,
+        "durationState": "aria-pressed; selected cherry pill, unselected secondary pill",
+        "artSlot": "block-battle-cover with geometric SVG block and heart fallback"
+      },
+      "lobby": {
+        "background": "var(--lavender)",
+        "maxWidth": "580px",
+        "radius": "30px",
+        "padding": "35px desktop, 23px mobile",
+        "state": "Named ready statuses for both seats; current-seat Ready button disables after readiness; cancel waiting match is explicit",
+        "sharedStart": "Both ready unlock a three-second countdown; chosen duration remains visible"
+      },
+      "hud": {
+        "background": "var(--pink)",
+        "radius": "22px",
+        "padding": "17px 24px",
+        "position": "sticky, top 10px; mobile top 5px",
+        "clock": "Fredoka 29px tabular digits with clock icon; Go in N during countdown",
+        "scores": "Named scores with 25px Fredoka numbers and 22px Caveat vs",
+        "mobile": "Centered stacked clock and scores; 12px 14px padding"
+      },
+      "layout": {
+        "maxWidth": "1100px",
+        "columns": "minmax(0, 530px) minmax(150px, 1fr)",
+        "gap": "36px",
+        "tablet": "At 850px: flexible board plus 190px preview, 22px gap",
+        "mobile": "At 600px: partner preview stacks beneath full-width board; 20px gap; inherited safe-area bottom navigation"
+      },
+      "board": {
+        "geometry": "8 by 8 square cells",
+        "surface": "var(--sheet)",
+        "radius": "20px",
+        "padding": "10px",
+        "gap": "5px",
+        "cellRadius": "7px",
+        "empty": "var(--blush)",
+        "filled": "var(--cherry)",
+        "validAim": "Peach with inset 2px cherry stroke",
+        "invalidAim": "Strawberry with inset 2px ink stroke",
+        "anchor": "Ink 2px circle inside active cell; aria-selected and aria-activedescendant",
+        "mobile": "16px board radius, 7px padding, 4px gaps, 5px cell radius",
+        "focus": "3px cherry outline with 4px offset",
+        "interaction": "Choose one of three pieces, aim at an anchor, inspect fit, confirm Place piece. Pointer positions the anchor; keyboard arrows move it and Enter confirms; four 44px directional buttons offer an alternate touch path",
+        "status": "Polite row/column and fits/blocked instruction; countdown prevents placement; no-fit state locks that seat's score",
+        "smallCellRule": "Board cells are precise geometry rather than individual large buttons. Keep the 44px arrow alternatives and explicit confirmation"
+      },
+      "tray": {
+        "columns": 3,
+        "gap": "12px desktop, 9px mobile",
+        "background": "var(--lavender)",
+        "radius": "18px",
+        "minimumHeight": "110px desktop, 95px mobile",
+        "piece": "SVG geometry filled cherry; individual blocks 16 by 16 with 4px corners",
+        "selected": "Inset 3px cherry ring plus aria-pressed",
+        "disabled": "Used pieces, busy state and inactive play disable selection; used label says Placed",
+        "rule": "Pieces cannot rotate. Use all three for a fresh tray"
+      },
+      "partnerPreview": {
+        "background": "var(--lavender)",
+        "radius": "25px",
+        "padding": "28px desktop, 20px tablet/mobile",
+        "miniBoard": "8-column grid, 3px gaps and corners, sheet empty cells and cherry occupied cells; max-width 190px desktop, 90px mobile",
+        "score": "Fredoka 45px desktop, 29px mobile; points label in Nunito Sans",
+        "mobile": "Compact two-column panel with 90px board beside name and score; rules span full width"
+      },
+      "scoringCopy": "10 points per block, 100 per cleared line, 50 extra per additional line cleared together.",
+      "result": "Reuse game-result and reduced-motion-aware falling confetti; trophy, winner or perfect tie, both scores, local-demo or saved-scoreboard wording, Battle again pill",
+      "haptics": "Best-effort 12ms vibration after placement and [35,40,35] on result; no dedicated new audio behavior",
+      "night": "Inherit existing plum token overrides; no new palette. Butter cartridge changes to peach with ink foreground",
+      "preview": "Explicit two-player local demo with Control player seat buttons and selected aria-pressed state; no online data saved",
+      "verificationBoundary": "Documented from implementation and approved surface brief. API/Postgres membership, authoritative sequence, occupancy, score and deadline wiring is supplied; hosted migration and real two-device acceptance are not established by this document. No deployment claim."
     }
   },
   "components": [
@@ -386,6 +489,27 @@
       "description": "Warm result wording and rematch action after win or draw; confetti metadata lives in extensions.arcade.result.",
       "html": "<section class=\"ds-result\"><h3>A perfect excuse for a rematch.</h3><p>Added to this session’s scoreboard.</p><button>Play again</button></section>",
       "css": ".ds-result{text-align:center;max-width:430px;margin:25px auto 0;color:var(--ink,#50313f)}.ds-result h3{font-family:var(--display,sans-serif);font-weight:500;font-size:26px;line-height:1.14;margin:8px 0}.ds-result p{font-family:var(--body,Arial,sans-serif);font-size:13px;color:var(--muted,#795562);margin:0 0 18px}.ds-result button{font-family:var(--body,Arial,sans-serif);font-weight:700;min-height:48px;padding:13px 23px;border:0;border-radius:999px;background:var(--cherry,#9d304f);color:var(--on-primary,#fff);cursor:pointer;transition:transform .16s}.ds-result button:hover{filter:brightness(.96)}.ds-result button:active{transform:scale(.97)}.ds-result button:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-result button{transition:none}.ds-result button:active{transform:none}}"
+    },
+    {
+      "name": "Block Duel Clock",
+      "kind": "custom",
+      "description": "Sticky strawberry shared-clock and named-score ribbon.",
+      "html": "<div class=\"ds-battle-hud\"><span><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg><strong>2:00</strong></span><div>Player one <b>0</b><em>vs</em>Player two <b>0</b></div></div>",
+      "css": ".ds-battle-hud{display:flex;align-items:center;justify-content:space-between;gap:20px;background:var(--pink,#f8c9d8);color:var(--ink,#50313f);border-radius:22px;padding:17px 24px;position:sticky;top:10px;font-family:var(--body,Arial,sans-serif)}.ds-battle-hud>span{display:flex;gap:10px;align-items:center;white-space:nowrap}.ds-battle-hud strong{font-family:var(--display,sans-serif);font-size:29px;font-variant-numeric:tabular-nums}.ds-battle-hud>div{display:flex;align-items:center;gap:12px;font-size:14px;overflow-wrap:anywhere}.ds-battle-hud b{font-family:var(--display,sans-serif);font-size:25px}.ds-battle-hud em{font-family:var(--hand,cursive);font-size:22px;font-style:normal}@media(max-width:600px){.ds-battle-hud{display:block;padding:12px 14px;top:5px}.ds-battle-hud>span,.ds-battle-hud>div{justify-content:center}.ds-battle-hud>div{margin-top:8px;font-size:12px}}"
+    },
+    {
+      "name": "Block Tray Piece",
+      "kind": "button",
+      "description": "Named selectable block geometry with a cherry selection ring; used pieces disable.",
+      "html": "<button class=\"ds-tray-piece\" aria-pressed=\"true\" aria-label=\"Select piece 1: two by two square\"><svg viewBox=\"0 0 100 80\" aria-hidden=\"true\"><rect x=\"10\" y=\"6\" width=\"16\" height=\"16\" rx=\"4\"/><rect x=\"29\" y=\"6\" width=\"16\" height=\"16\" rx=\"4\"/><rect x=\"10\" y=\"25\" width=\"16\" height=\"16\" rx=\"4\"/><rect x=\"29\" y=\"25\" width=\"16\" height=\"16\" rx=\"4\"/></svg><span>Piece 1</span></button>",
+      "css": ".ds-tray-piece{display:block;border:0;border-radius:18px;background:var(--lavender,#eae1f5);color:var(--ink,#50313f);padding:10px 8px;min-height:110px;cursor:pointer;font-family:var(--body,Arial,sans-serif);font-weight:700;transition:transform .16s,background .16s}.ds-tray-piece svg{width:100%;height:66px;display:block;fill:var(--cherry,#9d304f)}.ds-tray-piece[aria-pressed=true]{box-shadow:inset 0 0 0 3px var(--cherry,#9d304f)}.ds-tray-piece span{font-size:11px}.ds-tray-piece:hover:not(:disabled){filter:brightness(.96)}.ds-tray-piece:active:not(:disabled){transform:scale(.97)}.ds-tray-piece:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-tray-piece:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-tray-piece{transition:none}.ds-tray-piece:active{transform:none}}"
+    },
+    {
+      "name": "Block Duel Ready Lobby",
+      "kind": "custom",
+      "description": "Lavender readiness page protects the shared start and selected duration.",
+      "html": "<section class=\"ds-block-lobby\"><h2>Meet at the starting line.</h2><p>2-minute battle · same pieces, separate boards</p><div class=\"ds-ready-list\"><p>Player one<strong>Ready</strong></p><p>Player two<strong>Not ready yet</strong></p></div><button>I’m ready</button></section>",
+      "css": ".ds-block-lobby{background:var(--lavender,#eae1f5);color:var(--ink,#50313f);max-width:580px;border-radius:30px;text-align:center;padding:35px;font-family:var(--body,Arial,sans-serif)}.ds-block-lobby h2{font-family:var(--display,sans-serif);font-weight:500;font-size:32px;line-height:1.14;letter-spacing:-.02em}.ds-ready-list{margin:25px 0}.ds-ready-list p{display:flex;align-items:center;gap:12px;overflow-wrap:anywhere}.ds-ready-list strong{margin-left:auto;font-size:12px}.ds-block-lobby button{border:0;background:var(--cherry,#9d304f);color:var(--on-primary,#fff);border-radius:999px;padding:13px 23px;min-height:48px;font:700 16px var(--body,Arial,sans-serif);cursor:pointer;transition:transform .16s}.ds-block-lobby button:hover:not(:disabled){filter:brightness(.96)}.ds-block-lobby button:active:not(:disabled){transform:scale(.97)}.ds-block-lobby button:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-block-lobby button:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-block-lobby button{transition:none}.ds-block-lobby button:active{transform:none}}"
     }
   ],
   "narrative": {

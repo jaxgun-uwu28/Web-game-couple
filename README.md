@@ -1,5 +1,13 @@
 # Our Little Arcade
 
+## Block Hearts Duel
+
+Play now includes a timed 1v1 block puzzle with independent 8×8 boards. Choose 1, 2, 3 or 5 minutes; both players ready up before a shared countdown. Both receive the same piece sequence. Place pieces without rotation, clear full rows and columns, and compete for points: 10 per block, 100 per line, plus 50 per additional line cleared together. A blocked board locks its score while the other player continues. Ties are supported.
+
+For the already configured fresh project, run **`supabase/migrations/004_block_battle.sql` once** in Supabase SQL Editor. Keep your existing accounts and earlier migrations. Server functions validate placements, compute scores and enforce the deadline; private updates and polling refresh the partner board. Local preview supports switching between both seats. Hosted two-device acceptance requires this migration and both signed-in accounts.
+
+The cover art slot is `block-battle-cover` in `public/drop-in/game-art/`.
+
 A private couples app. The active interface includes **Stages 1 and 2 of the new pink brief**: Home, editable anniversary, artwork slots, private sign-in, optional nicknames and music, plus Tic-Tac-Toe and Connect Four with a scoreboard. Memories and Notes have labelled Stage 4 destinations. Additional earlier game modules remain for Stage 6.
 
 ## Stage 2 arcade

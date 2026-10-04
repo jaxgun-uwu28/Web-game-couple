@@ -11,6 +11,7 @@ export const slots = [
   ["couple", "couple-photo-2", 1000, 1000],
   ["game-art", "tictactoe-cover", 800, 600],
   ["game-art", "connect4-cover", 800, 600],
+  ["game-art", "block-battle-cover", 800, 600],
   ["game-art", "drawing-cover", 800, 600],
   ["game-art", "knowme-cover", 800, 600],
   ["game-art", "trivia-cover", 800, 600],

@@ -15,8 +15,13 @@ import {
   Wifi,
   Gamepad2,
   Sparkles,
+  Layers3,
 } from "lucide-react";
-import { type Game, registry } from "@/lib/games";
+import { type Game, registry, arcadeRegistry } from "@/lib/games";
+import dynamic from "next/dynamic";
+const BlockBattle = dynamic(() => import("./BlockBattle"), {
+  loading: () => <p>Opening the block duel…</p>,
+});
 import { previewBoard, previewMove, type BoardKind } from "@/lib/board-preview";
 import { Slot } from "./ArtSlots";
 
@@ -43,7 +48,8 @@ export default function PlayArcade({
     [error, setError] = useState(""),
     [sound, setSound] = useState(false),
     [connection, setConnection] = useState("Connecting…"),
-    [online, setOnline] = useState<string[]>([]);
+    [online, setOnline] = useState<string[]>([]),
+    [blockOpen, setBlockOpen] = useState(false);
   const locked = useRef(false),
     channel = useRef<ReturnType<SupabaseClient["channel"]> | null>(null),
     audio = useRef<AudioContext | null>(null);
@@ -117,6 +123,7 @@ export default function PlayArcade({
     const back = () => {
       setSelected(null);
       setStart(null);
+      setBlockOpen(false);
     };
     window.addEventListener("popstate", back);
     return () => window.removeEventListener("popstate", back);
@@ -241,6 +248,23 @@ export default function PlayArcade({
       </p>
     </section>
   );
+  if (blockOpen)
+    return (
+      <BlockBattle
+        db={db}
+        session={session}
+        coupleId={coupleId}
+        slot={slot}
+        names={names}
+        preview={preview}
+        back={() => window.history.back()}
+        onResult={(winner) => {
+          if (preview && winner !== null)
+            setScore((s) => s.map((n, i) => n + (i === winner ? 1 : 0)));
+          else void refresh();
+        }}
+      />
+    );
   return (
     <div className="play-arcade">
       <div className="page-heading">
@@ -270,23 +294,36 @@ export default function PlayArcade({
       {!game && !start ? (
         <>
           <div className="cartridge-shelf">
-            {registry
-              .filter((g) => g.id === "tic" || g.id === "connect")
+            {arcadeRegistry
+              .filter(
+                (g) => g.id === "tic" || g.id === "connect" || g.id === "block",
+              )
               .map((g) => (
                 <button
                   key={g.id}
                   className={`cartridge ${g.id}`}
-                  onClick={() => open(g.id as BoardKind)}
+                  onClick={() => {
+                    if (g.id === "block") {
+                      window.history.pushState({ arcadeGame: true }, "");
+                      setBlockOpen(true);
+                    } else open(g.id as BoardKind);
+                  }}
                 >
                   <div className="cartridge-art">
                     <Slot
                       name={
-                        g.id === "tic" ? "tictactoe-cover" : "connect4-cover"
+                        g.id === "tic"
+                          ? "tictactoe-cover"
+                          : g.id === "block"
+                            ? "block-battle-cover"
+                            : "connect4-cover"
                       }
                       alt={`${g.name} cover`}
                     >
                       <div className={`cartridge-symbols ${g.id}`}>
-                        {g.id === "tic" ? (
+                        {g.id === "block" ? (
+                          <Layers3 size={75} />
+                        ) : g.id === "tic" ? (
                           <>
                             <X />
                             <Circle />

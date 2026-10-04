@@ -74,6 +74,12 @@
     },
     {
       "folder": "game-art",
+      "name": "block-battle-cover",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
       "name": "drawing-cover",
       "width": 800,
       "height": 600

@@ -2,6 +2,7 @@ Drop-in artwork: game-art
 
 tictactoe-cover.webp — 800 × 600 px recommended
 connect4-cover.webp — 800 × 600 px recommended
+block-battle-cover.webp — 800 × 600 px recommended
 drawing-cover.webp — 800 × 600 px recommended
 knowme-cover.webp — 800 × 600 px recommended
 trivia-cover.webp — 800 × 600 px recommended

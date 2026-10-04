@@ -1,0 +1,488 @@
+.cartridge.block {
+  grid-column: 1/-1;
+  background: var(--butter);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--pink-ink);
+}
+html[data-time="night"] .cartridge.block {
+  background: var(--peach);
+  color: var(--ink);
+}
+.cartridge.block .cartridge-art {
+  flex: 0 0 220px;
+  background: var(--peach);
+  margin: 20px;
+  height: 150px;
+}
+.cartridge.block .cartridge-label {
+  flex: 1;
+}
+.cartridge.block .cartridge-label p {
+  color: var(--pink-ink);
+}
+.block-duel {
+  max-width: 1100px;
+  margin: auto;
+}
+.block-start {
+  max-width: 640px;
+  background: var(--peach);
+  border-radius: 30px;
+  padding: 28px 40px;
+  text-align: center;
+  margin: 30px auto;
+}
+.block-start h2 {
+  font-size: 36px;
+  margin: 22px 0 12px;
+}
+.block-start p {
+  font-size: 15px;
+}
+.block-cover {
+  height: 155px;
+}
+.block-cover .slot-fallback {
+  background: transparent;
+}
+.block-cover-pieces {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: var(--cherry);
+}
+.block-cover-pieces svg {
+  width: 100px;
+  fill: currentColor;
+}
+.block-cover-pieces svg:last-child {
+  fill: none;
+  width: 40px;
+}
+.duration-picker {
+  border: 0;
+  padding: 0;
+  margin: 25px 0;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.duration-picker legend {
+  font-weight: 800;
+  width: 100%;
+  margin-bottom: 14px;
+}
+.duration-picker button {
+  padding: 12px 18px;
+}
+.block-lobby {
+  background: var(--lavender);
+  max-width: 580px;
+  margin: 25px auto;
+  border-radius: 30px;
+  text-align: center;
+  padding: 35px;
+}
+.block-lobby h2 {
+  font-size: 32px;
+}
+.ready-list {
+  margin: 25px 0;
+}
+.ready-list p {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow-wrap: anywhere;
+}
+.ready-list strong {
+  margin-left: auto;
+  font-size: 12px;
+}
+.block-lobby > .text-button {
+  display: block;
+  margin: 15px auto 0;
+}
+.battle-hud {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--pink);
+  border-radius: 22px;
+  padding: 17px 24px;
+  margin: 22px 0;
+  position: sticky;
+  top: 10px;
+  z-index: 3;
+}
+.battle-hud > span {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  white-space: nowrap;
+}
+.battle-hud strong {
+  font-family: var(--display);
+  font-size: 29px;
+  font-variant-numeric: tabular-nums;
+}
+.battle-hud > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.battle-hud b {
+  font-family: var(--display);
+  font-size: 25px;
+}
+.battle-hud div > span {
+  font-family: var(--hand);
+  font-size: 22px;
+}
+.demo-seats {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+}
+.demo-seats button {
+  font-size: 12px;
+}
+.demo-seats [aria-pressed="true"] {
+  background: var(--cherry);
+  color: var(--on-primary);
+}
+.battle-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 530px) minmax(150px, 1fr);
+  gap: 36px;
+  align-items: start;
+}
+.board-caption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.board-caption h2 {
+  font-size: 26px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.board-caption span {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted);
+  max-width: 150px;
+  text-align: right;
+}
+.block-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 5px;
+  padding: 10px;
+  background: var(--sheet);
+  border-radius: 20px;
+  touch-action: manipulation;
+  outline-offset: 4px;
+}
+.block-grid:focus-visible {
+  outline: 3px solid var(--cherry);
+}
+.block-grid > div {
+  aspect-ratio: 1;
+  border-radius: 7px;
+  background: var(--blush);
+  position: relative;
+}
+.block-grid > .filled {
+  background: var(--cherry);
+}
+.block-grid > .aimed {
+  background: var(--peach);
+  box-shadow: inset 0 0 0 2px var(--cherry);
+}
+.block-grid.invalid > .aimed {
+  background: var(--pink);
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+.block-grid > .anchor:after {
+  content: "";
+  position: absolute;
+  inset: 30%;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+}
+.block-tray {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 15px 0;
+}
+.block-tray button {
+  display: block;
+  border-radius: 18px;
+  background: var(--lavender);
+  color: var(--ink);
+  padding: 10px 8px;
+  min-height: 110px;
+}
+.block-tray svg {
+  width: 100%;
+  height: 66px;
+  display: block;
+  fill: var(--cherry);
+}
+.block-tray button[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 3px var(--cherry);
+}
+.block-tray span {
+  font-size: 11px;
+}
+.block-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.aim-pad {
+  display: flex;
+  gap: 5px;
+}
+.aim-pad button {
+  padding: 10px;
+  min-width: 44px;
+  width: 44px;
+  height: 44px;
+}
+.block-controls > button {
+  flex: 1;
+  padding: 13px 14px;
+  font-size: 13px;
+}
+.own-block-board > .small {
+  font-size: 12px;
+}
+.opponent-block {
+  background: var(--lavender);
+  padding: 28px;
+  border-radius: 25px;
+  text-align: center;
+}
+.opponent-block h2 {
+  font-size: 26px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.opponent-block > strong {
+  display: block;
+  font-family: var(--display);
+  font-size: 45px;
+  line-height: 1.2;
+  margin: 18px 0;
+}
+.opponent-block small {
+  display: block;
+  font-family: var(--body);
+  font-size: 12px;
+  color: var(--muted);
+}
+.mini-block-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+  max-width: 190px;
+  margin: 20px auto;
+}
+.mini-block-grid i {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--sheet);
+}
+.mini-block-grid .filled {
+  background: var(--cherry);
+}
+.opponent-block p {
+  font-size: 12px;
+  color: var(--muted);
+}
+.block-rules {
+  text-align: left;
+  border-top: 1px solid var(--line);
+  padding-top: 15px;
+  margin-top: 22px;
+}
+.block-rules h3 {
+  font-size: 22px;
+  margin: 0;
+}
+@media (max-width: 850px) {
+  .battle-layout {
+    gap: 22px;
+    grid-template-columns: minmax(0, 1fr) 190px;
+  }
+  .opponent-block {
+    padding: 20px;
+  }
+  .block-controls {
+    flex-wrap: wrap;
+  }
+  .block-controls > button {
+    min-width: 150px;
+  }
+  .cartridge.block .cartridge-art {
+    flex-basis: 140px;
+  }
+  .battle-hud {
+    padding: 14px 18px;
+  }
+  .battle-hud > div {
+    gap: 8px;
+  }
+}
+@media (max-width: 600px) {
+  .cartridge.block {
+    display: block;
+  }
+  .cartridge.block .cartridge-art {
+    height: 130px;
+    margin: 16px 16px 0;
+  }
+  .cartridge.block .cartridge-label {
+    padding: 22px;
+  }
+  .block-start {
+    padding: 22px;
+    margin: 20px 0;
+  }
+  .block-start h2 {
+    font-size: 29px;
+  }
+  .block-start p {
+    font-size: 13px;
+  }
+  .block-cover {
+    height: 120px;
+  }
+  .block-lobby {
+    padding: 23px;
+  }
+  .block-lobby h2 {
+    font-size: 28px;
+  }
+  .battle-hud {
+    padding: 12px 14px;
+    display: block;
+    top: 5px;
+  }
+  .battle-hud > span {
+    justify-content: center;
+  }
+  .battle-hud > div {
+    margin-top: 8px;
+    justify-content: center;
+    font-size: 12px;
+  }
+  .battle-hud b {
+    font-size: 23px;
+  }
+  .battle-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .own-block-board {
+    width: 100%;
+  }
+  .board-caption h2 {
+    font-size: 22px;
+  }
+  .block-grid {
+    gap: 4px;
+    padding: 7px;
+    border-radius: 16px;
+  }
+  .block-grid > div {
+    border-radius: 5px;
+  }
+  .block-tray {
+    gap: 9px;
+    margin: 12px 0;
+  }
+  .block-tray button {
+    min-height: 95px;
+    padding: 8px;
+  }
+  .block-tray svg {
+    height: 55px;
+  }
+  .block-controls {
+    flex-wrap: wrap;
+  }
+  .block-controls > button {
+    min-width: 110px;
+    font-size: 12px;
+    padding: 12px 8px;
+  }
+  .aim-pad {
+    gap: 4px;
+  }
+  .aim-pad button {
+    padding: 8px;
+  }
+  .opponent-block {
+    display: grid;
+    grid-template-columns: 1fr 90px;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    padding: 20px;
+  }
+  .opponent-block h2 {
+    font-size: 23px;
+  }
+  .opponent-block > strong {
+    font-size: 29px;
+    margin: 0;
+    grid-column: 1;
+  }
+  .opponent-block small {
+    display: inline;
+    margin-left: 7px;
+  }
+  .mini-block-grid {
+    grid-column: 2;
+    grid-row: 1/4;
+    width: 90px;
+    margin: 0;
+  }
+  .opponent-block > p {
+    grid-column: 1;
+    margin: 0;
+  }
+  .block-rules {
+    grid-column: 1/-1;
+    margin-top: 5px;
+  }
+  .block-rules h3 {
+    font-size: 20px;
+  }
+  .block-rules p {
+    margin: 7px 0;
+  }
+  .demo-seats {
+    justify-content: center;
+  }
+  .demo-seats button {
+    font-size: 11px;
+    padding: 11px 14px;
+  }
+  .duration-picker button {
+    padding: 11px 14px;
+  }
+}

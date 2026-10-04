@@ -66,3 +66,8 @@ Run npm run dev. Sign out of local preview, enter the first account's email and 
 Open Play on both accounts and choose the same game. Check turn changes, a saved win and matching scoreboards. Then test a private Art Slots upload from one account and its appearance on the other. Use private Realtime channels; public channel access can be disabled in project Realtime settings. If magic-link delivery fails, inspect Auth email configuration and delivery limits and configure SMTP as needed. Never disable RLS or grant anonymous table access to fix sign-in.
 
 The local preview works independently of Supabase and cannot confirm hosted setup. Stage 2's tests validate the SQL in embedded Postgres; hosted two-device acceptance remains a separate check.
+# Block Hearts Duel update
+
+Your fresh-project setup and two private accounts can remain as configured. Open `supabase/migrations/004_block_battle.sql`, copy the entire file into the new project's SQL Editor, and run it once. Do not rerun the combined fresh setup. This migration adds the private block matches, validated game functions, Realtime access and scoreboard totals.
+
+After it succeeds, sign in on two devices. In Play, open Block Hearts Duel on both, choose a duration and create/join the duel, then press Ready on each account. Verify both clocks start together, scores update, and the result agrees when time expires. The publishable key cannot install this migration.

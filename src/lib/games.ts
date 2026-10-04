@@ -31,6 +31,7 @@ export const registry = [
   },
 ] as const;
 export type GameKind = (typeof registry)[number]["id"];
+export const arcadeRegistry = [...registry,{id:'block',name:'Block Hearts Duel',note:'Two boards. One clock. All the points.',icon:'blocks'}] as const;
 export type Game = {
   id: string;
   kind: GameKind;
