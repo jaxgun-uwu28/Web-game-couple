@@ -208,7 +208,7 @@ Tic-tac-toe uses a square sheet board divided by forest rules. Connect Four uses
 
 The authored game-entry moment is a paper opening (350ms, cubic-bezier(0.22, 1, 0.36, 1)), shifting 8px into place while its clip opens. The date wheel spins through three turns in 1.1s with the same easing. Optional rain is a photograph overlay moving on a 2s linear loop. The body palette transitions over 500ms. Reduced-motion preference disables animations and transitions, restores automatic scrolling and removes hover movement.
 
-The cabin window supports morning, golden hour, dusk and night tints. The northern-calendar seasonal label is decorative and is not a Philippine weather claim. Weather is opt-in; generated Web Audio ambience is off by default and never autoplays.
+The cabin window supports morning, golden hour, dusk and night tints. The northern-calendar seasonal label is decorative and is not a Philippine weather claim. Weather is opt-in; the user-supplied Night Train background music is off by default and never autoplays. The sound button starts a loop at 30% volume; switching it off pauses the track, and switching it on resumes it. The MP3 is fetched only after playback is requested.
 
 ## Do's and Don'ts
 

@@ -3,10 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX, Moon, Sun, CloudRain } from "lucide-react";
 export default function Ambience() {
   const [sound, setSound] = useState(false),
+    [soundLoading, setSoundLoading] = useState(false),
+    [soundError, setSoundError] = useState(""),
     [night, setNight] = useState(false),
     [weather, setWeather] = useState(""),
     [weatherBusy, setWeatherBusy] = useState(false);
-  const audio = useRef<AudioContext | null>(null);
+  const audio = useRef<HTMLAudioElement | null>(null);
   useEffect(() => {
     const hour = new Date().getHours();
     const theme =
@@ -20,45 +22,28 @@ export default function Ambience() {
     document.documentElement.dataset.time = theme;
     setNight(theme === "night");
     return () => {
-      void audio.current?.close();
+      audio.current?.pause();
     };
   }, []);
   const toggleAudio = async () => {
+    const player = audio.current;
+    if (!player || soundLoading) return;
+    setSoundError("");
     if (sound) {
-      await audio.current?.close();
-      audio.current = null;
+      player.pause();
       setSound(false);
       return;
     }
+    setSoundLoading(true);
     try {
-      const ctx = new AudioContext();
-      audio.current = ctx;
-      const gain = ctx.createGain();
-      gain.gain.value = 0.025;
-      gain.connect(ctx.destination);
-      for (const frequency of [174, 261, 348]) {
-        const osc = ctx.createOscillator();
-        osc.frequency.value = frequency;
-        osc.connect(gain);
-        osc.start();
-      }
-      const buffer = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
-      noise.loop = true;
-      const filter = ctx.createBiquadFilter();
-      filter.type = "lowpass";
-      filter.frequency.value = 280;
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.value = 0.012;
-      noise.connect(filter).connect(noiseGain).connect(ctx.destination);
-      noise.start();
-      await ctx.resume();
+      player.volume = 0.3;
+      await player.play();
       setSound(true);
     } catch {
-      setWeather("Sound is unavailable in this browser.");
+      setSound(false);
+      setSoundError("Music could not play. Tap the sound button to try again.");
+    } finally {
+      setSoundLoading(false);
     }
   };
   const checkWeather = () => {
@@ -99,10 +84,28 @@ export default function Ambience() {
   };
   return (
     <div className="ambience">
+      <audio
+        ref={audio}
+        src="/audio/night-train.mp3"
+        loop
+        preload="none"
+        onPause={() => setSound(false)}
+        onError={() => {
+          setSound(false);
+          setSoundError(
+            "Music could not load. Tap the sound button to try again.",
+          );
+        }}
+      />
       <button
         className="icon-button"
-        aria-label={sound ? "Turn ambient sound off" : "Turn ambient sound on"}
+        aria-label={
+          sound ? "Turn background music off" : "Turn background music on"
+        }
         aria-pressed={sound}
+        aria-busy={soundLoading}
+        disabled={soundLoading}
+        title="Night Train · background music"
         onClick={() => void toggleAudio()}
       >
         {sound ? <Volume2 size={19} /> : <VolumeX size={19} />}
@@ -126,9 +129,9 @@ export default function Ambience() {
       >
         <CloudRain size={19} />
       </button>
-      {weather && (
+      {(soundError || weather) && (
         <span className="weather-status" role="status">
-          {weather}
+          {soundError || weather}
         </span>
       )}
     </div>
