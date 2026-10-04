@@ -7,6 +7,7 @@ The browser connection is already configured for the fresh project below. The re
 The app now connects to `ohjeloskpjsynhbddgch.supabase.co`. The old project is no longer the configured backend; no migration was applied to it by Codex.
 
 1. Select the **new project** in Supabase, open SQL Editor and run the entire `supabase/setup_fresh_project.sql` file once. This transaction includes migrations 001–003, starts with a blank anniversary and creates the private app-art bucket. Do not run the individual migrations afterward. If any statement fails, stop and share the error; the transaction rolls back.
+   For a brand-new installation, then run migrations 004 (Block Hearts Duel) and 005 (connections) once, in that order. Existing installations should run only their unapplied updates.
 2. In Authentication → URL Configuration set Site URL to `http://localhost:3000`, and allow `http://localhost:3000` and `http://localhost:3000/` as redirects. Keep Email enabled and disable public sign-ups.
 3. Under Authentication → Users create or invite the two accounts using the supplied invitation emails. Copy their Auth user UUIDs and run the profile-linking insert in this guide, using slots 0 and 1 and the fixed initial couple ID.
 4. Restart `npm run dev`, leave local preview and sign in using the existing account's email and password. Enter the anniversary in first-run setup. Repeat with the other account and check a shared game.
@@ -75,3 +76,9 @@ The local preview works independently of Supabase and cannot confirm hosted setu
 Your fresh-project setup and two private accounts can remain as configured. Open `supabase/migrations/004_block_battle.sql`, copy the entire file into the new project's SQL Editor, and run it once. Do not rerun the combined fresh setup. This migration adds the private block matches, validated game functions, Realtime access and scoreboard totals.
 
 After it succeeds, sign in on two devices. In Play, open Block Hearts Duel on both, choose a duration and create/join the duel, then press Ready on each account. Verify both clocks start together, scores update, and the result agrees when time expires. The publishable key cannot install this migration.
+
+## Stage 3 update
+
+Run the entire `supabase/migrations/005_connections.sql` file once in this project's SQL Editor. Existing profiles, passwords, anniversary and games are preserved. It adds couple-private moods, taps and validated connection functions; no signup or public read access is added.
+
+Check Home on both accounts: submit one daily answer and one choice, confirm the other account cannot read those answers yet, then answer on the second account and check both reveals and the match percentage. Save and update a mood, confirm the partner sees its note and history. Send Thinking of you; check the receiving app while open and verify the sender's one-minute cooldown. Background push is not part of this stage.

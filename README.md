@@ -12,7 +12,15 @@ The cover art slot is `block-battle-cover` in `public/drop-in/game-art/`.
 
 Drag a tray piece onto the board and release to place it. Valid previews use the full shape and stay inside the arena; outside or occupied drops return the piece to the tray. Tap/select, arrow controls and Enter/Place piece remain available. Tray artwork is centered and line clears briefly flash, respecting reduced motion. The supplied video informed the interaction; its artwork is not used in the app. This controls update needs no extra migration beyond 004.
 
-A private couples app. The active interface includes **Stages 1 and 2 of the new pink brief**: Home, editable anniversary, artwork slots, private sign-in, optional nicknames and music, plus Tic-Tac-Toe and Connect Four with a scoreboard. Memories and Notes have labelled Stage 4 destinations. Additional earlier game modules remain for Stage 6.
+A private couples app. The active interface includes **Stages 1–3 of the new pink brief**: Home, editable anniversary, artwork slots, private sign-in, optional nicknames/music, three arcade games, daily connection activities and mood check-ins. Memories and Notes have labelled Stage 4 destinations. Additional earlier game modules remain for Stage 6.
+
+## Stage 3 connections
+
+Home now includes sealed daily answers, Would You Rather and a running match percentage. Both answers reveal only once both people submit. The database sets the Manila day; stale submissions across midnight are rejected. Mood check-ins include an optional 160-character note, can be updated today, and show the latest 40 entries in shared private history.
+
+Thinking of you saves a private tap for the other account. Both phones refresh through private Realtime with a ten-second reconnect fallback. A new incoming tap can vibrate while the app is open; background delivery and push notifications are deferred to Stage 5. Each person can send one tap per minute, enforced by the server. No external message or email is sent by this feature.
+
+Run `supabase/migrations/005_connections.sql` once on the configured project after your existing setup. Do not rerun migrations 001–004. Local preview can switch between both people to demonstrate sealing, reveals, moods and taps; it remains in memory and resets on sign-out/reload. Hosted two-account acceptance requires applying migration 005 and checking both devices.
 
 ## Stage 2 arcade
 
@@ -26,7 +34,7 @@ Local preview is pass-and-play; games and wins survive tab navigation but clear 
 
 Apply `003_stage_two.sql` once after 001 and 002. It adds member-only nickname updates and requires both linked accounts to start. The seed script now uses generic PLAYER_ONE/PLAYER_TWO environment variables, preserves existing profile settings and refuses to transfer a linked account. Hosted two-device play, invitations and storage still need owner configuration and are not claimed tested.
 
-Acceptance after setup: sign in on two devices, choose the same game, confirm Presence, attempt an out-of-turn move, play a win and verify both scoreboards, reconnect and continue, then confirm an unrelated account cannot read or move it. Stage 3 adds Would You Rather, mood and thinking-of-you; Stage 4 adds wishlists, Memories and Notes; Stage 5 adds PWA/APK/push.
+Acceptance after setup: sign in on two devices, choose the same game, confirm Presence, attempt an out-of-turn move, play a win and verify both scoreboards, reconnect and continue, then confirm an unrelated account cannot read or move it. Stage 3 includes Would You Rather, mood and thinking-of-you; Stage 4 adds wishlists, Memories and Notes; Stage 5 adds PWA/APK/push.
 
 ## Current Stage 1
 

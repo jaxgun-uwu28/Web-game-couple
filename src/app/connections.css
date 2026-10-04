@@ -1,0 +1,321 @@
+.connection-daily {
+  min-width: 0;
+}
+.connection-daily .reveals p {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.connection-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.connection-preview button {
+  min-height: 44px;
+  font-size: 11px;
+  padding: 10px 14px;
+}
+.connection-preview [aria-pressed="true"] {
+  background: var(--cherry);
+  color: var(--on-primary);
+}
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  padding: 12px 16px;
+  background: var(--blush);
+  border-radius: 14px;
+  color: var(--ink);
+}
+.connection-status p {
+  margin: 0;
+  flex: 1;
+  min-width: 170px;
+  overflow-wrap: anywhere;
+}
+.connection-status.error {
+  background: var(--peach);
+}
+.connection-moments {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin: 30px 0;
+  align-items: start;
+}
+.connection-moments > .connection-status {
+  grid-column: 1/-1;
+}
+.choice-page {
+  padding: 30px 8px 24px 0;
+  min-width: 0;
+}
+.choice-intro h2,
+.mood-heading h2,
+.thinking-ribbon h2 {
+  font-family: var(--display);
+  font-size: clamp(25px, 2.8vw, 36px);
+  line-height: 1.1;
+  margin: 0 0 12px;
+}
+.choice-intro p {
+  color: var(--muted);
+  margin: 0 0 20px;
+}
+.choice-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.choice-options button {
+  min-height: 155px;
+  border-radius: 24px;
+  text-align: left;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-direction: column;
+  background: var(--butter);
+  color: var(--ink);
+  padding: 22px;
+  gap: 16px;
+  font-family: var(--display);
+  font-size: clamp(20px, 2.3vw, 27px);
+  line-height: 1.15;
+}
+.choice-options button:nth-child(2) {
+  background: var(--lavender);
+}
+.choice-options button span {
+  overflow-wrap: anywhere;
+}
+.choice-options button.selected {
+  box-shadow: inset 0 0 0 3px var(--cherry);
+}
+.choice-options button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.choice-options button:disabled:not(.selected) {
+  filter: saturate(0.65);
+}
+html[data-time="night"] .choice-options button:first-child {
+  background: var(--peach);
+}
+.choice-result {
+  padding: 20px 4px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.choice-result p {
+  margin: 8px 0 12px;
+  line-height: 1.6;
+}
+.choice-result p svg {
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.choice-result strong {
+  font-family: var(--display);
+  font-size: 21px;
+}
+.choice-result small {
+  display: block;
+  color: var(--muted);
+}
+.mood-page {
+  border-radius: 28px;
+  background: var(--sheet);
+  padding: 28px;
+  min-width: 0;
+}
+.mood-heading p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0 0 20px;
+}
+.mood-picker {
+  border: 0;
+  padding: 0;
+  margin: 0 0 20px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+.mood-picker button {
+  border-radius: 18px;
+  background: var(--blush);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 4px;
+  min-height: 82px;
+  font-size: 11px;
+}
+.mood-picker [aria-pressed="true"] {
+  background: var(--cherry);
+  color: var(--on-primary);
+}
+.mood-page form > label {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+.mood-page form > input {
+  width: 100%;
+  margin-bottom: 12px;
+}
+.mood-page form > button {
+  width: 100%;
+}
+.partner-mood {
+  margin-top: 20px;
+  padding: 16px 0;
+  border-top: 1px solid var(--blush);
+  font-size: 14px;
+}
+.partner-mood p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 8px 0;
+}
+.partner-mood small {
+  color: var(--muted);
+}
+.mood-history summary {
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 12px 0;
+}
+.mood-history summary span {
+  margin-left: 8px;
+  color: var(--muted);
+}
+.mood-history ol {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.mood-history li {
+  padding: 12px 0;
+  border-top: 1px solid var(--blush);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.mood-history time {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 4px;
+}
+.mood-history li p {
+  margin: 6px 0;
+  white-space: pre-wrap;
+}
+.thinking-ribbon {
+  grid-column: 1/-1;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: var(--peach);
+  padding: 28px 32px;
+  border-radius: 28px;
+}
+.thinking-ribbon h2 {
+  font-size: clamp(24px, 2.4vw, 30px);
+}
+.thinking-ribbon p {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+.thinking-ribbon small {
+  display: block;
+  max-width: 60ch;
+  color: var(--muted);
+  font-size: 12px;
+}
+.thinking-ribbon > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.thinking-ribbon > button {
+  flex-shrink: 0;
+  min-width: 175px;
+}
+.thinking-mark {
+  color: var(--cherry);
+  background: var(--sheet);
+  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+@media (max-width: 1100px) {
+  .connection-moments {
+    gap: 20px;
+  }
+  .mood-page {
+    padding: 22px;
+  }
+  .choice-options button {
+    padding: 18px;
+  }
+  .thinking-ribbon {
+    flex-wrap: wrap;
+  }
+  .thinking-ribbon > button {
+    margin-left: auto;
+  }
+}
+@media (max-width: 900px) {
+  .connection-moments {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .choice-page {
+    padding: 20px 0 8px;
+  }
+  .choice-options button {
+    min-height: 142px;
+    padding: 20px;
+    font-size: 23px;
+  }
+  .mood-page {
+    padding: 22px 18px;
+  }
+  .mood-picker {
+    gap: 5px;
+  }
+  .mood-picker button {
+    font-size: 10px;
+    padding: 14px 2px;
+  }
+  .thinking-ribbon {
+    padding: 24px 20px;
+    gap: 16px;
+  }
+  .thinking-mark {
+    width: 48px;
+    height: 48px;
+  }
+  .thinking-ribbon > div:nth-child(2) {
+    flex-basis: calc(100% - 64px);
+  }
+  .thinking-ribbon > button {
+    width: 100%;
+  }
+}

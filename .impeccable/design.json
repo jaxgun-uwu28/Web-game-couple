@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-04T12:42:11.8314457Z",
+  "generatedAt": "2026-10-04T15:41:27.4706872Z",
   "title": "Design System: Our Little Arcade — pink keepsake design",
   "extensions": {
     "colorMeta": {
@@ -225,21 +225,21 @@
       "provenance": "No fabricated couple photographs. Keep shipping artwork provenance and music attribution in CREDITS.md."
     },
     "scope": {
-      "stage": 2,
+      "stage": 3,
       "implementedSurface": [
         "Approved Stage 1 Home/setup and Us/Art Slots",
         "Play chooser, starts, Tic-Tac-Toe and Connect Four boards, HUD, result and scoreboard",
         "Private-account/couple handling and optional Us nickname",
         "Honest Memories/Notes Stage 4 placeholder destinations",
-        "Block Hearts Duel start/duration, ready lobby, shared clock, separate 8 by 8 boards, tray/anchor controls, partner preview and result"
+        "Block Hearts Duel start/duration, ready lobby, shared clock, separate 8 by 8 boards, tray/anchor controls, partner preview and result",
+        "Stage 3 daily sealed questions, paired Would You Rather reveal/match percentage, mood check-ins/history and thinking-of-you foreground taps"
       ],
       "laterStages": [
-        "Stage 3 mood/nudges",
         "Stage 4 wishlist/photos/memories/notes",
-        "Stage 5 packaging",
+        "Stage 5 packaging and background push",
         "Stage 6 remaining games"
       ],
-      "verificationBoundary": "Device-local preview review. Supplied server-validation and private Realtime wiring does not establish hosted setup or live two-device acceptance. No live deployment, PWA or APK completion claim.",
+      "verificationBoundary": "Device-local preview review. Hosted migration 005 and two-account connection acceptance remain pending; supplied private RPC/Realtime wiring does not establish hosted sealing, live haptics or deployment. No PWA or APK completion claim.",
       "preview": "Pass-and-play games and local session wins clear on reload/sign-out; no online game data saved. Stage 1 anniversary remains device-local and preview art tab-local.",
       "personalData": "No baked-in personal names, preferences or anniversary date; optional nicknames are entered in Us."
     },
@@ -318,7 +318,7 @@
         "tablet": "850px: tighter cartridge gap and labels; shorter 150px art windows",
         "mobile": "600px: stacked rivalry and cartridges, 24px station corners, compact HUD and board, thumb-reachable column controls; inherited fixed safe-area bottom navigation"
       },
-      "deferredDestinations": "Memories and Notes have explicit Stage 4 landing screens. Mood and nudges are Stage 3; wishlist/photos/notes Stage 4; packaging Stage 5; remaining games Stage 6.",
+      "deferredDestinations": "Memories and Notes remain explicit Stage 4 landing screens; wishlist/photos/notes Stage 4, packaging/background push Stage 5, remaining games Stage 6. Stage 3 mood/nudges are now implemented connection surfaces.",
       "verificationBoundary": "Local-preview design handoff. Backend/API/private Realtime wiring is supplied; hosted account setup and live two-device play are unverified. No deployment, APK or PWA completion claim."
     },
     "blockHeartsDuel": {
@@ -450,6 +450,76 @@
       "style": "Existing 16px rounded sheet fields, Nunito Sans labels and full-width cherry Sign in pill; preserve current pink keepsake tokens and focus outline.",
       "states": "Signing in… and disabled submit while busy; alert notice for unavailable connection, non-private email or incorrect credentials; password cleared after success.",
       "verificationBoundary": "Documents current form and supplied authentication wiring, not verified hosted credentials or production acceptance."
+    },
+    "connections": {
+      "stage": 3,
+      "direction": "Extend the approved pink keepsake; lavender daily page alongside anniversary, paired butter/lavender choices, white mood page and full-width peach thinking-of-you ribbon. No new fonts or artwork.",
+      "layout": {
+        "columns": "1fr 1fr",
+        "gap": "28px",
+        "margin": "30px 0",
+        "ribbon": "spans both columns",
+        "compact": "1100px: 20px gap and 22px mood padding",
+        "stacked": "900px: single column, 12px gap, 18px top margin; ribbon action fills width"
+      },
+      "daily": {
+        "surface": "Existing lavender question page beside anniversary",
+        "limit": 2000,
+        "states": [
+          "Loading today’s page",
+          "Draft textarea and Seal my answer",
+          "Own answer sealed while waiting",
+          "Both named answers revealed",
+          "Streak and Manila-midnight reset",
+          "Save/refresh error with Retry connection"
+        ],
+        "behavior": "Both daily answers open together. Draft is not cleared on failed save; clear follows confirmed own answer state. Preserve whitespace and wrap long text.",
+        "preview": "Explicit local seat buttons use aria-pressed, 44px minimum height; changing seat shows that player’s sealed/revealed state"
+      },
+      "choice": {
+        "title": "Would You Rather",
+        "tiles": "Two columns, 12px gap, minimum 155px height, 24px corners, 22px padding; Fredoka clamp(20px, 2.3vw, 27px), 1.15 line height",
+        "colors": "First butter, second lavender; night first becomes peach",
+        "selected": "Inset 3px cherry ring and check icon with aria-pressed",
+        "disabled": "Choices disable while busy, not ready or after own submission. Opacity stays 1; unselected disabled tile saturates to 0.65",
+        "reveal": "Own choice sealed until both answer, then show both named picks and Same wavelength or different-pair message",
+        "matchPercentage": "Rounded matched/total shared-choice percentage with count context; empty state explains that both must choose first",
+        "tabletMobile": "At 900px activities stack; tiles remain paired, 142px minimum height, 20px padding and 23px text"
+      },
+      "mood": {
+        "surface": "Sheet-colored page, 28px corners and 28px padding",
+        "picker": "Five labeled Lucide buttons in one horizontal row; 6px gap, 18px corners, blush surface, 82px minimum height",
+        "options": [
+          "Happy / Smile",
+          "Calm / Leaf",
+          "Tired / Moon",
+          "Stressed / CloudRain",
+          "Low / Cloud"
+        ],
+        "selected": "Cherry background and --on-primary text/icon; aria-pressed",
+        "note": "Optional context up to 160 characters in existing rounded field",
+        "save": "Share my mood or Update my mood; today’s value may be updated",
+        "partner": "Partner’s named mood, optional note and time, or honest waiting copy",
+        "history": "Expandable recent check-ins, 44px minimum summary, named mood/date/note rows; 320px maximum list height with vertical scrolling",
+        "privacy": "Couple-private rather than public; online identity remains authenticated profile"
+      },
+      "thinkingOfYou": {
+        "surface": "Full-width peach ribbon, 28px radius, 28px 32px padding, 24px gap",
+        "mark": "Cherry heart on circular sheet, 64px desktop and 48px stacked",
+        "action": "Cherry Thinking of you pill, minimum 175px width; stacked layout full width",
+        "states": "No tap yet, incoming tap with timestamp, busy/not-ready disabled, Sent · Ns cooldown",
+        "cooldownSeconds": 60,
+        "feedback": "Best-effort foreground incoming vibration [35,60,35] and status message; successful actions may vibrate 12ms. This is not background push",
+        "preview": "Switch local seats to see taps; no online data saved"
+      },
+      "status": {
+        "surface": "Blush status or peach error, 14px corners and 12px 16px padding; wrapped text and retry action",
+        "loading": "Readiness gates answers, choice, mood and taps",
+        "failure": "Migration/refresh/save errors remain visible; retry re-fetches connection state; failed actions do not show success",
+        "onlineWiring": "Supplied connection_state, seal_connection_answer, check_in_mood and thinking_of_you RPC calls with private updates and periodic refresh",
+        "verificationBoundary": "Hosted migration 005 and two-account acceptance remain pending. These are implementation facts, not claims that hosted sealing, private history or live haptics were tested."
+      },
+      "nightMotion": "Inherit existing plum palette and reduced-motion behavior. No new decorative animation or external assets."
     }
   },
   "components": [
@@ -550,6 +620,27 @@
       "description": "Email/password entry for the two existing accounts, using current rounded fields and cherry pill styles.",
       "html": "<form class=\"ds-signin\"><label for=\"ds-email\">Email</label><input id=\"ds-email\" type=\"email\" autocomplete=\"email\" placeholder=\"you@example.com\" required/><label for=\"ds-password\">Password</label><input id=\"ds-password\" type=\"password\" autocomplete=\"current-password\" required/><button type=\"submit\">Sign in</button><p>Two private accounts. No public sign-ups.</p></form>",
       "css": ".ds-signin{max-width:385px;text-align:left;font-family:var(--body,Arial,sans-serif);color:var(--ink,#50313f)}.ds-signin label{display:block;font-size:14px;font-weight:700;margin:0 0 8px}.ds-signin input{width:100%;min-height:48px;border:1px solid var(--line,#e6cfd8);padding:13px 16px;background:var(--sheet,#fff);color:var(--ink,#50313f);border-radius:16px;font:inherit;caret-color:var(--cherry,#9d304f)}.ds-signin input::placeholder{color:var(--muted,#795562);opacity:1}.ds-signin button{width:100%;margin-top:15px;min-height:48px;border:0;background:var(--cherry,#9d304f);color:var(--on-primary,#fff);border-radius:999px;padding:13px 23px;font:700 16px var(--body,Arial,sans-serif);cursor:pointer;transition:transform .16s,background .16s}.ds-signin button:hover:not(:disabled){filter:brightness(.96)}.ds-signin button:active:not(:disabled){transform:scale(.97)}.ds-signin input:focus-visible,.ds-signin button:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-signin button:disabled{opacity:.5;cursor:default}.ds-signin p{font-size:12px;color:var(--muted,#795562)}@media(prefers-reduced-motion:reduce){.ds-signin button{transition:none}.ds-signin button:active{transform:none}}"
+    },
+    {
+      "name": "Would You Rather Choice",
+      "kind": "button",
+      "description": "Expressive butter choice with selected ring and check state; lavender sibling forms the paired choice.",
+      "html": "<button class=\"ds-choice\" aria-pressed=\"true\"><span>A quiet night in</span><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"m5 12 4 4L19 6\"/></svg></button>",
+      "css": ".ds-choice{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:16px;min-height:155px;border:0;border-radius:24px;background:var(--butter,#f7e6a6);color:var(--ink,#50313f);padding:22px;text-align:left;font:500 clamp(20px,2.3vw,27px)/1.15 var(--display,sans-serif);cursor:pointer;transition:transform .16s,background .16s}.ds-choice[aria-pressed=true]{box-shadow:inset 0 0 0 3px var(--cherry,#9d304f)}.ds-choice:hover:not(:disabled){filter:brightness(.96)}.ds-choice:active:not(:disabled){transform:scale(.97)}.ds-choice:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-choice:disabled{opacity:1;cursor:default}.ds-choice:disabled:not([aria-pressed=true]){filter:saturate(.65)}@media(prefers-reduced-motion:reduce){.ds-choice{transition:none}.ds-choice:active{transform:none}}"
+    },
+    {
+      "name": "Labeled Mood Option",
+      "kind": "button",
+      "description": "Horizontal mood picker item with a literal label and selected cherry state.",
+      "html": "<button class=\"ds-mood\" aria-pressed=\"true\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01\"/></svg><span>Happy</span></button>",
+      "css": ".ds-mood{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--blush,#ffe6ec);color:var(--ink,#50313f);border:0;border-radius:18px;padding:14px 4px;min-width:44px;min-height:82px;font:700 11px var(--body,Arial,sans-serif);cursor:pointer;transition:transform .16s,background .16s}.ds-mood[aria-pressed=true]{background:var(--cherry,#9d304f);color:var(--on-primary,#fff)}.ds-mood:hover:not(:disabled){filter:brightness(.96)}.ds-mood:active:not(:disabled){transform:scale(.97)}.ds-mood:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-mood:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-mood{transition:none}.ds-mood:active{transform:none}}"
+    },
+    {
+      "name": "Thinking of You Ribbon",
+      "kind": "custom",
+      "description": "Full-width peach connection ribbon with foreground-only tap delivery and cooldown states.",
+      "html": "<section class=\"ds-thinking\"><div><h2>A little tap. A little closer.</h2><p>Send a little “thinking of you” to your person.</p><small>Live updates while the app is open.</small></div><button>Thinking of you</button></section>",
+      "css": ".ds-thinking{display:flex;align-items:center;gap:24px;background:var(--peach,#f8dcc4);color:var(--ink,#50313f);padding:28px 32px;border-radius:28px;font-family:var(--body,Arial,sans-serif)}.ds-thinking>div{flex:1;min-width:0}.ds-thinking h2{font:500 clamp(24px,2.4vw,30px)/1.1 var(--display,sans-serif);margin:0 0 12px}.ds-thinking p{font-size:14px;margin:0 0 8px}.ds-thinking small{display:block;font-size:12px;color:var(--muted,#795562)}.ds-thinking button{min-width:175px;min-height:48px;border:0;border-radius:999px;background:var(--cherry,#9d304f);color:var(--on-primary,#fff);padding:13px 23px;font:700 16px var(--body,Arial,sans-serif);cursor:pointer;transition:transform .16s}.ds-thinking button:hover:not(:disabled){filter:brightness(.96)}.ds-thinking button:active:not(:disabled){transform:scale(.97)}.ds-thinking button:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-thinking button:disabled{opacity:.5;cursor:default}@media(max-width:900px){.ds-thinking{flex-wrap:wrap;padding:24px 20px;gap:16px}.ds-thinking button{width:100%}}@media(prefers-reduced-motion:reduce){.ds-thinking button{transition:none}.ds-thinking button:active{transform:none}}"
     }
   ],
   "narrative": {
@@ -566,6 +657,7 @@
     "donts": [],
     "motion": "One spring flourish celebrates the date; controls squish on press. Reduced motion disables animation. Night follows local time with manual toggle. Night Train loops off by default.",
     "artwork": "Artwork uses Slot/useAsset: signed private app-art images, generated local manifest, then icon/gradient fallback. No fabricated couple photographs.",
-    "stageBoundary": "Stage 2 extends the approved keepsake world into a small arcade. Play uses two cartridge entries: a strawberry Tic-Tac-Toe with cross/ring pieces and a lavender Connect Four with cross/heart tokens. Each opens a focused start screen, then a tactile board, turn HUD, all-time rivalry ribbon and result screen. Boards use geometry rather than stock illustrations; optional artwork resolves through existing slots. Game sound stays off by default; a short synthesized tap sound needs no external audio asset. A single falling confetti moment marks a result, disabled with reduced motion. Online identity comes from the two linked account seats; nicknames are optional and entered in Us. Preview explicitly uses pass-and-play on this device. Memories and Notes have honest later-stage landing screens; mood, nudges and wishlists remain deferred."
+    "stageBoundary": "Stage 2 extends the approved keepsake world into a small arcade. Play uses two cartridge entries: a strawberry Tic-Tac-Toe with cross/ring pieces and a lavender Connect Four with cross/heart tokens. Each opens a focused start screen, then a tactile board, turn HUD, all-time rivalry ribbon and result screen. Boards use geometry rather than stock illustrations; optional artwork resolves through existing slots. Game sound stays off by default; a short synthesized tap sound needs no external audio asset. A single falling confetti moment marks a result, disabled with reduced motion. Online identity comes from the two linked account seats; nicknames are optional and entered in Us. Preview explicitly uses pass-and-play on this device. Memories and Notes have honest later-stage landing screens; mood, nudges and wishlists remain deferred.",
+    "connectionPages": "Daily questions remain beside the anniversary on their lavender page. Would You Rather uses a butter/lavender pair of large choice tiles, followed by a quiet shared reveal and match percentage. Mood uses labeled Lucide icons in a horizontal picker, an optional note and expandable history. A full-width peach ribbon holds Thinking of you. Activities stack on phones and tablets to keep controls generous. Night uses the existing plum tokens. Preview seat controls are explicitly local; online identity remains the authenticated profile. No new external artwork or fonts are needed."
   }
 }
