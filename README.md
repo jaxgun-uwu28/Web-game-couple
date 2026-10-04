@@ -1,10 +1,22 @@
 # Our Little Arcade
 
-A private couples app. The active interface is **Stage 1 of the new pink brief**: responsive Home, anniversary setup/editing, artwork slots, private sign-in and optional music. Play, Memories and Notes are deferred. Earlier game modules remain in the repository for later integration. This stage pauses for visual approval.
+A private couples app. The active interface includes **Stages 1 and 2 of the new pink brief**: Home, editable anniversary, artwork slots, private sign-in, optional nicknames and music, plus Tic-Tac-Toe and Connect Four with a scoreboard. Memories and Notes have labelled Stage 4 destinations. Additional earlier game modules remain for Stage 6.
+
+## Stage 2 arcade
+
+For dashboard migration and private-account instructions, follow [SUPABASE-SETUP.md](SUPABASE-SETUP.md). Start with its read-only schema check before running creation SQL.
+
+Play opens a cartridge chooser, start screen, turn HUD, tactile board and result. Private online moves go through `/api/game` and validated Postgres functions. Private Presence/Broadcast/Postgres changes refresh saved games, with a 15-second reconnect fallback. Scoreboard totals completed wins. Synthesized sound effects stay off by default; supported devices receive short haptics. Game Back returns through browser history.
+
+Local preview is pass-and-play; games and wins survive tab navigation but clear on reload/sign-out. Us permits an optional nickname. Online identity comes from linked profile seats, never a selectable login seat. Both profiles must exist before starting games.
+
+Apply `003_stage_two.sql` once after 001 and 002. It adds member-only nickname updates and requires both linked accounts to start. The seed script now uses generic PLAYER_ONE/PLAYER_TWO environment variables, preserves existing profile settings and refuses to transfer a linked account. Hosted two-device play, invitations and storage still need owner configuration and are not claimed tested.
+
+Acceptance after setup: sign in on two devices, choose the same game, confirm Presence, attempt an out-of-turn move, play a win and verify both scoreboards, reconnect and continue, then confirm an unrelated account cannot read or move it. Stage 3 adds Would You Rather, mood and thinking-of-you; Stage 4 adds wishlists, Memories and Notes; Stage 5 adds PWA/APK/push.
 
 ## Current Stage 1
 
-- Run `npm run dev`, open http://localhost:3000 and choose “Review Stage 1 locally”. This button appears only in development. Preview dates persist in this browser; preview uploads stay in memory until reload. Production requires a provisioned private account.
+- Run `npm run dev`, open http://localhost:3000 and choose “Review locally”. This button appears only in development. Preview dates persist in this browser; preview uploads stay in memory until reload. Production requires a provisioned private account.
 - Drop originals into `public/drop-in/`. Seven folders contain README.txt instructions with filenames and sizes. Dev watches files; build regenerates the manifest. Raster images become resized, metadata-free WebP. SVG/GIF/audio are copied. Originals stay untouched. Missing images use designed fallbacks.
 - Us lists artwork slots and permits image uploads. Signed-in uploads override folder artwork and use a private bucket after migration 002. Folder artwork is public static content: use private uploads for private photos. Future feature/icon slots are registered now; APK/PWA packaging is deferred.
 - Apply migration `002_stage_one.sql` once after reconciling migration 001 with the existing database. It preserves existing dates, removes the anniversary default for new couples and enables couple-scoped private artwork. New private Realtime topics are `art:<uuid>` and `anniversary:<uuid>`.
@@ -48,8 +60,8 @@ Put these variables in ignored `.env.local`:
 
 ```dotenv
 SUPABASE_SERVICE_ROLE_KEY=YOUR_OWNER_SERVICE_ROLE_KEY
-LANCE_EMAIL=lancerobertmacorol8@gmail.com
-ELAINE_EMAIL=lancerobertmacorol4@gmail.com
+PLAYER_ONE_EMAIL=FIRST_INVITATION_EMAIL
+PLAYER_TWO_EMAIL=SECOND_INVITATION_EMAIL
 ```
 
 Then run:
@@ -58,7 +70,7 @@ Then run:
 node --env-file=.env.local scripts/seed.mjs
 ```
 
-Passwords are optional (`LANCE_PASSWORD`, `ELAINE_PASSWORD`); leave them unset to use email links. The script creates email-confirmed users but **does not send email**; use the login page’s “Email link” tab to request invitations. Keep the service-role key local, remove it after provisioning, and do not add it to Vercel. The script reuses existing emails; do not change these emails to transfer an occupied seat without intentionally updating the existing profile. The temporary Elaine email belongs to Lance; replace it with Elaine’s own address in Supabase Auth when ready.
+Passwords are optional (`PLAYER_ONE_PASSWORD`, `PLAYER_TWO_PASSWORD`); leave them unset to use email links. The script creates email-confirmed users but **does not send email**; request a private link on the login screen afterward. Keep the service-role key local, remove it after provisioning, and do not add it to Vercel. Existing account linkage is preserved. An optional COUPLE_ID selects an existing couple; otherwise the initial migration record is used.
 
 For manual profiles, use the users’ real Auth UUIDs:
 

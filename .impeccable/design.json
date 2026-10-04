@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-04T10:56:13.5979886Z",
+  "generatedAt": "2026-10-04T11:19:58.5266317Z",
   "title": "Design System: Our Little Arcade — pink keepsake design",
   "extensions": {
     "colorMeta": {
@@ -102,6 +102,16 @@
         "name": "night-keepsake",
         "value": "0 12px 30px #150d1a26",
         "purpose": "Night override of --shadow."
+      },
+      {
+        "name": "cartridge",
+        "value": "0 14px 25px #833a5314",
+        "purpose": "Lifted game cartridges."
+      },
+      {
+        "name": "romantic-board",
+        "value": "0 10px 20px #833a5314",
+        "purpose": "Tactile board within the game station."
       }
     ],
     "motion": [
@@ -114,6 +124,11 @@
         "name": "celebrate",
         "value": "0.7s cubic-bezier(0.22, 1, 0.36, 1)",
         "purpose": "Anniversary flourish: scale(0.98), scale(1.015), scale(1)."
+      },
+      {
+        "name": "arcade-confetti",
+        "value": "1.6s cubic-bezier(0.16, 1, 0.3, 1) both",
+        "purpose": "One falling result celebration; hidden under reduced motion."
       }
     ],
     "breakpoints": [
@@ -205,24 +220,100 @@
       "provenance": "No fabricated couple photographs. Keep shipping artwork provenance and music attribution in CREDITS.md."
     },
     "scope": {
-      "stage": 1,
+      "stage": 2,
       "implementedSurface": [
-        "Home and anniversary setup/edit",
-        "Us and Art Slots",
-        "Daily-question frontend wired to existing signed-in sealed-answer RPC"
+        "Approved Stage 1 Home/setup and Us/Art Slots",
+        "Play chooser, starts, Tic-Tac-Toe and Connect Four boards, HUD, result and scoreboard",
+        "Private-account/couple handling and optional Us nickname",
+        "Honest Memories/Notes Stage 4 placeholder destinations"
       ],
       "laterStages": [
-        "Play",
-        "Memories",
-        "Notes",
-        "Mood",
-        "Nudges",
-        "Wishlist",
-        "PWA",
-        "Android"
+        "Stage 3 mood/nudges",
+        "Stage 4 wishlist/photos/memories/notes",
+        "Stage 5 packaging",
+        "Stage 6 remaining games"
       ],
-      "verificationBoundary": "Local development preview for design review. Signed-in backend and private storage wiring do not establish that migrations, live deployment, PWA or APK delivery have completed.",
-      "personalData": "No baked-in personal names, preferences or anniversary date."
+      "verificationBoundary": "Device-local preview review. Supplied server-validation and private Realtime wiring does not establish hosted setup or live two-device acceptance. No live deployment, PWA or APK completion claim.",
+      "preview": "Pass-and-play games and local session wins clear on reload/sign-out; no online game data saved. Stage 1 anniversary remains device-local and preview art tab-local.",
+      "personalData": "No baked-in personal names, preferences or anniversary date; optional nicknames are entered in Us."
+    },
+    "arcade": {
+      "surface": "Stage 2 arcade within the approved pink keepsake world",
+      "path": [
+        "Private sign-in and linked couple",
+        "Play cartridge chooser",
+        "Focused start screen",
+        "Shared board with turn HUD",
+        "Result and rivalry scoreboard"
+      ],
+      "chooser": {
+        "columns": "1.1fr 1fr",
+        "gap": "30px",
+        "radius": "30px",
+        "connectOffset": "38px",
+        "tic": "Strawberry cartridge, blush art window, cross/ring geometry",
+        "connect": "Lavender cartridge, white art window, cross/heart geometry",
+        "mobile": "Single column at 600px; 23px gap; no cartridge offset"
+      },
+      "rivalry": {
+        "style": "Flat ruled ribbon above chooser and game; Fredoka cherry score numerals, Caveat vs, Nunito Sans names",
+        "scoreSize": "30px desktop, 27px mobile",
+        "labels": "All-time wins · both accounts when signed in; Local session wins in preview",
+        "nicknameBehavior": "Optional nicknames entered in Us; identity comes from the linked account seat rather than a baked-in personal name"
+      },
+      "station": {
+        "maxWidth": "800px",
+        "radius": "30px",
+        "padding": "24px 36px 30px",
+        "ticBackground": "var(--blush)",
+        "connectBackground": "var(--lavender)",
+        "start": "Centered 440px maximum rules panel, paired symbols and player key; Start our game or Continue game",
+        "hud": "Polite live status with symbol, named turn or result, waiting/your-move text and filled-cell counter; max-width 530px"
+      },
+      "boards": {
+        "tic": {
+          "maxWidth": "400px desktop, 300px mobile",
+          "surface": "var(--sheet)",
+          "radius": "24px",
+          "columns": 3,
+          "gap": "9px",
+          "cellRadius": "14px",
+          "empty": "var(--blush)",
+          "playerOne": "Cross on strawberry",
+          "playerTwo": "Ring on butter",
+          "interaction": "Square buttons; occupied, busy, finished and other-player turns disable moves without fading pieces"
+        },
+        "connect": {
+          "maxWidth": "530px desktop, 330px mobile",
+          "surface": "var(--pink)",
+          "columns": 7,
+          "rows": 6,
+          "gap": "7px desktop, 4px mobile",
+          "empty": "Round sheet wells",
+          "playerOne": "Cross on cherry with --on-primary foreground",
+          "playerTwo": "Heart on butter",
+          "interaction": "Seven numbered drop buttons with arrows, minimum 44px by 44px; cells are descriptive display elements. Full columns, busy state, results and other-player turns disable drops"
+        },
+        "identityRule": "Shape distinguishes the two seats independent of color: cross/ring in Tic-Tac-Toe, cross/heart in Connect Four.",
+        "night": "The approved plum token overrides continue. Cartridge art windows use canvas; butter token foreground uses --on-primary.",
+        "artwork": "Optional tictactoe-cover, connect4-cover, board-background and piece-cross/piece-circle use existing Slot source precedence. Board art is decorative at opacity 0.12; token images use contain. The existing piece-circle slot serves ring or heart seat art according to game."
+      },
+      "result": {
+        "style": "Centered heart, Fredoka 26px result heading, quiet scoreboard copy and Play again pill",
+        "confetti": "12 geometric pieces, 7px × 12px, 3px radius; cherry, butter and strawberry; 1.6s cubic-bezier(0.16, 1, 0.3, 1), staggered 0/.12/.24/.36s; translateY(-30px) to 180px, rotate 240deg and fade",
+        "reducedMotion": "Confetti hidden, animations and control transitions disabled"
+      },
+      "feedback": {
+        "gameSound": "Off by default; explicit toggle with aria-pressed. Synthesized sine tap 440Hz or result 660Hz, 120ms gain decay; no external audio asset",
+        "haptics": "Best-effort navigator.vibrate: 12ms action, [35,50,35] result when the device supports it. Separate from the opt-in sound toggle",
+        "error": "Peach notice with alert role and Retry connection action; move processing is locked while busy"
+      },
+      "responsive": {
+        "tablet": "850px: tighter cartridge gap and labels; shorter 150px art windows",
+        "mobile": "600px: stacked rivalry and cartridges, 24px station corners, compact HUD and board, thumb-reachable column controls; inherited fixed safe-area bottom navigation"
+      },
+      "deferredDestinations": "Memories and Notes have explicit Stage 4 landing screens. Mood and nudges are Stage 3; wishlist/photos/notes Stage 4; packaging Stage 5; remaining games Stage 6.",
+      "verificationBoundary": "Local-preview design handoff. Backend/API/private Realtime wiring is supplied; hosted account setup and live two-device play are unverified. No deployment, APK or PWA completion claim."
     }
   },
   "components": [
@@ -232,13 +323,6 @@
       "description": "Cherry action; plum foreground on night's light berry.",
       "html": "<button class=\"ds-primary\">Save our date</button>",
       "css": ".ds-primary{font-family:var(--body,Arial,sans-serif);font-weight:700;background:var(--cherry,#9d304f);color:var(--on-primary,#fff);border:0;border-radius:999px;padding:13px 23px;min-height:48px;cursor:pointer;transition:transform .16s,background .16s}.ds-primary:hover:not(:disabled){filter:brightness(.96)}.ds-primary:active:not(:disabled){transform:scale(.97)}.ds-primary:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-primary:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}.ds-primary:active{transform:none}}"
-    },
-    {
-      "name": "Secondary Pill",
-      "kind": "button",
-      "description": "White sticker action for edit and artwork tasks.",
-      "html": "<button class=\"ds-secondary\">Edit date</button>",
-      "css": ".ds-secondary{font-family:var(--body,Arial,sans-serif);font-weight:700;background:var(--sheet,#fff);color:var(--cherry,#9d304f);border:0;border-radius:999px;padding:13px 23px;min-height:48px;box-shadow:0 3px 8px #833a530a;cursor:pointer;transition:transform .16s,background .16s}.ds-secondary:hover:not(:disabled){filter:brightness(.96)}.ds-secondary:active:not(:disabled){transform:scale(.97)}.ds-secondary:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-secondary:disabled{opacity:.5}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none}.ds-secondary:active{transform:none}}"
     },
     {
       "name": "Writing Field",
@@ -255,13 +339,6 @@
       "css": ".ds-nav{display:flex;flex-direction:column;gap:12px}.ds-nav button{font-family:var(--body,Arial,sans-serif);font-weight:700;text-align:left;background:none;color:var(--muted,#795562);border:0;border-radius:17px;padding:15px;min-height:54px;cursor:pointer;transition:transform .16s,background .16s}.ds-nav button[aria-current=page]{background:var(--blush,#ffe6ec);color:var(--cherry,#9d304f)}.ds-nav button:hover:not(:disabled){filter:brightness(.96)}.ds-nav button:active:not(:disabled){transform:scale(.97)}.ds-nav button:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-nav button:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-nav button{transition:none}.ds-nav button:active{transform:none}}"
     },
     {
-      "name": "Folder Chip",
-      "kind": "chip",
-      "description": "Pill filter for the Art Slots folder list.",
-      "html": "<button class=\"ds-chip\" aria-pressed=\"true\">backgrounds</button>",
-      "css": ".ds-chip{font-family:var(--body,Arial,sans-serif);font-size:12px;font-weight:700;border:0;background:var(--sheet,#fff);color:var(--muted,#795562);border-radius:999px;padding:11px 16px;min-height:44px;cursor:pointer;transition:transform .16s,background .16s}.ds-chip[aria-pressed=true]{background:var(--cherry,#9d304f);color:var(--on-primary,#fff)}.ds-chip:hover{filter:brightness(.96)}.ds-chip:active{transform:scale(.97)}.ds-chip:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-chip{transition:none}.ds-chip:active{transform:none}}"
-    },
-    {
       "name": "Lavender Question Leaf",
       "kind": "card",
       "description": "Daily question paper with a translucent white writing surface.",
@@ -274,6 +351,41 @@
       "description": "An honest empty personal-art slot rather than a fabricated couple image.",
       "html": "<div class=\"ds-frame\"><div class=\"ds-art\"><svg width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"/><circle cx=\"9\" cy=\"9\" r=\"2\"/><path d=\"m21 15-5-5L5 21\"/></svg><span>Your photo belongs here</span></div></div>",
       "css": ".ds-frame{width:165px;height:176px;padding:8px;background:var(--sheet,#fff);border-radius:8px 8px 22px 8px;transform:rotate(-5deg);box-shadow:0 6px 18px #833a5312}.ds-art{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--peach,#f8dcc4);border-radius:6px 6px 15px 6px;color:var(--muted,#795562);font-family:var(--body,Arial,sans-serif);font-size:12px;text-align:center}"
+    },
+    {
+      "name": "Strawberry Game Cartridge",
+      "kind": "button",
+      "description": "Rounded game cover with geometric cross/ring art and a white pill invitation; lavender sibling identifies Connect Four.",
+      "html": "<button class=\"ds-cartridge\"><div class=\"ds-cover\"><svg width=\"60\" height=\"60\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"4\"><path d=\"m6 6 12 12M18 6 6 18\"/></svg><svg width=\"60\" height=\"60\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"4\"><circle cx=\"12\" cy=\"12\" r=\"8\"/></svg></div><div class=\"ds-cartridge-label\"><h2>Tic-Tac-Toe</h2><span>Let’s play</span></div></button>",
+      "css": ".ds-cartridge{display:block;padding:0;overflow:hidden;border:0;border-radius:30px;text-align:left;color:var(--ink,#50313f);background:var(--pink,#f8c9d8);box-shadow:0 14px 25px #833a5314;cursor:pointer;transition:transform .16s,background .16s}.ds-cover{height:190px;display:flex;align-items:center;justify-content:center;gap:20px;background:var(--blush,#ffe6ec);color:var(--cherry,#9d304f);margin:20px 20px 0;border-radius:18px}.ds-cartridge-label{padding:25px 30px 30px}.ds-cartridge h2{font-family:var(--display, sans-serif);font-size:clamp(29px,3vw,39px);font-weight:500;line-height:1.14;letter-spacing:-.02em;margin:0 0 24px}.ds-cartridge-label span{display:block;background:var(--sheet,#fff);border-radius:99px;padding:13px 20px;font:700 14px var(--body,Arial,sans-serif);color:var(--cherry,#9d304f)}.ds-cartridge:hover{filter:brightness(.96)}.ds-cartridge:active{transform:scale(.97)}.ds-cartridge:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-cartridge{transition:none}.ds-cartridge:active{transform:none}}"
+    },
+    {
+      "name": "Rivalry Ribbon",
+      "kind": "custom",
+      "description": "Flat ruled scoreboard with optional nickname labels; preview says local session wins.",
+      "html": "<section class=\"ds-rivalry\"><div>Our friendly rivalry<small>Local session wins</small></div><p><span>Player one <strong>0</strong></span><b>vs</b><span>Player two <strong>0</strong></span></p></section>",
+      "css": ".ds-rivalry{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 0 26px;border-bottom:1px solid var(--line,#e6cfd8);font-family:var(--body,Arial,sans-serif);color:var(--ink,#50313f)}.ds-rivalry>div{font-weight:800}.ds-rivalry small{display:block;font-size:12px;font-weight:500;color:var(--muted,#795562)}.ds-rivalry p{display:flex;gap:22px;align-items:center;margin:0}.ds-rivalry p span{display:flex;gap:12px;align-items:center;font-size:14px;overflow-wrap:anywhere;max-width:160px}.ds-rivalry strong{font-family:var(--display,sans-serif);font-size:30px;color:var(--cherry,#9d304f)}.ds-rivalry b{font-family:var(--hand,cursive);font-size:23px;font-weight:500}@media(max-width:600px){.ds-rivalry{display:block}.ds-rivalry p{margin-top:14px;justify-content:space-between;gap:12px}}"
+    },
+    {
+      "name": "Turn HUD",
+      "kind": "custom",
+      "description": "Polite turn status, seat symbol, instruction and occupied-cell count.",
+      "html": "<div class=\"ds-hud\" role=\"status\" aria-live=\"polite\"><span><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"m6 6 12 12M18 6 6 18\"/></svg></span><div><strong>Player one’s turn</strong><small>Pass the screen after your move.</small></div><em>0/9</em></div>",
+      "css": ".ds-hud{display:flex;align-items:center;gap:13px;max-width:530px;color:var(--ink,#50313f);font-family:var(--body,Arial,sans-serif)}.ds-hud>span{width:45px;height:45px;display:grid;place-items:center;flex:none;border-radius:50%;background:var(--sheet,#fff);color:var(--cherry,#9d304f)}.ds-hud strong{font-family:var(--display,sans-serif);font-size:21px;overflow-wrap:anywhere}.ds-hud small{display:block;font-size:12px;font-weight:500;color:var(--muted,#795562)}.ds-hud em{margin-left:auto;font-style:normal;font-size:12px;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "Connect Four Drop Control",
+      "kind": "button",
+      "description": "Separate numbered 44px action target; displayed round wells are not buttons.",
+      "html": "<button class=\"ds-drop\" aria-label=\"Drop into column 1\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 5v14m-7-7 7 7 7-7\"/></svg><span>1</span></button>",
+      "css": ".ds-drop{display:flex;align-items:center;justify-content:center;flex-direction:column;min-width:44px;min-height:44px;padding:2px;gap:0;background:transparent;color:var(--ink,#50313f);border:0;border-radius:999px;font:700 10px var(--body,Arial,sans-serif);cursor:pointer;transition:transform .16s}.ds-drop:hover:not(:disabled){filter:brightness(.96)}.ds-drop:active:not(:disabled){transform:scale(.97)}.ds-drop:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-drop:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-drop{transition:none}.ds-drop:active{transform:none}}"
+    },
+    {
+      "name": "Game Result",
+      "kind": "custom",
+      "description": "Warm result wording and rematch action after win or draw; confetti metadata lives in extensions.arcade.result.",
+      "html": "<section class=\"ds-result\"><h3>A perfect excuse for a rematch.</h3><p>Added to this session’s scoreboard.</p><button>Play again</button></section>",
+      "css": ".ds-result{text-align:center;max-width:430px;margin:25px auto 0;color:var(--ink,#50313f)}.ds-result h3{font-family:var(--display,sans-serif);font-weight:500;font-size:26px;line-height:1.14;margin:8px 0}.ds-result p{font-family:var(--body,Arial,sans-serif);font-size:13px;color:var(--muted,#795562);margin:0 0 18px}.ds-result button{font-family:var(--body,Arial,sans-serif);font-weight:700;min-height:48px;padding:13px 23px;border:0;border-radius:999px;background:var(--cherry,#9d304f);color:var(--on-primary,#fff);cursor:pointer;transition:transform .16s}.ds-result button:hover{filter:brightness(.96)}.ds-result button:active{transform:scale(.97)}.ds-result button:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-result button{transition:none}.ds-result button:active{transform:none}}"
     }
   ],
   "narrative": {
@@ -290,6 +402,6 @@
     "donts": [],
     "motion": "One spring flourish celebrates the date; controls squish on press. Reduced motion disables animation. Night follows local time with manual toggle. Night Train loops off by default.",
     "artwork": "Artwork uses Slot/useAsset: signed private app-art images, generated local manifest, then icon/gradient fallback. No fabricated couple photographs.",
-    "stageBoundary": "Stage 1 boundary: working Home/setup and Us/Art Slots. Daily question uses the existing sealed-answer RPC after sign-in. Play, Memories, Notes, mood, nudges and wishlist remain clearly marked later-stage features until approved implementation."
+    "stageBoundary": "Stage 2 extends the approved keepsake world into a small arcade. Play uses two cartridge entries: a strawberry Tic-Tac-Toe with cross/ring pieces and a lavender Connect Four with cross/heart tokens. Each opens a focused start screen, then a tactile board, turn HUD, all-time rivalry ribbon and result screen. Boards use geometry rather than stock illustrations; optional artwork resolves through existing slots. Game sound stays off by default; a short synthesized tap sound needs no external audio asset. A single falling confetti moment marks a result, disabled with reduced motion. Online identity comes from the two linked account seats; nicknames are optional and entered in Us. Preview explicitly uses pass-and-play on this device. Memories and Notes have honest later-stage landing screens; mood, nudges and wishlists remain deferred."
   }
 }

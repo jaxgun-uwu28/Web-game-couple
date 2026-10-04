@@ -1,0 +1,621 @@
+.play-arcade {
+  max-width: 1120px;
+  margin: auto;
+}
+.rivalry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 0 26px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 32px;
+}
+.rivalry > div {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-weight: 800;
+}
+.rivalry small,
+.game-hud small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.rivalry p {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  margin: 0;
+}
+.rivalry p span {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  overflow-wrap: anywhere;
+  max-width: 160px;
+  font-size: 14px;
+}
+.rivalry strong {
+  font-family: var(--display);
+  font-size: 30px;
+  color: var(--cherry);
+}
+.rivalry p b {
+  font-family: var(--hand);
+  font-size: 23px;
+  font-weight: 500;
+}
+.cartridge-shelf {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 30px;
+  align-items: start;
+}
+.cartridge {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 30px;
+  text-align: left;
+  color: var(--ink);
+  background: var(--pink);
+  box-shadow: 0 14px 25px #833a5314;
+}
+.cartridge.connect {
+  background: var(--lavender);
+  margin-top: 38px;
+}
+.cartridge-art {
+  height: 190px;
+  display: grid;
+  place-items: center;
+  background: var(--blush);
+  margin: 20px 20px 0;
+  border-radius: 18px;
+  overflow: hidden;
+}
+.cartridge.connect .cartridge-art {
+  background: var(--sheet);
+}
+.cartridge-art > .slot-fallback,
+.cartridge-art > .slot {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+.cartridge-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cartridge-art > .art-slot,
+.cartridge-art .slot-fallback {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.cartridge-symbols {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  transform: rotate(-8deg);
+  color: var(--cherry);
+}
+.cartridge-symbols svg {
+  width: 60px;
+  height: 60px;
+  stroke-width: 4;
+}
+.cartridge-symbols.connect {
+  display: grid;
+  grid-template-columns: repeat(2, 50px);
+  gap: 14px;
+  transform: rotate(8deg);
+}
+.cartridge-symbols.connect svg {
+  width: 45px;
+  height: 45px;
+}
+.cartridge-label {
+  padding: 25px 30px 30px;
+}
+.cartridge-label h2 {
+  font-size: clamp(29px, 3vw, 39px);
+  margin: 0 0 8px;
+}
+.cartridge-label p {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  margin: 0 0 24px;
+}
+.cartridge-label span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--sheet);
+  border-radius: 99px;
+  padding: 13px 20px;
+  font-size: 14px;
+  color: var(--cherry);
+}
+.arcade-later {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 14px;
+  margin: 35px 0;
+}
+.board-station {
+  position: relative;
+  background: var(--blush);
+  border-radius: 30px;
+  padding: 24px 36px 30px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.board-station.connect {
+  background: var(--lavender);
+}
+.station-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+.station-top .text-button {
+  font-size: 13px;
+}
+.board-station > h2 {
+  font-size: clamp(32px, 4vw, 44px);
+  text-align: center;
+  margin: 14px 0 23px;
+}
+.game-start {
+  max-width: 440px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 10px 0 20px;
+}
+.start-tokens {
+  display: flex;
+  justify-content: center;
+  gap: 35px;
+  margin: 8px 0 25px;
+  color: var(--cherry);
+}
+.start-tokens svg:first-child {
+  transform: rotate(-12deg);
+}
+.start-tokens svg:last-child {
+  transform: rotate(12deg);
+}
+.player-key {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  flex-wrap: wrap;
+  margin: 25px 0;
+}
+.player-key span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  max-width: 190px;
+}
+.player-key svg {
+  width: 20px;
+  flex: none;
+  color: var(--cherry);
+}
+.game-start > button {
+  min-width: 210px;
+}
+.game-start > .small {
+  margin: 22px auto 0;
+  max-width: 36ch;
+}
+.game-hud {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin: 0 auto 20px;
+  max-width: 530px;
+}
+.game-hud > span:first-child {
+  background: var(--sheet);
+  color: var(--cherry);
+  width: 45px;
+  height: 45px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  flex: none;
+}
+.game-hud strong {
+  font-family: var(--display);
+  font-size: 21px;
+  overflow-wrap: anywhere;
+}
+.game-hud > span:last-child {
+  margin-left: auto;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.romantic-board {
+  position: relative;
+  margin: auto;
+  max-width: 400px;
+  padding: 15px;
+  background: var(--sheet);
+  border-radius: 24px;
+  box-shadow: 0 10px 20px #833a5314;
+  isolation: isolate;
+}
+.romantic-board.connect {
+  max-width: 530px;
+  padding: 12px;
+  background: var(--pink);
+}
+.board-art {
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  z-index: -1;
+  object-fit: cover;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+.romantic-cells {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.connect .romantic-cells {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+}
+.romantic-cell {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-height: 0;
+  padding: 0;
+  background: var(--blush);
+  border-radius: 14px;
+  color: var(--cherry);
+}
+button.romantic-cell:disabled {
+  opacity: 1;
+}
+.romantic-cell.token-1 {
+  background: var(--pink);
+}
+.romantic-cell.token-2 {
+  background: var(--butter);
+  color: var(--ink);
+}
+.token-art,
+.token-art.slot-fallback {
+  display: grid;
+  place-items: center;
+  width: 74%;
+  height: 74%;
+  padding: 0;
+}
+.token-art svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 3.5;
+}
+.token-art .slot-fallback {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+.token-art .slot-fallback,
+.cartridge-art .slot-fallback {
+  background: transparent;
+  color: inherit;
+}
+.token-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+img.token-art {
+  object-fit: contain;
+}
+.connect .romantic-cell {
+  border-radius: 50%;
+  background: var(--sheet);
+}
+.connect .romantic-cell.token-1 {
+  background: var(--cherry);
+  color: var(--on-primary);
+}
+.connect .romantic-cell.token-2 {
+  background: var(--butter);
+  color: var(--ink);
+}
+.drop-controls {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0;
+  margin: 0 -5px 10px;
+}
+.drop-controls button {
+  min-width: 44px;
+  min-height: 44px;
+  flex-direction: column;
+  gap: 0;
+  padding: 2px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 10px;
+}
+.board-rule {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  margin: 20px auto 0;
+  max-width: 45ch;
+}
+.board-rule span {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  margin-top: 7px;
+}
+.game-result {
+  text-align: center;
+  position: relative;
+  margin: 25px auto 0;
+  max-width: 430px;
+}
+.game-result > svg {
+  color: var(--cherry);
+}
+.game-result h3 {
+  font-size: 26px;
+  margin: 8px 0;
+}
+.game-result p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 18px;
+}
+.win-confetti {
+  position: absolute;
+  inset: -45px 0 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.win-confetti i {
+  position: absolute;
+  top: 0;
+  width: 7px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--cherry);
+  animation: arcade-confetti 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.win-confetti i:nth-child(3n) {
+  background: var(--butter);
+}
+.win-confetti i:nth-child(3n + 1) {
+  background: var(--pink);
+}
+@keyframes arcade-confetti {
+  from {
+    transform: translateY(-30px) rotate(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(180px) rotate(240deg);
+    opacity: 0;
+  }
+}
+.nickname-setting {
+  padding: 25px 0 35px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 30px;
+  max-width: 620px;
+}
+.nickname-setting h2 {
+  font-size: 30px;
+  margin: 0;
+}
+.nickname-setting p {
+  color: var(--muted);
+  font-size: 14px;
+}
+.nickname-setting form button {
+  margin-top: 14px;
+}
+.future-page {
+  text-align: center;
+  max-width: 570px;
+  margin: 60px auto;
+}
+.future-page h1 {
+  font-size: clamp(32px, 4vw, 48px);
+}
+.future-page p {
+  color: var(--muted);
+}
+.future-art {
+  width: 140px;
+  height: 140px;
+  margin: auto;
+  border-radius: 35px;
+  object-fit: cover;
+  background: var(--pink);
+  color: var(--cherry);
+}
+.future-art.slot-fallback {
+  display: grid;
+  place-items: center;
+}
+.future-art .slot-fallback {
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+[data-time="night"] .cartridge-art {
+  background: var(--canvas);
+}
+[data-time="night"] .romantic-cell.token-2 {
+  color: var(--on-primary);
+}
+@media (max-width: 850px) {
+  .cartridge-shelf {
+    gap: 20px;
+  }
+  .cartridge-label {
+    padding: 23px;
+  }
+  .cartridge-art {
+    height: 150px;
+    margin: 16px 16px 0;
+  }
+  .rivalry {
+    gap: 16px;
+  }
+  .rivalry p {
+    gap: 12px;
+  }
+  .rivalry p span {
+    max-width: 115px;
+  }
+}
+@media (max-width: 600px) {
+  .rivalry {
+    display: block;
+    margin-bottom: 25px;
+    padding: 10px 0 20px;
+  }
+  .rivalry > div {
+    font-size: 14px;
+  }
+  .rivalry p {
+    justify-content: space-between;
+    margin: 14px 0 0;
+  }
+  .rivalry p span {
+    max-width: 135px;
+    font-size: 12px;
+  }
+  .rivalry strong {
+    font-size: 27px;
+  }
+  .cartridge-shelf {
+    grid-template-columns: 1fr;
+    gap: 23px;
+  }
+  .cartridge.connect {
+    margin-top: 0;
+  }
+  .cartridge-art {
+    height: 135px;
+  }
+  .cartridge-label {
+    padding: 22px;
+  }
+  .cartridge-label h2 {
+    font-size: 30px;
+  }
+  .cartridge-label p {
+    font-size: 12px;
+    margin-bottom: 18px;
+  }
+  .cartridge-symbols svg {
+    width: 49px;
+    height: 49px;
+  }
+  .board-station {
+    padding: 17px 10px 24px;
+    border-radius: 24px;
+    margin: 0 -9px;
+  }
+  .station-top {
+    padding: 0 6px;
+  }
+  .station-top .text-button {
+    font-size: 12px;
+    padding: 8px;
+  }
+  .board-station > h2 {
+    margin: 12px 0 23px;
+    font-size: 32px;
+  }
+  .game-hud {
+    padding: 0 8px;
+    gap: 9px;
+  }
+  .game-hud strong {
+    font-size: 18px;
+  }
+  .game-hud small {
+    font-size: 11px;
+  }
+  .romantic-board {
+    padding: 12px;
+    max-width: 300px;
+  }
+  .romantic-board.connect {
+    padding: 5px;
+    max-width: 330px;
+  }
+  .connect .romantic-cells {
+    gap: 4px;
+  }
+  .drop-controls {
+    margin: 0 -3px 6px;
+  }
+  .drop-controls button {
+    min-width: 44px;
+  }
+  .game-start {
+    padding: 5px 14px 14px;
+  }
+  .game-start p {
+    font-size: 14px;
+  }
+  .board-rule {
+    padding: 0 8px;
+    font-size: 12px;
+  }
+  .arcade-later {
+    align-items: start;
+    font-size: 12px;
+  }
+  .arcade-later svg {
+    flex: none;
+  }
+  .future-page {
+    margin: 40px auto;
+  }
+  .nickname-setting h2 {
+    font-size: 27px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .win-confetti {
+    display: none;
+  }
+}

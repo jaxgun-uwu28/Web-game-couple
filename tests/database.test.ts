@@ -13,6 +13,9 @@ test("Postgres validates moves, seals answers, restricts outsiders and drawing s
     );
     await db.exec(await readFile("supabase/migrations/001_arcade.sql", "utf8"));
     await db.exec(
+      await readFile("supabase/migrations/003_stage_two.sql", "utf8"),
+    );
+    await db.exec(
       `insert into auth.users values('${lance}'),('${elaine}'),('${stranger}');insert into profiles(id,couple_id,slot,name) values('${lance}','06092025-0000-4000-8000-000000000001',0,'Lance'),('${elaine}','06092025-0000-4000-8000-000000000001',1,'Elaine');set role authenticated;`,
     );
     const as = async (id: string) => {
@@ -27,6 +30,22 @@ test("Postgres validates moves, seals answers, restricts outsiders and drawing s
       );
       return result.rows[0].value;
     };
+    await as(lance);
+    await rpc("set_nickname($1)", ["My chosen nickname"]);
+    const nicknames = await db.query<{ nickname: string }>(
+      "select nickname from profiles order by slot",
+    );
+    assert.deepEqual(
+      nicknames.rows.map((p) => p.nickname),
+      ["My chosen nickname", ""],
+    );
+    await assert.rejects(
+      rpc("set_nickname($1)", ["x".repeat(41)]),
+      /40 characters/,
+    );
+    await as(stranger);
+    await assert.rejects(rpc("set_nickname($1)", ["Intruder"]), /invitation/);
+    await assert.rejects(rpc("new_game($1)", ["tic"]), /invitation/);
     await as(lance);
     const tic = await rpc("new_game($1)", ["tic"]);
     assert.equal(

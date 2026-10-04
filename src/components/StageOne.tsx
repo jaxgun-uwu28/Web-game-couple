@@ -26,6 +26,10 @@ import { anniversaryStats, localDay, validDate } from "@/lib/anniversary";
 import { dailyQuestions, dayIndex, manilaDay } from "@/lib/games";
 import { ArtProvider, ArtSettings, Slot } from "./ArtSlots";
 import Ambience from "./Ambience";
+import dynamic from "next/dynamic";
+const PlayArcade = dynamic(() => import("./PlayArcade"), {
+  loading: () => <p className="opening">Opening the arcade…</p>,
+});
 const tabs = [
   { id: "home", name: "Home", icon: Home },
   { id: "play", name: "Play", icon: Gamepad2 },
@@ -53,7 +57,11 @@ export default function StageOne() {
     [daily, setDaily] = useState<{ user_id: string; answer: string | null }[]>(
       [],
     ),
-    [streak, setStreak] = useState(0);
+    [streak, setStreak] = useState(0),
+    [profiles, setProfiles] = useState<
+      { id: string; slot: number; nickname: string }[]
+    >([]),
+    [nickname, setNickname] = useState("");
   useEffect(() => {
     setNow(new Date());
     const timer = setInterval(() => setNow(new Date()), 10000);
@@ -65,7 +73,16 @@ export default function StageOne() {
       setSession(data.session);
       setAuthReady(true);
     });
-    const { data } = db.auth.onAuthStateChange((_event, s) => setSession(s));
+    const { data } = db.auth.onAuthStateChange((event, s) => {
+      setSession(s);
+      if (event === "SIGNED_OUT" || event === "SIGNED_IN") {
+        setLoaded(false);
+        setCoupleId(null);
+        setProfiles([]);
+        setDaily([]);
+        setAnniversary(null);
+      }
+    });
     return () => {
       clearInterval(timer);
       data.subscription.unsubscribe();
@@ -80,11 +97,22 @@ export default function StageOne() {
       .eq("id", session.user.id)
       .single();
     if (profile.error) {
+      setCoupleId(null);
       setError("This account needs a private couple invitation.");
       setLoaded(true);
       return;
     }
     setCoupleId(profile.data.couple_id);
+    const people = await db
+      .from("profiles")
+      .select("id,slot,nickname")
+      .eq("couple_id", profile.data.couple_id)
+      .order("slot");
+    if (people.error) {
+      setError("Your couple accounts could not load. Try again.");
+      return;
+    }
+    setProfiles(people.data);
     const c = await db
       .from("couples")
       .select("anniversary")
@@ -134,7 +162,7 @@ export default function StageOne() {
     setLoaded(true);
     setAnniversary(localStorage.getItem("arcade-stage1-anniversary"));
     setMessage(
-      "Stage 1 preview · date is saved on this device; uploaded artwork stays in this tab.",
+      "Local preview · games use pass-and-play; nothing is saved to your online accounts.",
     );
     setError("");
   };
@@ -145,19 +173,28 @@ export default function StageOne() {
       ];
   const saveDate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const selectedDate = String(new FormData(e.currentTarget).get("anniversary") || "");
-    if (!validDate(selectedDate) || selectedDate > localDay() || selectedDate < "1900-01-01") {
+    const selectedDate = String(
+      new FormData(e.currentTarget).get("anniversary") || "",
+    );
+    if (
+      !validDate(selectedDate) ||
+      selectedDate > localDay() ||
+      selectedDate < "1900-01-01"
+    ) {
       setError("Choose a real anniversary date, today or earlier.");
       return;
     }
     setBusy(true);
     setError("");
     try {
-      if (preview) localStorage.setItem("arcade-stage1-anniversary", selectedDate);
+      if (preview)
+        localStorage.setItem("arcade-stage1-anniversary", selectedDate);
       else {
         if (!db || !coupleId)
           throw new Error("Your private couple invitation is required.");
-        const { error } = await db.rpc("set_anniversary", { value: selectedDate });
+        const { error } = await db.rpc("set_anniversary", {
+          value: selectedDate,
+        });
         if (error) throw new Error(error.message);
       }
       setAnniversary(selectedDate);
@@ -212,6 +249,38 @@ export default function StageOne() {
       setAnswer("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Your answer could not save.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const names = [0, 1].map(
+    (slot) =>
+      profiles.find((p) => p.slot === slot)?.nickname || `Player ${slot + 1}`,
+  );
+  const mySlot = profiles.find((p) => p.id === session?.user.id)?.slot ?? 0;
+  const saveNickname = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      if (preview) {
+        setProfiles([
+          { id: "preview", slot: 0, nickname },
+          { id: "preview-two", slot: 1, nickname: "" },
+        ]);
+        setMessage("Nickname updated for this preview.");
+      } else {
+        const result = await db!.rpc("set_nickname", {
+          value: nickname.trim(),
+        });
+        if (result.error) throw result.error;
+        await load();
+        setMessage("Your nickname is saved.");
+      }
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Nickname could not save. Try again.",
+      );
     } finally {
       setBusy(false);
     }
@@ -281,15 +350,20 @@ export default function StageOne() {
                 key={t.id}
                 className={tab === t.id ? "nav-item active" : "nav-item"}
                 aria-current={tab === t.id ? "page" : undefined}
-                disabled={
-                  (t.id !== "home" && t.id !== "us") || (!session && !preview)
-                }
+                disabled={(!session && !preview) || (!preview && !coupleId)}
                 title={
-                  t.id !== "home" && t.id !== "us"
+                  t.id === "memories" || t.id === "notes"
                     ? "Available in the next stages"
                     : t.name
                 }
                 onClick={() => {
+                  if (t.id === "us")
+                    setNickname(
+                      profiles.find(
+                        (p) =>
+                          p.id === (preview ? "preview" : session?.user.id),
+                      )?.nickname || "",
+                    );
                   setTab(t.id);
                   setEditing(false);
                 }}
@@ -336,6 +410,8 @@ export default function StageOne() {
                     } else void db?.auth.signOut();
                     setCoupleId(null);
                     setDaily([]);
+                    setProfiles([]);
+                    setNickname("");
                     setTab("home");
                   }}
                 >
@@ -402,12 +478,22 @@ export default function StageOne() {
                 </p>
                 {process.env.NODE_ENV === "development" && (
                   <button className="text-button" onClick={openPreview}>
-                    Review Stage 1 locally <ChevronRight size={17} />
+                    Review locally <ChevronRight size={17} />
                   </button>
                 )}
               </section>
             ) : !loaded ? (
               <p className="opening">Finding our first page…</p>
+            ) : !preview && !coupleId ? (
+              <section className="welcome">
+                <KeyRound size={40} />
+                <h1>A private invitation is needed.</h1>
+                <p>
+                  This signed-in account is not linked to a couple yet. Ask the
+                  project owner to provision your profile, then retry.
+                </p>
+                <button onClick={() => void load()}>Retry invitation</button>
+              </section>
             ) : !anniversary || editing ? (
               <section className="setup-page">
                 <div className="setup-art">
@@ -456,8 +542,51 @@ export default function StageOne() {
                     Edit date
                   </button>
                 </section>
+                <section className="nickname-setting">
+                  <h2>What should we call you?</h2>
+                  <p>Optional. Your nickname appears on your shared games.</p>
+                  <form onSubmit={saveNickname}>
+                    <label htmlFor="nickname">Your nickname</label>
+                    <input
+                      id="nickname"
+                      value={nickname}
+                      maxLength={40}
+                      onChange={(e) => setNickname(e.target.value)}
+                      placeholder="Player 1 or Player 2 is fine, too"
+                    />
+                    <button disabled={busy}>Save nickname</button>
+                  </form>
+                </section>
                 <ArtSettings />
               </>
+            ) : tab === "play" ? null : tab === "memories" ||
+              tab === "notes" ? (
+              <section className="future-page">
+                <Slot
+                  name={
+                    tab === "memories"
+                      ? "memories-background"
+                      : "notes-background"
+                  }
+                  alt="Custom page artwork"
+                  className="future-art"
+                >
+                  <Heart size={50} />
+                </Slot>
+                <h1>
+                  {tab === "memories"
+                    ? "A place for our favorite moments."
+                    : "Little words. Big feelings."}
+                </h1>
+                <p>
+                  {tab === "memories"
+                    ? "Your private photo timeline arrives in Stage 4."
+                    : "Your love-notes jar and sealed letters arrive in Stage 4."}
+                </p>
+                <button onClick={() => setTab("play")}>
+                  Play together while we wait <Gamepad2 size={18} />
+                </button>
+              </section>
             ) : (
               <>
                 <div className="page-heading">
@@ -591,8 +720,7 @@ export default function StageOne() {
                       <span>A page for today</span>
                     </div>
                     <h2>
-                      A little question,{" "}
-                      <br />
+                      A little question, <br />
                       just for us.
                     </h2>
                     <p className="daily-question">{question}</p>
@@ -674,7 +802,7 @@ export default function StageOne() {
                       <br />
                       and little surprises.
                     </p>
-                    <span>Our next chapter · Stage 2 onward</span>
+                    <span>Our next chapter · Stage 3 onward</span>
                   </div>
                 </section>
                 <section className="coming-strip" aria-label="Next stages">
@@ -687,13 +815,34 @@ export default function StageOne() {
                     <span>Thinking of you</span>
                   </div>
                   <div>
-                    <Gamepad2 size={21} />
-                    <span>Your next turn</span>
+                    <button
+                      className="text-button"
+                      onClick={() => setTab("play")}
+                    >
+                      <Gamepad2 size={21} />
+                      Play together
+                    </button>
                   </div>
                   <p>These connections arrive in the next stages.</p>
                 </section>
               </>
             )}
+            {(session || preview) &&
+              loaded &&
+              anniversary &&
+              !editing &&
+              (preview || coupleId) && (
+                <div hidden={tab !== "play"}>
+                  <PlayArcade
+                    db={db}
+                    session={session}
+                    coupleId={coupleId}
+                    slot={mySlot}
+                    names={names}
+                    preview={preview}
+                  />
+                </div>
+              )}
           </main>
           <footer className="stage-footer">
             <Heart size={13} />
