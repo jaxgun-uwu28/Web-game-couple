@@ -1835,3 +1835,35 @@ html[data-weather="rain"] .photo-wrap:after {
     transform: none;
   }
 }
+/* Touch targets stay generous even when the visible icons are small. */
+@media (max-width: 760px) {
+  .header-right .icon-button {
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+@media (max-width: 480px) {
+  .masthead {
+    flex-wrap: wrap;
+    padding: 14px 0;
+    row-gap: 4px;
+  }
+  .wordmark {
+    flex-basis: 100%;
+  }
+  .wordmark span {
+    white-space: nowrap;
+  }
+  .header-right {
+    margin-left: auto;
+  }
+  .column-controls {
+    width: calc(100% + 28px);
+    margin: 0 -14px 8px;
+    gap: 0;
+  }
+  .column-controls button {
+    min-width: 44px;
+  }
+}

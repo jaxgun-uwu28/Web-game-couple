@@ -473,8 +473,8 @@ export default function Arcade() {
         }
         await rpc("save_entry", { k: kind, content: body, eid: id || null });
       });
-    } catch {
-      /* displayed above */
+    } catch (e) {
+      throw e; // Keep the draft in the caller when persistence fails.
     }
   };
   const answerToday = async (kind: string, content: string) => {

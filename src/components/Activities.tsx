@@ -177,7 +177,9 @@ export default function Activities({
                   ...(tab === "movies"
                     ? { genre: filter === "All" ? "Horror" : filter }
                     : {}),
-                }).then(() => setText(""));
+                })
+                  .then(() => setText(""))
+                  .catch(() => {});
               }}
             >
               <label htmlFor="entry">
@@ -247,7 +249,7 @@ export default function Activities({
                         aria-label={`Mark ${String(e.body.text)} ${e.done ? "unfinished" : "done"}`}
                         aria-pressed={e.done}
                         disabled={busy}
-                        onClick={() => void save(tab, {}, e.id)}
+                        onClick={() => void save(tab, {}, e.id).catch(() => {})}
                       >
                         {e.done ? <Check size={18} /> : <span />}
                       </button>
@@ -261,7 +263,9 @@ export default function Activities({
                         className="icon-button"
                         aria-label={`Delete ${String(e.body.text)}`}
                         disabled={busy}
-                        onClick={() => void save("delete", {}, e.id)}
+                        onClick={() =>
+                          void save("delete", {}, e.id).catch(() => {})
+                        }
                       >
                         <Trash2 size={16} />
                       </button>

@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-04T09:55:17.8902911Z",
+  "title": "Design System: Our Little Arcade",
+  "extensions": {
+    "colorMeta": {
+      "forest": {
+        "role": "primary",
+        "displayName": "Forest",
+        "purpose": "Actions and Elaine's green circle."
+      },
+      "leaf": {
+        "role": "primary",
+        "displayName": "Light Leaf",
+        "purpose": "Daily paper and soft hover surfaces."
+      },
+      "wine": {
+        "role": "secondary",
+        "displayName": "Wine",
+        "purpose": "Personal notes and seal."
+      },
+      "rose": {
+        "role": "secondary",
+        "displayName": "Rose",
+        "purpose": "Paired pieces and error paper."
+      },
+      "brass": {
+        "role": "tertiary",
+        "displayName": "Brass",
+        "purpose": "Keyboard focus."
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Cream Paper",
+        "purpose": "Page background."
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Writing Sheet",
+        "purpose": "Fields and lifted papers."
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Near-black Ink",
+        "purpose": "Main text and Lance's black cross."
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Fraunces Display",
+        "purpose": "Main heading."
+      },
+      "headline": {
+        "displayName": "Fraunces Headline",
+        "purpose": "Paper and section headings."
+      },
+      "body": {
+        "displayName": "DM Sans Body",
+        "purpose": "Readable instructions and controls."
+      },
+      "handwriting": {
+        "displayName": "Caveat Marginalia",
+        "purpose": "Short personal notes."
+      }
+    },
+    "shadows": [
+      {
+        "name": "paper",
+        "value": "0 10px 32px #26282112",
+        "purpose": "Notebook, game and settings papers; CSS --shadow."
+      },
+      {
+        "name": "photograph",
+        "value": "0 8px 30px #26282118",
+        "purpose": "Mounted forest print."
+      },
+      {
+        "name": "daily-paper",
+        "value": "0 6px 22px #344f3f12",
+        "purpose": "Leaf-colored daily paper."
+      },
+      {
+        "name": "seal",
+        "value": "0 4px 9px #713a4526",
+        "purpose": "Wine wax seal."
+      }
+    ],
+    "motion": [
+      {
+        "name": "control-transition",
+        "value": "background 0.16s, transform 0.16s",
+        "purpose": "Button feedback with CSS default ease."
+      },
+      {
+        "name": "palette-transition",
+        "value": "background-color 0.5s, color 0.5s",
+        "purpose": "Body environment changes."
+      },
+      {
+        "name": "page-open",
+        "value": "0.35s cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Game paper opens from clip-path inset(0 0 8% 0) and translateY(8px)."
+      },
+      {
+        "name": "date-spin",
+        "value": "1.1s cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Date wheel rotates 1080deg."
+      },
+      {
+        "name": "rain",
+        "value": "2s linear infinite",
+        "purpose": "Opt-in photograph overlay moves 180px."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide",
+        "value": "1400px",
+        "query": "min-width",
+        "purpose": "60px shell gutters."
+      },
+      {
+        "name": "compact-desktop",
+        "value": "1000px",
+        "query": "max-width",
+        "purpose": "285px daily rail and 28px play gap."
+      },
+      {
+        "name": "stacked",
+        "value": "760px",
+        "query": "max-width",
+        "purpose": "Single-column play and invitation; 44px header controls."
+      },
+      {
+        "name": "phone",
+        "value": "480px",
+        "query": "max-width",
+        "purpose": "18px shell gutters; wrapped masthead, stacked intro and quiz options."
+      }
+    ],
+    "focus": {
+      "outline": "3px solid var(--brass)",
+      "outlineOffset": "4px"
+    },
+    "environments": {
+      "night": {
+        "selector": "html[data-time=\"night\"]",
+        "customProperties": {
+          "--paper": "#171f1b",
+          "--sheet": "#233128",
+          "--ink": "#f5f0e4",
+          "--forest": "#bbd2ad",
+          "--leaf": "#364c3a",
+          "--wine": "#edb6c3",
+          "--rose": "#643d47",
+          "--brass": "#d7bb79",
+          "--muted": "#bac7b3",
+          "--line": "#48574b"
+        },
+        "colorScheme": "dark",
+        "purpose": "Dark cabin materials. Daily paper and game pieces retain light-color exceptions; primary button text becomes #17221a."
+      },
+      "photographFilters": {
+        "morning": "saturate(0.7)",
+        "golden": "sepia(0.23) saturate(0.8)",
+        "dusk": "brightness(0.7) saturate(0.6)",
+        "night": "brightness(0.4) saturate(0.5)"
+      },
+      "reducedMotion": {
+        "query": "prefers-reduced-motion: reduce",
+        "animation": "none !important",
+        "transition": "none !important",
+        "scrollBehavior": "auto",
+        "hoverTransform": "none"
+      }
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Forest action with a visible keyboard ring and gentle hover lift.",
+      "html": "<button class=\"ds-primary\">Save answer</button>",
+      "css": ".ds-primary{font-family:var(--sans,Arial,sans-serif);font-size:15px;line-height:1.6;background:var(--forest,#344f3f);color:var(--sheet,#fffcf3);min-height:44px;border:0;border-radius:5px;padding:12px 20px;cursor:pointer;transition:background .16s,transform .16s}.ds-primary:hover:not(:disabled){background:#243e2f;transform:translateY(-1px)}.ds-primary:focus-visible{outline:3px solid var(--brass,#806132);outline-offset:4px}.ds-primary:disabled{opacity:.58;cursor:default}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}.ds-primary:hover{transform:none}}"
+    },
+    {
+      "name": "Writing Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Readable sheet-colored writing surface.",
+      "html": "<label class=\"ds-label\" for=\"ds-answer\">Your answer</label><textarea id=\"ds-answer\" class=\"ds-field\" placeholder=\"A little thought for today\"></textarea>",
+      "css": ".ds-label{display:block;font-family:var(--sans,Arial,sans-serif);font-size:13px;font-weight:600;color:var(--ink,#262821);margin:14px 0 6px}.ds-field{font-family:var(--sans,Arial,sans-serif);font-size:15px;line-height:1.6;background:var(--sheet,#fffcf3);color:var(--ink,#262821);border:1px solid var(--line,#d8d2c3);border-radius:4px;padding:12px 14px;min-height:120px;max-width:100%;resize:vertical;caret-color:var(--wine,#713a45)}.ds-field::placeholder{color:var(--muted,#626653);opacity:1}.ds-field:focus-visible{outline:3px solid var(--brass,#806132);outline-offset:4px}"
+    },
+    {
+      "name": "Game Ticket",
+      "kind": "button",
+      "refersTo": "game-ticket",
+      "description": "Ruled game invitation row with a serif title.",
+      "html": "<button class=\"ds-ticket\"><span><strong>Tic-tac-toe</strong><small>A little friendly rivalry</small></span><span class=\"ds-ticket-action\">Play</span></button>",
+      "css": ".ds-ticket{width:100%;min-height:44px;background:transparent;color:var(--ink,#262821);border:0;border-block:1px solid var(--line,#d8d2c3);border-radius:0;padding:23px 20px;display:flex;align-items:center;gap:24px;text-align:left;cursor:pointer;transition:background .16s,transform .16s}.ds-ticket strong{display:block;font-family:var(--serif,Georgia,serif);font-size:25px;font-weight:400;line-height:1.2}.ds-ticket small{display:block;font-family:var(--sans,Arial,sans-serif);font-size:12px;color:var(--muted,#626653);margin-top:6px}.ds-ticket-action{margin-left:auto;font-family:var(--sans,Arial,sans-serif);font-size:12px;color:var(--forest,#344f3f)}.ds-ticket:hover:not(:disabled){background:var(--leaf,#dce7ce);transform:translateX(4px)}.ds-ticket:focus-visible{outline:3px solid var(--brass,#806132);outline-offset:4px}.ds-ticket:disabled{opacity:.58;cursor:default}@media(prefers-reduced-motion:reduce){.ds-ticket{transition:none}.ds-ticket:hover{transform:none}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Cabin Scrapbook",
+    "overview": "A love letter on the table of a little forest cabin. A photographic window anchors cream paper, ink, game pieces and olive bookcloth. Asymmetric objects and short handwritten notes keep Lance and Elaine's private space intimate.",
+    "keyCharacteristics": [
+      "Warm paper and earthy green",
+      "Three distinct typographic voices",
+      "Flat ruled lists and tactile paper objects",
+      "Symbols alongside player colors"
+    ],
+    "rules": [
+      {
+        "name": "The Symbol Rule",
+        "body": "Elaine owns the green circle; Lance owns the black cross. Keep symbols in every state.",
+        "section": "colors"
+      },
+      {
+        "name": "The Three Voices Rule",
+        "body": "Serif introduces, sans-serif explains or operates, handwriting adds an aside.",
+        "section": "typography"
+      },
+      {
+        "name": "The Paper Rule",
+        "body": "Reserve lifted, rotated treatment for authored paper objects. Game rows stay flat and ruled.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do preserve the cabin scrapbook and forest photograph.",
+      "Do preserve 44px controls, keyboard focus and reduced motion.",
+      "Do keep asset attribution in CREDITS.md.",
+      "Do keep preview content limited to supplied names and preferences without persistence."
+    ],
+    "donts": [
+      "Don't introduce stock dashboard chrome or generic card grids.",
+      "Don't introduce competing scenery or emoji decoration.",
+      "Don't rely on game-piece color alone.",
+      "Don't autoplay ambience."
+    ]
+  }
+}

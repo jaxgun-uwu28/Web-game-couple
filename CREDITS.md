@@ -7,4 +7,4 @@
 - Lucide React icons: https://lucide.dev/license — ISC.
 - Favicon: original geometric monogram created for this project.
 - Ambient audio: original synthesized filtered noise and sine tones using Web Audio. No sampled third-party recordings.
-- Design guidance: https://impeccable.style and https://github.com/pbakaus/impeccable, read from its official skill/reference files. Launcher unavailable; direct brief and craft guidance applied. No Impeccable detector or launcher certification is claimed.
+- Design guidance: https://impeccable.style and https://github.com/pbakaus/impeccable. Applied the user-installed Impeccable plugin, ran its context loader and detector, and completed independent review/documentation. The npm installer failed to read its ZIP; the official repository was downloaded as fallback. Initial engine cache permissions were resolved by using a workspace cache. No comp-led fidelity certification is claimed.
