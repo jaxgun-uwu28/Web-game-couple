@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-04T15:41:27.4706872Z",
+  "generatedAt": "2026-10-04T16:23:10.2547663Z",
   "title": "Design System: Our Little Arcade — pink keepsake design",
   "extensions": {
     "colorMeta": {
@@ -134,6 +134,11 @@
         "name": "block-clear",
         "value": "0.55s ease-out",
         "purpose": "Brief butter/cherry cell-clear flash; disabled for reduced motion."
+      },
+      {
+        "name": "jar-squish",
+        "value": "0.4s ease-out",
+        "purpose": "Butter wish pick briefly rotates -1deg and scales .98; disabled for reduced motion."
       }
     ],
     "breakpoints": [
@@ -225,21 +230,21 @@
       "provenance": "No fabricated couple photographs. Keep shipping artwork provenance and music attribution in CREDITS.md."
     },
     "scope": {
-      "stage": 3,
+      "stage": 4,
       "implementedSurface": [
         "Approved Stage 1 Home/setup and Us/Art Slots",
         "Play chooser, starts, Tic-Tac-Toe and Connect Four boards, HUD, result and scoreboard",
         "Private-account/couple handling and optional Us nickname",
         "Honest Memories/Notes Stage 4 placeholder destinations",
         "Block Hearts Duel start/duration, ready lobby, shared clock, separate 8 by 8 boards, tray/anchor controls, partner preview and result",
-        "Stage 3 daily sealed questions, paired Would You Rather reveal/match percentage, mood check-ins/history and thinking-of-you foreground taps"
+        "Stage 3 daily sealed questions, paired Would You Rather reveal/match percentage, mood check-ins/history and thinking-of-you foreground taps",
+        "Stage 4 Us wishlists, private claims, wish sheet/jar, photographic Memories and sealed text/photo/voice Notes"
       ],
       "laterStages": [
-        "Stage 4 wishlist/photos/memories/notes",
-        "Stage 5 packaging and background push",
-        "Stage 6 remaining games"
+        "Stage 5 packaging/background push excluded from this documentation pass",
+        "Stage 6 remaining games excluded from this documentation pass"
       ],
-      "verificationBoundary": "Device-local preview review. Hosted migration 005 and two-account connection acceptance remain pending; supplied private RPC/Realtime wiring does not establish hosted sealing, live haptics or deployment. No PWA or APK completion claim.",
+      "verificationBoundary": "Stage 4 independent review returned ship within local-preview scope. Hosted migration 006 and two-account privacy/media acceptance remain pending. Earlier hosted acceptance limits remain; no deployment, PWA or APK completion claim. Concurrent Stage 5 work is excluded.",
       "preview": "Pass-and-play games and local session wins clear on reload/sign-out; no online game data saved. Stage 1 anniversary remains device-local and preview art tab-local.",
       "personalData": "No baked-in personal names, preferences or anniversary date; optional nicknames are entered in Us."
     },
@@ -318,7 +323,7 @@
         "tablet": "850px: tighter cartridge gap and labels; shorter 150px art windows",
         "mobile": "600px: stacked rivalry and cartridges, 24px station corners, compact HUD and board, thumb-reachable column controls; inherited fixed safe-area bottom navigation"
       },
-      "deferredDestinations": "Memories and Notes remain explicit Stage 4 landing screens; wishlist/photos/notes Stage 4, packaging/background push Stage 5, remaining games Stage 6. Stage 3 mood/nudges are now implemented connection surfaces.",
+      "deferredDestinations": "Memories and Notes are now Stage 4 keepsake surfaces; wishlists extend Us. Stage 5 packaging/background push and Stage 6 remaining games are outside this documentation pass.",
       "verificationBoundary": "Local-preview design handoff. Backend/API/private Realtime wiring is supplied; hosted account setup and live two-device play are unverified. No deployment, APK or PWA completion claim."
     },
     "blockHeartsDuel": {
@@ -520,6 +525,58 @@
         "verificationBoundary": "Hosted migration 005 and two-account acceptance remain pending. These are implementation facts, not claims that hosted sealing, private history or live haptics were tested."
       },
       "nightMotion": "Inherit existing plum palette and reduced-motion behavior. No new decorative animation or external assets."
+    },
+    "keepsakes": {
+      "stage": 4,
+      "direction": "Wishes extend Us; Memories becomes a chronological photographic album; Notes becomes peach envelopes and white reading paper. Preserve existing palette, Fredoka/Nunito Sans/Caveat, pill controls, 28px paper corners and 44px targets. No new visual identity or stock photography.",
+      "wishes": {
+        "listTypes": [
+          "Shared: both edit",
+          "Personal: owner edits, partner may surprise",
+          "Secret: owner only",
+          "Custom shared"
+        ],
+        "tabs": "Named wrapping pills, 12px gap, selected cherry versus secondary sheet; secret tab carries lock icon",
+        "rows": "Sheet-colored paper, 28px radius and padding, 24px list gap; Fredoka title clamp(1.3rem,2vw,1.75rem), heart level 1–3, muted price/category, wrapped notes, optional private photo and link",
+        "tools": "Completion count, Make a wish, Shake the wish jar, status/heart-level filters; controls wrap naturally",
+        "states": "Wished, Planned, Done/received; edit/reorder, comments and Love this actions as applicable; permissions distinguish owner and shared lists",
+        "jar": "Random unfinished wish appears in butter panel, 24px padding/radius, 1.5rem Fredoka, 400ms ease-out rotate(-1deg)/scale(.98) squish and optional 25ms haptic; no pick when all wishes are done",
+        "privacy": "Secret lists never reach the partner. Gift claims are visible only to the claimer; no shared claim notification or broadcast. Received-gift message appears when eligible.",
+        "sheet": "Focused bottom sheet for create/edit: canvas surface, 28px top corners, width min(100%,680px), max-height 90dvh, scrollable with overscroll containment, safe-area padding; dark plum translucent backdrop #261c2b99, z-index 80. Focus enters first field, Tab stays inside, Escape closes and focus returns. Save failure keeps fields and sheet open",
+        "fields": "Title/note/link, optional price/currency/category/date/photo and heart level; safe http/https links; manual fields work without optional link metadata",
+        "budget": "Estimated visible wishes grouped by currency below papers"
+      },
+      "memories": {
+        "composer": "Lavender panel, maximum width 720px, 24px padding and 28px radius; personal photo/caption and daily swap option",
+        "timeline": "Photo-led chronological objects, maximum width 800px, 40px gap and top margin; sheet articles with 24px padding and 28px radius, muted date and Caveat 1.6rem captions",
+        "photos": "Real user photos only, max-width 680px, max-height 500px, object-fit contain, 20px corners and blush backing; private-photo link can open the signed media",
+        "states": "Honest empty album invitation, private-photo loading or refresh-to-retry text, waiting daily swap, both photos open, Send a heart",
+        "privacy": "Partner’s daily photo remains unavailable until both post; checks precede signed media access. Preview switches seats explicitly and saves no hosted data"
+      },
+      "notes": {
+        "composer": "Expandable lavender panel, maximum width 720px, 24px padding, 28px radius; text title/body, optional seal date/open-when occasion and photo or voice",
+        "limits": "Title 120 characters; body 10000; voice recording up to one minute; media under 10 MB",
+        "envelopes": "Peach rows, 24px radius, 28px padding, 24px gap; mail glyph, 1.6rem Fredoka title, author/occasion/date metadata and secondary Open letter or disabled Still sealed action",
+        "readingPaper": "Sheet background, 28px radius and 32px padding; Caveat 1.8rem body with preserved whitespace and long-word wrapping; optional photo or native full-width audio controls and Close letter",
+        "privacy": "Date seal validated before note content or signed media reaches recipient. Author can read their own note; opened state is separate from metadata. Foreground recorder asks for microphone access; unsupported/denied recording offers writing or photo alternative",
+        "states": "Empty letter invitation, recording/stop/attachment-ready, saving, sealed date, open, failed-media recovery; composer preserves input after failed save"
+      },
+      "forms": {
+        "field": "Sheet/ink with line border, 16px radius, 12px padding and 48px minimum height; 16px form gaps; textarea 110px minimum height",
+        "mobile": "At 600px, envelopes wrap with full-width open action; wish papers use 20px padding and actions flex; paired short fields retain two columns; bottom sheet retains keyboard and safe-area scrolling room",
+        "feedback": "Local-preview seat pills, status confirmation, visible error alert, busy disabled mutations, save failure preserves inputs. Existing plum night and reduced-motion rules apply"
+      },
+      "privateMedia": {
+        "processing": "Photo uploads compress/rasterize to WebP and remove location metadata; no fabricated couple images",
+        "links": "Signed links expire after 300 seconds; read errors explain refreshing or reopening",
+        "preview": "Local seat switching demonstrates privacy states; temporary media blobs are local to the current session"
+      },
+      "backup": "Us offers Download private backup for visible wishes, eligible memories and opened letters with private media. Partner secrets and sealed content stay excluded; no claim of a cloud backup service.",
+      "verification": {
+        "disposition": "Ship within local-preview scope, per independent Stage 4 review",
+        "captures": ".impeccable/review/keepsakes/ — desktop/tablet/mobile wishes, memories, notes and photo states; mobile wish sheet and open letter",
+        "boundary": "Hosted migration 006 and two-account privacy/media acceptance remain pending. This document records implemented UX and supplied validation wiring, not verified hosted deployment. Stage 5 files/work are excluded from this pass."
+      }
     }
   },
   "components": [
@@ -540,8 +597,8 @@
     {
       "name": "Navigation Item",
       "kind": "nav",
-      "description": "Blush active state; later-stage destinations visibly disabled.",
-      "html": "<nav class=\"ds-nav\" aria-label=\"Main navigation\"><button aria-current=\"page\">Home</button><button>Us</button><button disabled>Play</button></nav>",
+      "description": "Blush active navigation within the pink keepsake: Home, Play, Memories, Notes and Us have their documented surface destinations.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Main navigation\"><button>Home</button><button>Play</button><button aria-current=\"page\">Memories</button><button>Notes</button><button>Us</button></nav>",
       "css": ".ds-nav{display:flex;flex-direction:column;gap:12px}.ds-nav button{font-family:var(--body,Arial,sans-serif);font-weight:700;text-align:left;background:none;color:var(--muted,#795562);border:0;border-radius:17px;padding:15px;min-height:54px;cursor:pointer;transition:transform .16s,background .16s}.ds-nav button[aria-current=page]{background:var(--blush,#ffe6ec);color:var(--cherry,#9d304f)}.ds-nav button:hover:not(:disabled){filter:brightness(.96)}.ds-nav button:active:not(:disabled){transform:scale(.97)}.ds-nav button:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-nav button:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-nav button{transition:none}.ds-nav button:active{transform:none}}"
     },
     {
@@ -641,6 +698,27 @@
       "description": "Full-width peach connection ribbon with foreground-only tap delivery and cooldown states.",
       "html": "<section class=\"ds-thinking\"><div><h2>A little tap. A little closer.</h2><p>Send a little “thinking of you” to your person.</p><small>Live updates while the app is open.</small></div><button>Thinking of you</button></section>",
       "css": ".ds-thinking{display:flex;align-items:center;gap:24px;background:var(--peach,#f8dcc4);color:var(--ink,#50313f);padding:28px 32px;border-radius:28px;font-family:var(--body,Arial,sans-serif)}.ds-thinking>div{flex:1;min-width:0}.ds-thinking h2{font:500 clamp(24px,2.4vw,30px)/1.1 var(--display,sans-serif);margin:0 0 12px}.ds-thinking p{font-size:14px;margin:0 0 8px}.ds-thinking small{display:block;font-size:12px;color:var(--muted,#795562)}.ds-thinking button{min-width:175px;min-height:48px;border:0;border-radius:999px;background:var(--cherry,#9d304f);color:var(--on-primary,#fff);padding:13px 23px;font:700 16px var(--body,Arial,sans-serif);cursor:pointer;transition:transform .16s}.ds-thinking button:hover:not(:disabled){filter:brightness(.96)}.ds-thinking button:active:not(:disabled){transform:scale(.97)}.ds-thinking button:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-thinking button:disabled{opacity:.5;cursor:default}@media(max-width:900px){.ds-thinking{flex-wrap:wrap;padding:24px 20px;gap:16px}.ds-thinking button{width:100%}}@media(prefers-reduced-motion:reduce){.ds-thinking button{transition:none}.ds-thinking button:active{transform:none}}"
+    },
+    {
+      "name": "Wish Paper Row",
+      "kind": "card",
+      "description": "Generous white paper wish with expressive title, heart level and quiet metadata.",
+      "html": "<article class=\"ds-wish-paper\"><div class=\"ds-wish-heading\"><h3>A slow weekend away</h3><span aria-label=\"Three hearts\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z\"/></svg></span></div><p>A place to wander, and time just for us.</p><small>PHP 2,500 · Together</small><button>Edit wish</button></article>",
+      "css": ".ds-wish-paper{padding:28px;background:var(--sheet,#fff);color:var(--ink,#50313f);border-radius:28px;font-family:var(--body,Arial,sans-serif)}.ds-wish-heading{display:flex;justify-content:space-between;gap:20px}.ds-wish-heading h3{margin:0;font:500 clamp(1.3rem,2vw,1.75rem) var(--display,sans-serif)}.ds-wish-paper p{overflow-wrap:anywhere}.ds-wish-paper small{color:var(--muted,#795562)}.ds-wish-paper button{display:block;margin-top:20px;min-height:44px;background:var(--sheet,#fff);color:var(--cherry,#9d304f);border:0;border-radius:999px;padding:11px 17px;font:700 12px var(--body,Arial,sans-serif);cursor:pointer;transition:transform .16s}.ds-wish-paper button:hover{filter:brightness(.96)}.ds-wish-paper button:active{transform:scale(.97)}.ds-wish-paper button:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}@media(max-width:600px){.ds-wish-paper{padding:20px}}@media(prefers-reduced-motion:reduce){.ds-wish-paper button{transition:none}.ds-wish-paper button:active{transform:none}}"
+    },
+    {
+      "name": "Peach Letter Envelope",
+      "kind": "custom",
+      "description": "Peach envelope with title, author and open or sealed action.",
+      "html": "<article class=\"ds-envelope\"><svg width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"2\" y=\"4\" width=\"20\" height=\"16\" rx=\"2\"/><path d=\"m22 7-10 6L2 7\"/></svg><div><h2>For an ordinary day</h2><p>From your person</p></div><button>Open letter</button></article>",
+      "css": ".ds-envelope{display:flex;align-items:center;gap:24px;padding:28px;background:var(--peach,#f8dcc4);color:var(--ink,#50313f);border-radius:24px;font-family:var(--body,Arial,sans-serif)}.ds-envelope>div{flex:1}.ds-envelope h2{margin:0;font:500 1.6rem var(--display,sans-serif);overflow-wrap:anywhere}.ds-envelope p{margin:8px 0 0}.ds-envelope button{min-height:48px;border:0;border-radius:999px;padding:13px 23px;background:var(--sheet,#fff);color:var(--cherry,#9d304f);font:700 16px var(--body,Arial,sans-serif);cursor:pointer;transition:transform .16s}.ds-envelope button:hover:not(:disabled){filter:brightness(.96)}.ds-envelope button:active:not(:disabled){transform:scale(.97)}.ds-envelope button:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-envelope button:disabled{opacity:.5;cursor:default}@media(max-width:600px){.ds-envelope{flex-wrap:wrap;padding:20px;gap:12px}.ds-envelope button{width:100%}}@media(prefers-reduced-motion:reduce){.ds-envelope button{transition:none}.ds-envelope button:active{transform:none}}"
+    },
+    {
+      "name": "Opened Letter Paper",
+      "kind": "card",
+      "description": "White reading paper with short handwritten note content and optional private media.",
+      "html": "<article class=\"ds-open-letter\"><button>Close letter</button><p>A little reminder: I’m glad we get to do life together.</p></article>",
+      "css": ".ds-open-letter{margin:28px 0;background:var(--sheet,#fff);color:var(--ink,#50313f);border-radius:28px;padding:32px}.ds-open-letter p{font-family:var(--hand,cursive);font-size:1.8rem;color:var(--cherry,#9d304f);white-space:pre-wrap;overflow-wrap:anywhere}.ds-open-letter button{min-height:44px;background:var(--sheet,#fff);color:var(--cherry,#9d304f);border:0;border-radius:999px;padding:11px 17px;font:700 12px var(--body,Arial,sans-serif);cursor:pointer;transition:transform .16s}.ds-open-letter button:hover{filter:brightness(.96)}.ds-open-letter button:active{transform:scale(.97)}.ds-open-letter button:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}@media(prefers-reduced-motion:reduce){.ds-open-letter button{transition:none}.ds-open-letter button:active{transform:none}}"
     }
   ],
   "narrative": {
@@ -658,6 +736,7 @@
     "motion": "One spring flourish celebrates the date; controls squish on press. Reduced motion disables animation. Night follows local time with manual toggle. Night Train loops off by default.",
     "artwork": "Artwork uses Slot/useAsset: signed private app-art images, generated local manifest, then icon/gradient fallback. No fabricated couple photographs.",
     "stageBoundary": "Stage 2 extends the approved keepsake world into a small arcade. Play uses two cartridge entries: a strawberry Tic-Tac-Toe with cross/ring pieces and a lavender Connect Four with cross/heart tokens. Each opens a focused start screen, then a tactile board, turn HUD, all-time rivalry ribbon and result screen. Boards use geometry rather than stock illustrations; optional artwork resolves through existing slots. Game sound stays off by default; a short synthesized tap sound needs no external audio asset. A single falling confetti moment marks a result, disabled with reduced motion. Online identity comes from the two linked account seats; nicknames are optional and entered in Us. Preview explicitly uses pass-and-play on this device. Memories and Notes have honest later-stage landing screens; mood, nudges and wishlists remain deferred.",
-    "connectionPages": "Daily questions remain beside the anniversary on their lavender page. Would You Rather uses a butter/lavender pair of large choice tiles, followed by a quiet shared reveal and match percentage. Mood uses labeled Lucide icons in a horizontal picker, an optional note and expandable history. A full-width peach ribbon holds Thinking of you. Activities stack on phones and tablets to keep controls generous. Night uses the existing plum tokens. Preview seat controls are explicitly local; online identity remains the authenticated profile. No new external artwork or fonts are needed."
+    "connectionPages": "Daily questions remain beside the anniversary on their lavender page. Would You Rather uses a butter/lavender pair of large choice tiles, followed by a quiet shared reveal and match percentage. Mood uses labeled Lucide icons in a horizontal picker, an optional note and expandable history. A full-width peach ribbon holds Thinking of you. Activities stack on phones and tablets to keep controls generous. Night uses the existing plum tokens. Preview seat controls are explicitly local; online identity remains the authenticated profile. No new external artwork or fonts are needed.",
+    "keepsakePages": "Wishlists extend Us with named tabs, paper wish rows, heart levels, an animated butter wish-jar pick and a focused bottom sheet. Memories uses a chronological photo-led album, with captions in the existing handwritten face. Notes uses peach envelopes and white reading paper. Existing tokens, type and 28px keepsake corners remain authoritative. Every private upload is compressed/rasterized; absent photos use honest empty states. Secret ideas and claims have no shared notification or broadcast. Date seals and daily photo swaps are enforced before content or signed media reaches the other account."
   }
 }

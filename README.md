@@ -16,6 +16,16 @@ A private couples app. The active interface includes **Stages 1–3 of the new p
 
 ## Stage 3 connections
 
+## Stage 4 keepsakes
+
+Us now has shared, personal, secret and custom wishlists with heart priorities, planned/done status, optional price/link/photo, comments, reactions, private partner claims, filters, ordering and a wish jar. Supported shop links can suggest a title/price; manual input always works. The metadata endpoint uses a public-shop allowlist and refuses redirects.
+
+Memories has a private photographic timeline and daily photo swap. Notes has text, optional photo or a one-minute voice recording, date seals and open-when letters. Photos are rasterized to compressed WebP before upload, stripping location/EXIF metadata. Private media links expire after five minutes. The ZIP backup in Us includes only content accessible to the signed-in account.
+
+Run `supabase/migrations/006_keepsakes.sql` once after the prior updates. Automated tests prove claims/secret lists/sealed content and media stay private through direct database queries. Browser local preview covers complete wishes, photo compression and opening a partner letter; hosted and physical-device acceptance remain pending.
+
+## Daily connections
+
 Home now includes sealed daily answers, Would You Rather and a running match percentage. Both answers reveal only once both people submit. The database sets the Manila day; stale submissions across midnight are rejected. Mood check-ins include an optional 160-character note, can be updated today, and show the latest 40 entries in shared private history.
 
 Thinking of you saves a private tap for the other account. Both phones refresh through private Realtime with a ten-second reconnect fallback. A new incoming tap can vibrate while the app is open; background delivery and push notifications are deferred to Stage 5. Each person can send one tap per minute, enforced by the server. No external message or email is sent by this feature.

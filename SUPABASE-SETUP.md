@@ -82,3 +82,9 @@ After it succeeds, sign in on two devices. In Play, open Block Hearts Duel on bo
 Run the entire `supabase/migrations/005_connections.sql` file once in this project's SQL Editor. Existing profiles, passwords, anniversary and games are preserved. It adds couple-private moods, taps and validated connection functions; no signup or public read access is added.
 
 Check Home on both accounts: submit one daily answer and one choice, confirm the other account cannot read those answers yet, then answer on the second account and check both reveals and the match percentage. Save and update a mood, confirm the partner sees its note and history. Send Thinking of you; check the receiving app while open and verify the sender's one-minute cooldown. Background push is not part of this stage.
+
+## Stage 4 update
+
+Run `supabase/migrations/006_keepsakes.sql` once after the earlier updates. It creates wishlists, private gift claims, photo memories and sealed note storage. The `keepsakes` Storage bucket stays private; signed URLs expire after five minutes. Do not rerun the initial setup or replace your accounts.
+
+Check both accounts: shared lists permit edits by both, personal lists permit owner edits and private partner claims, and Secret Ideas remain visible only to their creator. Test a future-dated letter and one-sided daily photo swap before and after reveal. Direct table and Storage access obey the same restrictions. The local database tests cover these privacy boundaries; production acceptance still requires this migration and both accounts.

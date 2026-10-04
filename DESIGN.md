@@ -18,3 +18,7 @@ The new cartridge keeps the approved pink keepsake direction: a butter cover, la
 ## Stage 3 connection pages
 
 Daily questions remain beside the anniversary on their lavender page. Would You Rather uses a butter/lavender pair of large choice tiles, followed by a quiet shared reveal and match percentage. Mood uses labeled Lucide icons in a horizontal picker, an optional note and expandable history. A full-width peach ribbon holds Thinking of you. Activities stack on phones and tablets to keep controls generous. Night uses the existing plum tokens. Preview seat controls are explicitly local; online identity remains the authenticated profile. No new external artwork or fonts are needed.
+
+## Stage 4 keepsakes
+
+Wishlists extend Us with named tabs, paper wish rows, heart levels, an animated butter wish-jar pick and a focused bottom sheet. Memories uses a chronological photo-led album, with captions in the existing handwritten face. Notes uses peach envelopes and white reading paper. Existing tokens, type and 28px keepsake corners remain authoritative. Every private upload is compressed/rasterized; absent photos use honest empty states. Secret ideas and claims have no shared notification or broadcast. Date seals and daily photo swaps are enforced before content or signed media reaches the other account.
