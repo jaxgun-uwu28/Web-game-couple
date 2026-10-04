@@ -16,6 +16,8 @@ import {
 import {
   blockShapes,
   blockShapeNames,
+  blockSize,
+  blockAnchor,
   blockFits,
   durations,
   previewBlockMatch,
@@ -23,18 +25,24 @@ import {
   type BlockMatch,
 } from "@/lib/block-battle";
 import { Slot } from "./ArtSlots";
+import { gameRequest } from "@/lib/game-request";
 function Piece({ shape }: { shape: number }) {
   const offsets = blockShapes[shape];
+  const { width, height } = blockSize(shape);
   return (
-    <svg viewBox="0 0 100 80" aria-hidden="true">
+    <svg
+      viewBox={`0 0 ${width * 20} ${height * 20}`}
+      aria-hidden="true"
+      className={`piece-shape piece-color-${shape % 3}`}
+    >
       {offsets.map((o) => (
         <rect
           key={o}
-          x={10 + (o % 8) * 19}
-          y={6 + Math.floor(o / 8) * 19}
-          width="16"
-          height="16"
-          rx="4"
+          x={1 + (o % 8) * 20}
+          y={1 + Math.floor(o / 8) * 20}
+          width="18"
+          height="18"
+          rx="2"
         />
       ))}
     </svg>
@@ -69,6 +77,23 @@ export default function BlockBattle({
     [anchor, setAnchor] = useState([0, 0]),
     [demoSlot, setDemoSlot] = useState(0),
     [notice, setNotice] = useState("");
+  const boardElement = useRef<HTMLDivElement>(null);
+  const drag = useRef<{
+    piece: number;
+    x: number;
+    y: number;
+    moved: boolean;
+    anchor: number[] | null;
+  } | null>(null);
+  const suppressClick = useRef(false);
+  const [dragging, setDragging] = useState(false),
+    [dragInside, setDragInside] = useState(false);
+  const [cleared, setCleared] = useState<number[]>([]);
+  useEffect(() => {
+    if (!cleared.length) return;
+    const timer = setTimeout(() => setCleared([]), 550);
+    return () => clearTimeout(timer);
+  }, [cleared]);
   const lock = useRef(false),
     current = useRef(match),
     finishedId = useRef("");
@@ -94,28 +119,14 @@ export default function BlockBattle({
       seconds = 120,
     ) => {
       if (!session) throw new Error("Sign in to battle together.");
-      const response = await fetch("/api/game", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(
-          id
-            ? { kind: "block", id, action }
-            : { kind: "block", duration: seconds },
-        ),
-      });
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(
-          data.error?.includes("function")
-            ? "Run the Block Battle database update before playing online."
-            : data.error || "The match could not connect.",
-        );
-      return data;
+      return gameRequest(
+        db,
+        id
+          ? { kind: "block", id, action }
+          : { kind: "block", duration: seconds },
+      );
     },
-    [session],
+    [session, db],
   );
   const refresh = useCallback(async () => {
     if (preview || !current.current) return;
@@ -279,13 +290,15 @@ export default function BlockBattle({
     !countdown &&
     remaining > 0 &&
     !match.state.stuck[seat];
-  async function place() {
-    if (!match || !active || !valid) return;
+  async function place(selected = piece, target = anchor) {
+    if (!match || !active || match.state.used[seat][selected]) return;
+    const selectedShape = match.state.hands[seat][selected];
+    if (!blockFits(board, selectedShape, target[0], target[1])) return;
     await work(async () => {
       const previous = match.state.scores[seat];
       let next: BlockMatch;
       if (preview) {
-        next = previewBlockPlace(match, seat, piece, anchor[0], anchor[1]);
+        next = previewBlockPlace(match, seat, selected, target[0], target[1]);
         if (next.state.stuck.every(Boolean)) {
           next.status =
             next.state.scores[0] === next.state.scores[1] ? "draw" : "won";
@@ -300,21 +313,95 @@ export default function BlockBattle({
       } else {
         const data = await request(match.id, {
           type: "place",
-          piece,
-          row: anchor[0],
-          col: anchor[1],
+          piece: selected,
+          row: target[0],
+          col: target[1],
           move_id: crypto.randomUUID(),
         });
         adopt(data);
         next = data.match;
       }
-      setNotice(`+${next.state.scores[seat] - previous} points`);
-      setPiece(next.state.used[seat].findIndex((v) => !v));
+      const placedCells = blockShapes[selectedShape].map(
+        (o) => (target[0] + Math.floor(o / 8)) * 8 + target[1] + (o % 8),
+      );
+      const removed = board
+        .map((v, i) =>
+          (v || placedCells.includes(i)) && !next.state.boards[seat][i]
+            ? i
+            : -1,
+        )
+        .filter((i) => i >= 0);
+      setCleared(removed);
+      setNotice(
+        `+${next.state.scores[seat] - previous} points${removed.length ? " · line cleared!" : ""}`,
+      );
+      const nextPiece = next.state.used[seat].findIndex((v) => !v);
+      setPiece(nextPiece);
+      if (nextPiece >= 0)
+        setAnchor(
+          blockAnchor(next.state.hands[seat][nextPiece], target[0], target[1]),
+        );
       navigator.vibrate?.(12);
     });
   }
   function aim(row: number, col: number) {
-    setAnchor([Math.max(0, Math.min(7, row)), Math.max(0, Math.min(7, col))]);
+    if (shape !== undefined) setAnchor(blockAnchor(shape, row, col));
+  }
+  function selectPiece(index: number) {
+    setPiece(index);
+    setAnchor(
+      blockAnchor(match!.state.hands[seat][index], anchor[0], anchor[1]),
+    );
+  }
+  function dragMove(e: React.PointerEvent<HTMLButtonElement>) {
+    const held = drag.current,
+      grid = boardElement.current;
+    if (!held || !grid) return;
+    if (Math.hypot(e.clientX - held.x, e.clientY - held.y) < 6 && !held.moved)
+      return;
+    held.moved = true;
+    setDragging(true);
+    const first = grid.children[0].getBoundingClientRect(),
+      last = grid.children[63].getBoundingClientRect();
+    const inside =
+      e.clientX >= first.left &&
+      e.clientX <= last.right &&
+      e.clientY >= first.top &&
+      e.clientY <= last.bottom;
+    setDragInside(inside);
+    if (!inside) {
+      held.anchor = null;
+      return;
+    }
+    const selectedShape = match!.state.hands[seat][held.piece],
+      size = blockSize(selectedShape);
+    held.anchor = blockAnchor(
+      selectedShape,
+      Math.floor((e.clientY - first.top) / ((last.bottom - first.top) / 8)) -
+        Math.floor((size.height - 1) / 2),
+      Math.floor((e.clientX - first.left) / ((last.right - first.left) / 8)) -
+        Math.floor((size.width - 1) / 2),
+    );
+    setAnchor(held.anchor);
+  }
+  function dragEnd() {
+    const held = drag.current;
+    drag.current = null;
+    setDragging(false);
+    setDragInside(false);
+    if (!held?.moved) return;
+    suppressClick.current = true;
+    if (
+      held.anchor &&
+      blockFits(
+        board,
+        match!.state.hands[seat][held.piece],
+        held.anchor[0],
+        held.anchor[1],
+      )
+    )
+      void place(held.piece, held.anchor);
+    else setNotice("Piece returned to the tray. Drop it on an empty space.");
   }
   const terminal = match && ["won", "draw"].includes(match.status),
     clockLabel = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`;
@@ -455,10 +542,11 @@ export default function BlockBattle({
                   <div className="board-caption">
                     <h2>{names[seat]}’s board</h2>
                     <span role="status">
-                      {notice || "Choose a piece, aim, then place."}
+                      {notice || "Drag a piece onto the board."}
                     </span>
                   </div>
                   <div
+                    ref={boardElement}
                     className={`block-grid ${valid ? "valid" : "invalid"}`}
                     role="grid"
                     tabIndex={0}
@@ -505,6 +593,7 @@ export default function BlockBattle({
                     {board.map((v, i) => {
                       const overlay =
                         active &&
+                        (!dragging || dragInside) &&
                         shape !== undefined &&
                         blockShapes[shape].some(
                           (o) =>
@@ -519,7 +608,7 @@ export default function BlockBattle({
                           role="gridcell"
                           aria-label={`Row ${Math.floor(i / 8) + 1}, column ${(i % 8) + 1}, ${v ? "filled" : "empty"}`}
                           aria-selected={i === anchor[0] * 8 + anchor[1]}
-                          className={`${v ? "filled" : ""} ${overlay ? "aimed" : ""} ${i === anchor[0] * 8 + anchor[1] ? "anchor" : ""}`}
+                          className={`${v ? "filled" : ""} ${overlay ? "aimed" : ""} ${cleared.includes(i) ? "just-cleared" : ""} ${i === anchor[0] * 8 + anchor[1] ? "anchor" : ""}`}
                         />
                       );
                     })}
@@ -538,7 +627,33 @@ export default function BlockBattle({
                             }
                             aria-label={`Select piece ${i + 1}: ${blockShapeNames[s]}`}
                             aria-pressed={piece === i}
-                            onClick={() => setPiece(i)}
+                            onClick={() => {
+                              if (suppressClick.current) {
+                                suppressClick.current = false;
+                                return;
+                              }
+                              selectPiece(i);
+                            }}
+                            onPointerDown={(e) => {
+                              if (!active || busy || e.button !== 0) return;
+                              suppressClick.current = false;
+                              selectPiece(i);
+                              drag.current = {
+                                piece: i,
+                                x: e.clientX,
+                                y: e.clientY,
+                                moved: false,
+                                anchor: null,
+                              };
+                              e.currentTarget.setPointerCapture(e.pointerId);
+                            }}
+                            onPointerMove={dragMove}
+                            onPointerUp={dragEnd}
+                            onPointerCancel={() => {
+                              drag.current = null;
+                              setDragging(false);
+                              setDragInside(false);
+                            }}
                           >
                             <Piece shape={s} />
                             <span>
@@ -589,7 +704,7 @@ export default function BlockBattle({
                           ? "Both boards unlock after the countdown."
                           : match.state.stuck[seat]
                             ? "No pieces fit. Your score is locked while your person finishes."
-                            : `Aim: row ${anchor[0] + 1}, column ${anchor[1] + 1}. ${valid ? "Piece fits. Press Enter or choose Place piece." : "Blocked here. Choose another anchor or piece."}`}
+                            : `Drag and release to place, or tap a piece and use the controls. Aim: row ${anchor[0] + 1}, column ${anchor[1] + 1}. ${valid ? "Piece fits. Press Enter or choose Place piece." : "Blocked here. Choose another anchor or piece."}`}
                       </p>
                     </>
                   )}

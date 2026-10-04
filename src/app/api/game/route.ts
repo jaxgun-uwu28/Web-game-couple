@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { isPrivateEmail } from "@/lib/private-auth";
 export async function POST(req: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL,
     key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -13,7 +14,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Sign in first." }, { status: 401 });
   const db = createClient(url, key, {
     global: { headers: { Authorization: token } },
-    auth: { persistSession: false },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
   });
   const {
     data: { user },
@@ -21,8 +26,23 @@ export async function POST(req: Request) {
   } = await db.auth.getUser(token.slice(7));
   if (authError || !user)
     return NextResponse.json(
-      { error: "Your invitation expired. Sign in again." },
-      { status: 401 },
+      {
+        error:
+          authError && (!authError.status || authError.status >= 500)
+            ? "Supabase sign-in verification is unavailable. Try again shortly."
+            : "Your session could not be verified. Sign out, then sign in again.",
+      },
+      {
+        status:
+          authError && (!authError.status || authError.status >= 500)
+            ? 503
+            : 401,
+      },
+    );
+  if (!isPrivateEmail(user.email))
+    return NextResponse.json(
+      { error: "Only the two private accounts can play." },
+      { status: 403 },
     );
   try {
     const body = await req.text();

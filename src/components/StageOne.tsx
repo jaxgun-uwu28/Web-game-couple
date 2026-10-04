@@ -22,6 +22,7 @@ import {
   Flower2,
 } from "lucide-react";
 import { createBrowserDb } from "@/lib/supabase";
+import { isPrivateEmail } from "@/lib/private-auth";
 import { anniversaryStats, localDay, validDate } from "@/lib/anniversary";
 import { dailyQuestions, dayIndex, manilaDay } from "@/lib/games";
 import { ArtProvider, ArtSettings, Slot } from "./ArtSlots";
@@ -53,6 +54,7 @@ export default function StageOne() {
     [message, setMessage] = useState(""),
     [now, setNow] = useState<Date | null>(null),
     [email, setEmail] = useState(""),
+    [password, setPassword] = useState(""),
     [answer, setAnswer] = useState(""),
     [daily, setDaily] = useState<{ user_id: string; answer: string | null }[]>(
       [],
@@ -91,6 +93,12 @@ export default function StageOne() {
   const load = async () => {
     if (!db || !session || preview) return;
     setError("");
+    if (!isPrivateEmail(session.user.email)) {
+      setCoupleId(null);
+      setLoaded(true);
+      setError("Only the two private accounts can enter this arcade.");
+      return;
+    }
     const profile = await db
       .from("profiles")
       .select("couple_id")
@@ -214,18 +222,25 @@ export default function StageOne() {
     setError("");
     try {
       if (!db) throw new Error("The private connection is not configured yet.");
-      const { error } = await db.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: false,
-          emailRedirectTo: window.location.origin,
-        },
+      if (!isPrivateEmail(email))
+        throw new Error("Use one of the two private account emails.");
+      const { error } = await db.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
       });
-      if (error) throw new Error(error.message);
-      setMessage("Your private link is in your inbox.");
+      if (error)
+        throw new Error(
+          error.status === 400
+            ? "Email or password is incorrect. Use the password set for this account in Supabase."
+            : error.message,
+        );
+      setPassword("");
+      setMessage("");
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "Your invitation could not send.",
+        e instanceof Error
+          ? e.message
+          : "Sign-in could not complete. Try again.",
       );
     } finally {
       setBusy(false);
@@ -457,7 +472,7 @@ export default function StageOne() {
                   a little closer.
                 </p>
                 <form onSubmit={signIn}>
-                  <label htmlFor="login-email">Your invitation email</label>
+                  <label htmlFor="login-email">Email</label>
                   <input
                     id="login-email"
                     type="email"
@@ -467,13 +482,22 @@ export default function StageOne() {
                     placeholder="you@example.com"
                     required
                   />
+                  <label htmlFor="login-password">Password</label>
+                  <input
+                    id="login-password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
                   <button disabled={busy}>
-                    {busy ? "Sending…" : "Send my private link"}
+                    {busy ? "Signing in…" : "Sign in"}
                     <ArrowRight size={19} />
                   </button>
                 </form>
                 <p className="small">
-                  <KeyRound size={14} /> Two private invitations. No public
+                  <KeyRound size={14} /> Two private accounts. No public
                   sign-ups.
                 </p>
                 {process.env.NODE_ENV === "development" && (

@@ -9,9 +9,13 @@ The app now connects to `ohjeloskpjsynhbddgch.supabase.co`. The old project is n
 1. Select the **new project** in Supabase, open SQL Editor and run the entire `supabase/setup_fresh_project.sql` file once. This transaction includes migrations 001–003, starts with a blank anniversary and creates the private app-art bucket. Do not run the individual migrations afterward. If any statement fails, stop and share the error; the transaction rolls back.
 2. In Authentication → URL Configuration set Site URL to `http://localhost:3000`, and allow `http://localhost:3000` and `http://localhost:3000/` as redirects. Keep Email enabled and disable public sign-ups.
 3. Under Authentication → Users create or invite the two accounts using the supplied invitation emails. Copy their Auth user UUIDs and run the profile-linking insert in this guide, using slots 0 and 1 and the fixed initial couple ID.
-4. Restart `npm run dev`, leave local preview and request your private sign-in link. Enter the anniversary in first-run setup. Repeat with the other account and check a shared game.
+4. Restart `npm run dev`, leave local preview and sign in using the existing account's email and password. Enter the anniversary in first-run setup. Repeat with the other account and check a shared game.
+
+The sign-in form now uses email and password, with no public signup or invitation-link request. Only `lancerobertmacorol8@gmail.com` and `lancerobertmacorol4@gmail.com` are accepted by the app and game API. Both still need their linked private profiles. Use the passwords set when you created these Auth users; if those accounts do not yet have passwords, configure them through Supabase before testing. No new SQL migration is needed for this sign-in update. Game requests obtain the current session, refresh near-expired tokens and retry a rejected token once before any game move executes.
 
 The publishable key configures the app but cannot run SQL or administer users. Complete dashboard steps as project owner. No custom exposed schema is needed on this fresh project. The audit instructions below apply only when diagnosing an existing installation.
+
+If sign-in succeeds but games report verification unavailable, ensure the local `npm run dev` process has outbound network access to Supabase. A server launched inside a network-restricted execution sandbox cannot verify tokens even when the browser can sign in. Run it from your normal project terminal, or restart the verified development server with approved network access. Do not remove server verification to work around this.
 
 ## Check what is already installed
 

@@ -4,6 +4,9 @@ import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import {
   blockHand,
+  blockAnchor,
+  blockShapes,
+  blockSize,
   placeBlock,
   blockFits,
   previewBlockMatch,
@@ -186,4 +189,23 @@ test("server battle validates both-ready start, authoritative scores, replay and
   } finally {
     await db.close();
   }
+});
+test("every shape stays within all board edges when moving or changing pieces", () => {
+  const empty = Array(64).fill(0);
+  blockShapes.forEach((_, shape) => {
+    for (const [row, col] of [
+      [99, 99],
+      [-10, -10],
+      [7, 7],
+      [0, 7],
+      [7, 0],
+    ]) {
+      const [r, c] = blockAnchor(shape, row, col);
+      const size = blockSize(shape);
+      assert.ok(
+        r >= 0 && c >= 0 && r + size.height <= 8 && c + size.width <= 8,
+      );
+      assert.equal(blockFits(empty, shape, r, c), true);
+    }
+  });
 });

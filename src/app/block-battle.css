@@ -202,6 +202,9 @@ html[data-time="night"] .cartridge.block {
 }
 .block-grid > .filled {
   background: var(--cherry);
+  box-shadow:
+    inset 0 3px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.15);
 }
 .block-grid > .aimed {
   background: var(--peach);
@@ -225,6 +228,8 @@ html[data-time="night"] .cartridge.block {
   margin: 15px 0;
 }
 .block-tray button {
+  touch-action: none;
+  cursor: grab;
   display: block;
   border-radius: 18px;
   background: var(--lavender);
@@ -233,10 +238,44 @@ html[data-time="night"] .cartridge.block {
   min-height: 110px;
 }
 .block-tray svg {
-  width: 100%;
-  height: 66px;
+  width: 76px;
+  height: 64px;
+  margin: 0 auto 6px;
   display: block;
   fill: var(--cherry);
+}
+.block-tray .piece-color-0 {
+  fill: var(--cherry);
+}
+.block-tray .piece-color-1 {
+  fill: #447c62;
+}
+.block-tray .piece-color-2 {
+  fill: #7560a0;
+}
+.block-tray button:active {
+  cursor: grabbing;
+}
+.block-grid {
+  overflow: hidden;
+}
+.block-grid > .just-cleared {
+  animation: block-clear 0.55s ease-out;
+}
+@keyframes block-clear {
+  0% {
+    background: var(--butter);
+    box-shadow: inset 0 0 0 3px var(--cherry);
+  }
+  100% {
+    background: var(--blush);
+    box-shadow: inset 0 0 0 0 transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .block-grid > .just-cleared {
+    animation: none;
+  }
 }
 .block-tray button[aria-pressed="true"] {
   box-shadow: inset 0 0 0 3px var(--cherry);

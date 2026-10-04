@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-04T12:17:06.8802981Z",
+  "generatedAt": "2026-10-04T12:42:11.8314457Z",
   "title": "Design System: Our Little Arcade — pink keepsake design",
   "extensions": {
     "colorMeta": {
@@ -129,6 +129,11 @@
         "name": "arcade-confetti",
         "value": "1.6s cubic-bezier(0.16, 1, 0.3, 1) both",
         "purpose": "One falling result celebration; hidden under reduced motion."
+      },
+      {
+        "name": "block-clear",
+        "value": "0.55s ease-out",
+        "purpose": "Brief butter/cherry cell-clear flash; disabled for reduced motion."
       }
     ],
     "breakpoints": [
@@ -388,9 +393,16 @@
         "anchor": "Ink 2px circle inside active cell; aria-selected and aria-activedescendant",
         "mobile": "16px board radius, 7px padding, 4px gaps, 5px cell radius",
         "focus": "3px cherry outline with 4px offset",
-        "interaction": "Choose one of three pieces, aim at an anchor, inspect fit, confirm Place piece. Pointer positions the anchor; keyboard arrows move it and Enter confirms; four 44px directional buttons offer an alternate touch path",
+        "interaction": "Drag a tray piece over the board, preview the entire shape, then release to place if it fits. Tap/select, board-anchor aiming, keyboard arrows/Enter and four 44px directional controls with Place piece remain available.",
         "status": "Polite row/column and fits/blocked instruction; countdown prevents placement; no-fit state locks that seat's score",
-        "smallCellRule": "Board cells are precise geometry rather than individual large buttons. Keep the 44px arrow alternatives and explicit confirmation"
+        "smallCellRule": "Board cells are precise geometry rather than individual large buttons. Keep the 44px arrow alternatives and explicit confirmation",
+        "dragPlacement": {
+          "capture": "Primary pointer press selects the piece and captures the pointer; touch-action:none on tray buttons; movement threshold 6px.",
+          "preview": "Whole-shape overlay appears only while inside actual board-cell bounds; valid peach/cherry and blocked strawberry/ink previews remain distinct.",
+          "anchor": "Anchor is centered around the held shape and clamped by its width/height so all constituent blocks stay within the 8 by 8 board. Selecting a different piece re-clamps the anchor.",
+          "release": "Valid inside release commits placement. Blocked or outside release preserves the piece in the tray with Piece returned to the tray feedback; pointer cancellation clears drag state.",
+          "fallback": "Click remains select-only; a completed drag suppresses its synthetic click. Keyboard/tap placement remains explicit."
+        }
       },
       "tray": {
         "columns": 3,
@@ -398,10 +410,18 @@
         "background": "var(--lavender)",
         "radius": "18px",
         "minimumHeight": "110px desktop, 95px mobile",
-        "piece": "SVG geometry filled cherry; individual blocks 16 by 16 with 4px corners",
+        "piece": "Centered tight-viewBox SVG: width and height derive from shape bounds in 20-unit cells; each block is 18 by 18 at 1-unit inset with 2px corners. Preview SVG is 76px by 64px, centered with 6px bottom margin; mobile height is 55px.",
         "selected": "Inset 3px cherry ring plus aria-pressed",
         "disabled": "Used pieces, busy state and inactive play disable selection; used label says Placed",
-        "rule": "Pieces cannot rotate. Use all three for a fresh tray"
+        "rule": "Pieces cannot rotate. Use all three for a fresh tray",
+        "shapeColors": {
+          "assignment": "shape index modulo 3",
+          "cherry": "var(--cherry)",
+          "green": "#447c62",
+          "lavender": "#7560a0",
+          "purpose": "Piece appearance only; selection and fit remain expressed through rings, geometry and text."
+        },
+        "cursor": "grab at rest; grabbing on press"
       },
       "partnerPreview": {
         "background": "var(--lavender)",
@@ -416,7 +436,20 @@
       "haptics": "Best-effort 12ms vibration after placement and [35,40,35] on result; no dedicated new audio behavior",
       "night": "Inherit existing plum token overrides; no new palette. Butter cartridge changes to peach with ink foreground",
       "preview": "Explicit two-player local demo with Control player seat buttons and selected aria-pressed state; no online data saved",
-      "verificationBoundary": "Documented from implementation and approved surface brief. API/Postgres membership, authoritative sequence, occupancy, score and deadline wiring is supplied; hosted migration and real two-device acceptance are not established by this document. No deployment claim."
+      "verificationBoundary": "Documented from implementation and approved surface brief. API/Postgres membership, authoritative sequence, occupancy, score and deadline wiring is supplied; hosted migration and real two-device acceptance are not established by this document. No deployment claim.",
+      "lineClearFeedback": {
+        "duration": "0.55s ease-out; marked cleared cells reset after 550ms",
+        "effect": "Butter cell flash with inset 3px cherry border fades to blush with no inset border.",
+        "copy": "+N points · line cleared!",
+        "reducedMotion": "Clear animation disabled; textual points/line-cleared feedback remains."
+      }
+    },
+    "signIn": {
+      "method": "Email and password for the two existing private accounts; no public signup or magic-link entry.",
+      "fields": "Required Email with autocomplete=email and required Password with autocomplete=current-password; password is masked.",
+      "style": "Existing 16px rounded sheet fields, Nunito Sans labels and full-width cherry Sign in pill; preserve current pink keepsake tokens and focus outline.",
+      "states": "Signing in… and disabled submit while busy; alert notice for unavailable connection, non-private email or incorrect credentials; password cleared after success.",
+      "verificationBoundary": "Documents current form and supplied authentication wiring, not verified hosted credentials or production acceptance."
     }
   },
   "components": [
@@ -500,9 +533,9 @@
     {
       "name": "Block Tray Piece",
       "kind": "button",
-      "description": "Named selectable block geometry with a cherry selection ring; used pieces disable.",
-      "html": "<button class=\"ds-tray-piece\" aria-pressed=\"true\" aria-label=\"Select piece 1: two by two square\"><svg viewBox=\"0 0 100 80\" aria-hidden=\"true\"><rect x=\"10\" y=\"6\" width=\"16\" height=\"16\" rx=\"4\"/><rect x=\"29\" y=\"6\" width=\"16\" height=\"16\" rx=\"4\"/><rect x=\"10\" y=\"25\" width=\"16\" height=\"16\" rx=\"4\"/><rect x=\"29\" y=\"25\" width=\"16\" height=\"16\" rx=\"4\"/></svg><span>Piece 1</span></button>",
-      "css": ".ds-tray-piece{display:block;border:0;border-radius:18px;background:var(--lavender,#eae1f5);color:var(--ink,#50313f);padding:10px 8px;min-height:110px;cursor:pointer;font-family:var(--body,Arial,sans-serif);font-weight:700;transition:transform .16s,background .16s}.ds-tray-piece svg{width:100%;height:66px;display:block;fill:var(--cherry,#9d304f)}.ds-tray-piece[aria-pressed=true]{box-shadow:inset 0 0 0 3px var(--cherry,#9d304f)}.ds-tray-piece span{font-size:11px}.ds-tray-piece:hover:not(:disabled){filter:brightness(.96)}.ds-tray-piece:active:not(:disabled){transform:scale(.97)}.ds-tray-piece:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-tray-piece:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-tray-piece{transition:none}.ds-tray-piece:active{transform:none}}"
+      "description": "Centered colored block geometry with tight shape bounds; drag-and-release placement plus keyboard/tap selection alternatives; used pieces disable.",
+      "html": "<button class=\"ds-tray-piece\" aria-pressed=\"true\" aria-label=\"Select piece 1: two by two square\"><svg viewBox=\"0 0 40 40\" aria-hidden=\"true\" class=\"ds-piece-cherry\"><rect x=\"1\" y=\"1\" width=\"18\" height=\"18\" rx=\"2\"/><rect x=\"21\" y=\"1\" width=\"18\" height=\"18\" rx=\"2\"/><rect x=\"1\" y=\"21\" width=\"18\" height=\"18\" rx=\"2\"/><rect x=\"21\" y=\"21\" width=\"18\" height=\"18\" rx=\"2\"/></svg><span>Piece 1</span></button>",
+      "css": ".ds-tray-piece{display:block;border:0;border-radius:18px;background:var(--lavender,#eae1f5);color:var(--ink,#50313f);padding:10px 8px;min-height:110px;cursor:grab;touch-action:none;font-family:var(--body,Arial,sans-serif);font-weight:700;transition:transform .16s,background .16s}.ds-tray-piece svg{width:76px;height:64px;margin:0 auto 6px;display:block;fill:var(--cherry,#9d304f)}.ds-tray-piece .ds-piece-green{fill:#447c62}.ds-tray-piece .ds-piece-lavender{fill:#7560a0}.ds-tray-piece[aria-pressed=true]{box-shadow:inset 0 0 0 3px var(--cherry,#9d304f)}.ds-tray-piece span{font-size:11px}.ds-tray-piece:hover:not(:disabled){filter:brightness(.96)}.ds-tray-piece:active:not(:disabled){transform:scale(.97);cursor:grabbing}.ds-tray-piece:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-tray-piece:disabled{opacity:.5;cursor:default}@media(max-width:600px){.ds-tray-piece{min-height:95px;padding:8px}.ds-tray-piece svg{height:55px}}@media(prefers-reduced-motion:reduce){.ds-tray-piece{transition:none}.ds-tray-piece:active{transform:none}}"
     },
     {
       "name": "Block Duel Ready Lobby",
@@ -510,6 +543,13 @@
       "description": "Lavender readiness page protects the shared start and selected duration.",
       "html": "<section class=\"ds-block-lobby\"><h2>Meet at the starting line.</h2><p>2-minute battle · same pieces, separate boards</p><div class=\"ds-ready-list\"><p>Player one<strong>Ready</strong></p><p>Player two<strong>Not ready yet</strong></p></div><button>I’m ready</button></section>",
       "css": ".ds-block-lobby{background:var(--lavender,#eae1f5);color:var(--ink,#50313f);max-width:580px;border-radius:30px;text-align:center;padding:35px;font-family:var(--body,Arial,sans-serif)}.ds-block-lobby h2{font-family:var(--display,sans-serif);font-weight:500;font-size:32px;line-height:1.14;letter-spacing:-.02em}.ds-ready-list{margin:25px 0}.ds-ready-list p{display:flex;align-items:center;gap:12px;overflow-wrap:anywhere}.ds-ready-list strong{margin-left:auto;font-size:12px}.ds-block-lobby button{border:0;background:var(--cherry,#9d304f);color:var(--on-primary,#fff);border-radius:999px;padding:13px 23px;min-height:48px;font:700 16px var(--body,Arial,sans-serif);cursor:pointer;transition:transform .16s}.ds-block-lobby button:hover:not(:disabled){filter:brightness(.96)}.ds-block-lobby button:active:not(:disabled){transform:scale(.97)}.ds-block-lobby button:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-block-lobby button:disabled{opacity:.5;cursor:default}@media(prefers-reduced-motion:reduce){.ds-block-lobby button{transition:none}.ds-block-lobby button:active{transform:none}}"
+    },
+    {
+      "name": "Private Account Sign-in",
+      "kind": "custom",
+      "description": "Email/password entry for the two existing accounts, using current rounded fields and cherry pill styles.",
+      "html": "<form class=\"ds-signin\"><label for=\"ds-email\">Email</label><input id=\"ds-email\" type=\"email\" autocomplete=\"email\" placeholder=\"you@example.com\" required/><label for=\"ds-password\">Password</label><input id=\"ds-password\" type=\"password\" autocomplete=\"current-password\" required/><button type=\"submit\">Sign in</button><p>Two private accounts. No public sign-ups.</p></form>",
+      "css": ".ds-signin{max-width:385px;text-align:left;font-family:var(--body,Arial,sans-serif);color:var(--ink,#50313f)}.ds-signin label{display:block;font-size:14px;font-weight:700;margin:0 0 8px}.ds-signin input{width:100%;min-height:48px;border:1px solid var(--line,#e6cfd8);padding:13px 16px;background:var(--sheet,#fff);color:var(--ink,#50313f);border-radius:16px;font:inherit;caret-color:var(--cherry,#9d304f)}.ds-signin input::placeholder{color:var(--muted,#795562);opacity:1}.ds-signin button{width:100%;margin-top:15px;min-height:48px;border:0;background:var(--cherry,#9d304f);color:var(--on-primary,#fff);border-radius:999px;padding:13px 23px;font:700 16px var(--body,Arial,sans-serif);cursor:pointer;transition:transform .16s,background .16s}.ds-signin button:hover:not(:disabled){filter:brightness(.96)}.ds-signin button:active:not(:disabled){transform:scale(.97)}.ds-signin input:focus-visible,.ds-signin button:focus-visible{outline:3px solid var(--cherry,#9d304f);outline-offset:4px}.ds-signin button:disabled{opacity:.5;cursor:default}.ds-signin p{font-size:12px;color:var(--muted,#795562)}@media(prefers-reduced-motion:reduce){.ds-signin button{transition:none}.ds-signin button:active{transform:none}}"
     }
   ],
   "narrative": {

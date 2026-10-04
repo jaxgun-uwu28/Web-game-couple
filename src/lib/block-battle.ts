@@ -13,6 +13,20 @@ export const blockShapes = [
   [0, 8, 16, 17],
 ];
 export const durations = [60, 120, 180, 300];
+export function blockSize(shape: number) {
+  const offsets = blockShapes[shape];
+  return {
+    width: Math.max(...offsets.map((o) => o % 8)) + 1,
+    height: Math.max(...offsets.map((o) => Math.floor(o / 8))) + 1,
+  };
+}
+export function blockAnchor(shape: number, row: number, col: number) {
+  const { width, height } = blockSize(shape);
+  return [
+    Math.max(0, Math.min(8 - height, row)),
+    Math.max(0, Math.min(8 - width, col)),
+  ];
+}
 export const blockShapeNames = [
   "single block",
   "two blocks across",
@@ -60,6 +74,14 @@ export function blockFits(
   row: number,
   col: number,
 ) {
+  if (
+    !blockShapes[shape] ||
+    row < 0 ||
+    col < 0 ||
+    !Number.isInteger(row) ||
+    !Number.isInteger(col)
+  )
+    return false;
   return blockShapes[shape].every(
     (offset) =>
       row + Math.floor(offset / 8) < 8 &&

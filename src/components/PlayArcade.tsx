@@ -1,4 +1,5 @@
 "use client";
+import { gameRequest } from "@/lib/game-request";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import {
@@ -156,17 +157,10 @@ export default function PlayArcade({
   }
   async function request(kind: BoardKind, id?: string, cell?: number) {
     if (!session) throw new Error("Sign in to play together.");
-    const response = await fetch("/api/game", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify(id ? { id, action: { cell } } : { kind }),
-    });
-    const data = await response.json();
-    if (!response.ok)
-      throw new Error(data.error || "Your move could not save.");
+    const data = await gameRequest(
+      db,
+      id ? { id, action: { cell } } : { kind },
+    );
     return data as Game;
   }
   async function work(task: () => Promise<void>) {
