@@ -1,6 +1,17 @@
 # Connect the private accounts
 
-The browser connection is already configured. The remaining work uses the Supabase dashboard for the existing project. Do not share service-role keys or passwords in chat.
+The browser connection is already configured for the fresh project below. The remaining work uses its Supabase owner dashboard. Do not share service-role keys or passwords in chat.
+
+## Current fresh project — use this path
+
+The app now connects to `ohjeloskpjsynhbddgch.supabase.co`. The old project is no longer the configured backend; no migration was applied to it by Codex.
+
+1. Select the **new project** in Supabase, open SQL Editor and run the entire `supabase/setup_fresh_project.sql` file once. This transaction includes migrations 001–003, starts with a blank anniversary and creates the private app-art bucket. Do not run the individual migrations afterward. If any statement fails, stop and share the error; the transaction rolls back.
+2. In Authentication → URL Configuration set Site URL to `http://localhost:3000`, and allow `http://localhost:3000` and `http://localhost:3000/` as redirects. Keep Email enabled and disable public sign-ups.
+3. Under Authentication → Users create or invite the two accounts using the supplied invitation emails. Copy their Auth user UUIDs and run the profile-linking insert in this guide, using slots 0 and 1 and the fixed initial couple ID.
+4. Restart `npm run dev`, leave local preview and request your private sign-in link. Enter the anniversary in first-run setup. Repeat with the other account and check a shared game.
+
+The publishable key configures the app but cannot run SQL or administer users. Complete dashboard steps as project owner. No custom exposed schema is needed on this fresh project. The audit instructions below apply only when diagnosing an existing installation.
 
 ## Check what is already installed
 
