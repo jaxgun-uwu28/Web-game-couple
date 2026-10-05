@@ -32,7 +32,8 @@ function client(expired = false, refreshFails = false) {
 
 test("only the two provisioned emails are accepted", () => {
   assert.equal(isPrivateEmail(" Lancerobertmacorol8@gmail.com "), true);
-  assert.equal(isPrivateEmail("lancerobertmacorol4@gmail.com"), true);
+  assert.equal(isPrivateEmail(" ElaineMaeEscosio49@gmail.com "), true);
+  assert.equal(isPrivateEmail("lancerobertmacorol4@gmail.com"), false);
   assert.equal(isPrivateEmail("someone@gmail.com"), false);
   assert.equal(isPrivateEmail(), false);
 });
