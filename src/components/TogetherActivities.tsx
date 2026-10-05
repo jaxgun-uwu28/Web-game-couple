@@ -1,4 +1,5 @@
 "use client";
+import SpinWheel from "./SpinWheel";
 import { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import {
@@ -26,12 +27,13 @@ import {
 } from "@/lib/together";
 import { manilaDay, dayIndex } from "@/lib/games";
 import { validCountdownDate } from "@/lib/together";
-import {previewProgress} from '@/lib/preview-progress';
+import { previewProgress } from "@/lib/preview-progress";
 import type { Stroke } from "./Doodle";
 const Doodle = dynamic(() => import("./Doodle"), {
   loading: () => <p>Opening our shared sketchbook…</p>,
 });
 const views = [
+  "Spin the wheel",
   "Dates",
   "Sketchbook",
   "36 questions",
@@ -66,7 +68,10 @@ export default function TogetherActivities() {
     version = useRef(0),
     spinTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const refresh = useCallback(async () => {
-    if(c.preview){setProgress(previewProgress(c.seat));return;}
+    if (c.preview) {
+      setProgress(previewProgress(c.seat));
+      return;
+    }
     if (!c.db || !c.couple) return;
     const n = ++version.current;
     const [a, p, s] = await Promise.all([
@@ -113,7 +118,8 @@ export default function TogetherActivities() {
   }, [refresh, c.db, c.couple, c.preview]);
   useEffect(() => {
     const key = `arcade-rewards:${c.user}`;
-    setTheme('original');setSticker('heart');
+    setTheme("original");
+    setSticker("heart");
     try {
       const p = JSON.parse(localStorage.getItem(key) || "{}");
       if (p.theme) setTheme(p.theme);
@@ -259,13 +265,15 @@ export default function TogetherActivities() {
         : Heart;
   return (
     <section className="together-activities">
-      <div className="section-heading">
-        <div>
-          <h2>More little ways to be together.</h2>
-          <p>A plan, a page, a question. Pick what feels right today.</p>
+      {view !== "Spin the wheel" && (
+        <div className="section-heading">
+          <div>
+            <h2>More little ways to be together.</h2>
+            <p>A plan, a page, a question. Pick what feels right today.</p>
+          </div>
+          <Sticker size={32} />
         </div>
-        <Sticker size={32} />
-      </div>
+      )}
       {error && (
         <div className="notice error" role="alert">
           {error}
@@ -297,6 +305,7 @@ export default function TogetherActivities() {
         ))}
       </div>
       <div id="activity-panel" role="tabpanel" aria-label={view}>
+        {view === "Spin the wheel" && <SpinWheel />}
         {view === "Dates" && (
           <>
             <div className="date-picker-scene">
@@ -348,7 +357,9 @@ export default function TogetherActivities() {
                   {picked
                     ? picked.body.title
                     : candidates.length
-                      ? candidates.length === 1 ? "1 idea fits today." : `${candidates.length} ideas fit today.`
+                      ? candidates.length === 1
+                        ? "1 idea fits today."
+                        : `${candidates.length} ideas fit today.`
                       : "Add an idea below, or choose different filters."}
                 </p>
               </div>
@@ -445,7 +456,9 @@ export default function TogetherActivities() {
           <>
             <h3>One page. Both our pencils.</h3>
             <p>
-              {c.preview ? "Try drawing on this device. Preview marks last while this page is open and are not saved online." : "Marks appear on the other phone after you lift your finger. Your drawings are saved."}
+              {c.preview
+                ? "Try drawing on this device. Preview marks last while this page is open and are not saved online."
+                : "Marks appear on the other phone after you lift your finger. Your drawings are saved."}
             </p>
             <Doodle
               strokes={strokes}
@@ -514,7 +527,10 @@ export default function TogetherActivities() {
                 const form = new FormData(e.currentTarget);
                 const countdownDate = String(form.get("countdown-date") || "");
                 void work(async () => {
-                  await save("countdown", { title: title.trim(), date: countdownDate });
+                  await save("countdown", {
+                    title: title.trim(),
+                    date: countdownDate,
+                  });
                   setTitle("");
                   setDate("");
                 });
@@ -550,7 +566,9 @@ export default function TogetherActivities() {
                 .filter((a) => a.kind === "countdown")
                 .map((a) => {
                   const validDate = validCountdownDate(a.body.date || ""),
-                    days = validDate ? dayIndex(a.body.date!) - dayIndex(today) : 0,
+                    days = validDate
+                      ? dayIndex(a.body.date!) - dayIndex(today)
+                      : 0,
                     amount = countdownProgress(
                       a.created_at,
                       a.body.date!,
@@ -561,7 +579,11 @@ export default function TogetherActivities() {
                       <svg
                         viewBox="0 0 100 100"
                         role="img"
-                        aria-label={validDate ? `${Math.round(amount * 100)} percent of the wait complete` : "Countdown date unavailable"}
+                        aria-label={
+                          validDate
+                            ? `${Math.round(amount * 100)} percent of the wait complete`
+                            : "Countdown date unavailable"
+                        }
                       >
                         <circle
                           cx="50"
@@ -583,13 +605,15 @@ export default function TogetherActivities() {
                       <div>
                         <h3>{a.body.title}</h3>
                         <p>
-                          {!validDate ? "Date unavailable · Add a new countdown with a valid date" : a.done
-                            ? "A memory now"
-                            : days === 0
-                              ? "Today is the day!"
-                              : days < 0
-                                ? "The day has arrived"
-                                : `${days} days to go`}{" "}
+                          {!validDate
+                            ? "Date unavailable · Add a new countdown with a valid date"
+                            : a.done
+                              ? "A memory now"
+                              : days === 0
+                                ? "Today is the day!"
+                                : days < 0
+                                  ? "The day has arrived"
+                                  : `${days} days to go`}{" "}
                           · {a.body.date}
                         </p>
                       </div>
@@ -747,7 +771,10 @@ export default function TogetherActivities() {
           {progress.xp} XP · {progress.coins} coins
         </p>
         <p className="small">
-          {c.preview ? "Preview rewards simulate completed games on this device and do not carry into your accounts." : "Rewards come from server-validated completed games."} Coins are keepsakes, with no cash value.
+          {c.preview
+            ? "Preview rewards simulate completed games on this device and do not carry into your accounts."
+            : "Rewards come from server-validated completed games."}{" "}
+          Coins are keepsakes, with no cash value.
         </p>
         <div className="achievement-row">
           <span>

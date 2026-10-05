@@ -80,6 +80,54 @@
     },
     {
       "folder": "game-art",
+      "name": "heartblast-cover",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "heartblast-background",
+      "width": 1600,
+      "height": 1000
+    },
+    {
+      "folder": "game-art",
+      "name": "heartblast-board-background",
+      "width": 1000,
+      "height": 1000
+    },
+    {
+      "folder": "game-art",
+      "name": "heartblast-block-1",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "folder": "game-art",
+      "name": "heartblast-block-2",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "folder": "game-art",
+      "name": "heartblast-block-3",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "folder": "game-art",
+      "name": "heartblast-block-4",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "folder": "game-art",
+      "name": "heartblast-block-5",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "folder": "game-art",
       "name": "drawing-cover",
       "width": 800,
       "height": 600

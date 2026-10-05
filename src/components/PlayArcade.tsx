@@ -65,6 +65,19 @@ export default function PlayArcade({
     audio = useRef<AudioContext | null>(null);
   const game = games.find((g) => g.id === selected),
     finished = game && game.state.status !== "playing";
+  const [blockKey, setBlockKey] = useState(0);
+  useEffect(() => {
+    const daily = () => {
+      window.history.pushState({ arcadeGame: true }, "");
+      setBlockOpen(true);
+      setBlockKey((k) => k + 1);
+      setExtraOpen(null);
+      setSelected(null);
+      setStart(null);
+    };
+    window.addEventListener("arcade:daily-block", daily);
+    return () => window.removeEventListener("arcade:daily-block", daily);
+  }, []);
   const attendance = useGamePresence(
     db,
     game?.id,
@@ -301,6 +314,7 @@ export default function PlayArcade({
   if (blockOpen)
     return (
       <BlockBattle
+        key={blockKey}
         active={active}
         db={db}
         session={session}
@@ -369,7 +383,7 @@ export default function PlayArcade({
                       g.id === "tic"
                         ? "tictactoe-cover"
                         : g.id === "block"
-                          ? "block-battle-cover"
+                          ? "heartblast-cover"
                           : g.id === "connect"
                             ? "connect4-cover"
                             : g.id === "draw"

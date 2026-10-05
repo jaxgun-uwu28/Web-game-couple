@@ -3,50 +3,90 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import {
   ArrowLeft,
-  ArrowUp,
-  ArrowRight,
-  ArrowDown,
-  Check,
-  Clock3,
-  Layers3,
-  Trophy,
-  RotateCcw,
   Heart,
+  Cherry,
+  Apple,
+  Cloud,
+  Sparkles,
+  Volume2,
+  VolumeX,
+  Check,
 } from "lucide-react";
-import {
-  blockShapes,
-  blockShapeNames,
-  blockSize,
-  blockAnchor,
-  blockFits,
-  durations,
-  previewBlockMatch,
-  previewBlockPlace,
-  type BlockMatch,
-} from "@/lib/block-battle";
-import { Slot } from "./ArtSlots";
-import { useGamePresence } from "@/lib/use-game-presence";
+import { Capacitor } from "@capacitor/core";
+import { Slot, useAsset } from "./ArtSlots";
 import { gameRequest } from "@/lib/game-request";
+import { useGamePresence } from "@/lib/use-game-presence";
+import {
+  heartShapes,
+  heartFits,
+  heartPlace,
+  heartStep,
+  heartWinner,
+  initialHeartState,
+  defaultHeartOptions,
+  type HeartOptions,
+  type HeartState,
+} from "@/lib/heartblast";
+type Match = {
+  id: string;
+  seed: number;
+  duration: number;
+  status: "waiting" | "playing" | "won" | "draw" | "cancelled";
+  starts_at: string | null;
+  ends_at: string | null;
+  winner: number | null;
+  revision?: number;
+  state: HeartState;
+};
+const colors = ["#F3A8C4", "#CDE5D0", "#F8DCC4", "#EAE1F5", "#F7E6A6"];
 function Piece({ shape }: { shape: number }) {
-  const offsets = blockShapes[shape];
-  const { width, height } = blockSize(shape);
+  const cells = heartShapes[shape] || [0],
+    w = Math.max(...cells.map((o) => o % 8)) + 1,
+    h = Math.max(...cells.map((o) => Math.floor(o / 8))) + 1;
   return (
     <svg
-      viewBox={`0 0 ${width * 20} ${height * 20}`}
+      viewBox={`0 0 ${w * 22} ${h * 22}`}
+      className="heart-piece"
       aria-hidden="true"
-      className={`piece-shape piece-color-${shape % 3}`}
     >
-      {offsets.map((o) => (
+      {cells.map((o) => (
         <rect
           key={o}
-          x={1 + (o % 8) * 20}
-          y={1 + Math.floor(o / 8) * 20}
-          width="18"
-          height="18"
-          rx="2"
+          x={(o % 8) * 22 + 1}
+          y={Math.floor(o / 8) * 22 + 1}
+          width="20"
+          height="20"
+          rx="5"
+          fill={colors[shape % 5]}
         />
       ))}
     </svg>
+  );
+}
+function BlockArt({ value }: { value: number }) {
+  const asset = useAsset(`heartblast-block-${value > 0 ? value : 4}`),
+    Icon = [Heart, Cherry, Apple, Cloud, Sparkles][
+      value > 0 ? (value - 1) % 5 : 3
+    ];
+  return asset?.kind === "image" ? (
+    <img src={asset.src} alt="" />
+  ) : (
+    <Icon aria-hidden="true" />
+  );
+}
+function MiniBoard({ board }: { board: number[] }) {
+  return (
+    <div className="mini-block-grid">
+      {board.map((v, i) => (
+        <i
+          key={i}
+          className={v ? "filled" : ""}
+          style={
+            v ? { background: colors[v > 0 ? (v - 1) % 5 : 3] } : undefined
+          }
+        />
+      ))}
+    </div>
   );
 }
 export default function BlockBattle({
@@ -56,9 +96,9 @@ export default function BlockBattle({
   slot,
   names,
   preview,
+  active: pageActive = true,
   back,
   onResult,
-  active: pageActive = true,
 }: {
   db: SupabaseClient | null;
   session: Session | null;
@@ -70,117 +110,144 @@ export default function BlockBattle({
   back: () => void;
   onResult: (winner: number | null) => void;
 }) {
-  const [match, setMatch] = useState<BlockMatch | null>(null),
-    [duration, setDuration] = useState(120),
+  const [options, setOptions] = useState<HeartOptions>(defaultHeartOptions),
+    [match, setMatch] = useState<Match | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [clock, setClock] = useState(Date.now()),
     [offset, setOffset] = useState(0),
+    [seatDemo, setSeatDemo] = useState(0),
     [piece, setPiece] = useState(0),
     [anchor, setAnchor] = useState([0, 0]),
-    [demoSlot, setDemoSlot] = useState(0),
-    [notice, setNotice] = useState("");
-  const attendance = useGamePresence(
+    [sound, setSound] = useState(false),
+    [best, setBest] = useState(0),
+    [sharedBest, setSharedBest] = useState(0),
+    [peer, setPeer] = useState<{
+      id: string;
+      board: number[];
+      score: number;
+    } | null>(null),
+    [popup, setPopup] = useState(""),
+    [cleared, setCleared] = useState<number[]>([]),
+    [drag, setDrag] = useState<{
+      x: number;
+      y: number;
+      inside: boolean;
+    } | null>(null);
+  const grid = useRef<HTMLDivElement>(null),
+    held = useRef<{
+      piece: number;
+      x: number;
+      y: number;
+      moved: boolean;
+      anchor: number[] | null;
+    } | null>(null),
+    lock = useRef(false),
+    current = useRef(match),
+    soundCtx = useRef<AudioContext | null>(null),
+    lastPopup = useRef(""),
+    seenResult = useRef(""),
+    broadcast = useRef<ReturnType<SupabaseClient["channel"]> | null>(null),
+    lastBroadcast = useRef(0);
+  const dailyRequested = useRef(false);
+  current.current = match;
+  const opts = match?.state.options || options,
+    asyncMode = opts.mode === "endless" || opts.mode === "daily",
+    actor = preview ? seatDemo : slot,
+    seat = opts.coop ? 0 : actor,
+    other = 1 - actor;
+  const presence = useGamePresence(
     db,
     match?.id,
     "block",
-    !preview && pageActive,
-  );
-  const boardElement = useRef<HTMLDivElement>(null);
-  const drag = useRef<{
-    piece: number;
-    x: number;
-    y: number;
-    moved: boolean;
-    anchor: number[] | null;
-  } | null>(null);
-  const suppressClick = useRef(false);
-  const [dragging, setDragging] = useState(false),
-    [dragInside, setDragInside] = useState(false);
-  const [cleared, setCleared] = useState<number[]>([]);
-  useEffect(() => {
-    if (!cleared.length) return;
-    const timer = setTimeout(() => setCleared([]), 550);
-    return () => clearTimeout(timer);
-  }, [cleared]);
-  const lock = useRef(false),
-    current = useRef(match),
-    finishedId = useRef("");
-  current.current = match;
-  const seat = preview ? demoSlot : slot,
-    opponent = 1 - seat;
-  const adopt = useCallback(
-    (data: { match: BlockMatch; server_now: string }) => {
-      setMatch((previous) =>
-        previous?.id === data.match.id &&
-        (previous.revision || 0) > (data.match.revision || 0)
-          ? previous
-          : data.match,
-      );
-      setOffset(Date.parse(data.server_now) - Date.now());
-    },
-    [],
+    !preview && pageActive && !asyncMode,
+    !asyncMode,
   );
   const request = useCallback(
     async (
       id: string | null,
       action: Record<string, unknown> = { type: "get" },
-      seconds = 120,
+      config: HeartOptions = defaultHeartOptions,
     ) => {
-      if (!session) throw new Error("Sign in to battle together.");
-      return gameRequest(
+      const before = Date.now();
+      const r = await gameRequest(
         db,
         id
-          ? { kind: "block", id, action }
-          : { kind: "block", duration: seconds },
+          ? { kind: "block", heartblast: true, id, action }
+          : { kind: "block", heartblast: true, config },
       );
+      return { ...r, clientMid: (before + Date.now()) / 2 };
     },
-    [session, db],
+    [db],
   );
-  const refresh = useCallback(async () => {
-    if (preview || !current.current) return;
-    try {
-      adopt(await request(current.current.id));
-      setError("");
-    } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Reconnect to see the saved match.",
+  const adopt = useCallback(
+    (r: { match: Match; server_now: string; clientMid?: number }) => {
+      setMatch((old) =>
+        old?.id === r.match.id && (old.revision || 0) > (r.match.revision || 0)
+          ? old
+          : r.match,
       );
+      if (r.clientMid) setOffset(Date.parse(r.server_now) - r.clientMid);
+    },
+    [],
+  );
+  const work = async (fn: () => Promise<void>) => {
+    if (lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      await fn();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Try again.");
+    } finally {
+      lock.current = false;
+      setBusy(false);
     }
-  }, [preview, request, adopt]);
+  };
   useEffect(() => {
-    const timer = setInterval(() => setClock(Date.now()), 250);
-    return () => clearInterval(timer);
+    if (localStorage.getItem("arcade-open-daily")) {
+      dailyRequested.current = true;
+      setOptions({ ...defaultHeartOptions, mode: "daily" });
+      localStorage.removeItem("arcade-open-daily");
+    }
+    setBest(Number(localStorage.getItem("arcade-heart-best") || 0));
+    setSound(localStorage.getItem("arcade-heart-sound") === "true");
+    const t = setInterval(() => setClock(Date.now()), 200);
+    return () => clearInterval(t);
   }, []);
   useEffect(() => {
-    if (preview || !db || !session || !coupleId) return;
-    let cancelled = false;
-    void db
-      .from("block_matches")
-      .select("id")
-      .eq("couple_id", coupleId)
-      .in("status", ["waiting", "playing"])
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .then(async ({ data, error }) => {
-        if (cancelled) return;
-        if (error) {
-          setError(
-            "Block Battle could not load. Try again.",
-          );
-          return;
-        }
-        if (data?.[0]) {
-          try {
-            const result = await request(data[0].id);
-            if (!cancelled) adopt(result);
-          } catch (e) {
-            if (!cancelled)
-              setError(e instanceof Error ? e.message : "Match unavailable.");
-          }
-        }
-      });
-    const live = db
+    if (preview || !db || !coupleId) return;
+    let live = true;
+    if (!dailyRequested.current)
+      void db
+        .from("block_matches")
+        .select("*")
+        .eq("couple_id", coupleId)
+        .not("state->options", "is", null)
+        .neq("state->options->>mode", "daily")
+        .in("status", ["waiting", "playing"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .then(({ data }) => {
+          if (live && data?.[0])
+            void request(data[0].id)
+              .then((r) => {
+                if (live) adopt(r);
+              })
+              .catch(() => {});
+        });
+    const refresh = () => {
+      if (!pageActive || !current.current) return;
+      void request(current.current.id)
+        .then((r) => {
+          if (live) adopt(r);
+        })
+        .catch(() => {
+          if (live) setError("The battle could not reconnect. Try again.");
+        });
+    };
+    const channel = db
       .channel(`block:${coupleId}`, { config: { private: true } })
       .on(
         "postgres_changes",
@@ -190,280 +257,395 @@ export default function BlockBattle({
           table: "block_matches",
           filter: `couple_id=eq.${coupleId}`,
         },
-        () => void refresh(),
+        refresh,
       )
+      .on("broadcast", { event: "heart-preview" }, ({ payload }) => {
+        if (
+          payload.match === current.current?.id &&
+          payload.seat !== slot &&
+          Array.isArray(payload.board) &&
+          payload.board.length === 64 &&
+          payload.board.every(
+            (v: unknown) =>
+              typeof v === "number" && Number.isInteger(v) && v >= -1 && v <= 5,
+          ) &&
+          Number.isFinite(payload.score)
+        )
+          setPeer({
+            id: payload.match,
+            board: payload.board,
+            score: payload.score,
+          });
+      })
       .subscribe();
-    const timer = setInterval(() => void refresh(), 2000);
+    broadcast.current = channel;
+    const t = setInterval(refresh, 2000);
+    void db
+      .from("block_matches")
+      .select("state")
+      .eq("couple_id", coupleId)
+      .in("status", ["won", "draw"])
+      .limit(500)
+      .then(({ data }) => {
+        if (live) {
+          setSharedBest(
+            Math.max(
+              0,
+              ...(data || [])
+                .filter((r) => r.state.options?.coop)
+                .map((r) => r.state.scores[0] || 0),
+            ),
+          );
+          setBest(
+            Math.max(
+              0,
+              ...(data || [])
+                .filter((r) => !r.state.options?.coop)
+                .map((r) => r.state.scores[slot] || 0),
+            ),
+          );
+        }
+      });
     return () => {
-      cancelled = true;
-      clearInterval(timer);
-      void db.removeChannel(live);
+      live = false;
+      clearInterval(t);
+      broadcast.current = null;
+      void db.removeChannel(channel);
     };
-  }, [db, session, coupleId, preview, refresh, request, adopt]);
+  }, [db, coupleId, preview, pageActive, slot, request, adopt]);
   const now = clock + offset,
     start = match?.starts_at ? Date.parse(match.starts_at) : 0,
-    end = match?.ends_at ? Date.parse(match.ends_at) : 0;
-  const remaining =
-    match?.status === "playing"
-      ? Math.max(0, Math.ceil((end - now) / 1000))
-      : match && ["won", "draw"].includes(match.status)
-        ? 0
-        : match?.duration || duration;
-  const countdown =
-    match?.status === "playing"
-      ? Math.max(0, Math.ceil((start - now) / 1000))
-      : 0;
-  useEffect(() => {
-    if (!match || match.status !== "playing" || remaining > 0) return;
-    if (preview)
-      setMatch((m) =>
-        m
-          ? {
-              ...m,
-              status: m.state.scores[0] === m.state.scores[1] ? "draw" : "won",
-              winner:
-                m.state.scores[0] === m.state.scores[1]
-                  ? null
-                  : m.state.scores[0] > m.state.scores[1]
-                    ? 0
-                    : 1,
-            }
-          : m,
-      );
-    else void refresh();
-  }, [match?.id, match?.status, remaining, preview, refresh]);
+    end = match?.ends_at ? Date.parse(match.ends_at) : 0,
+    remaining =
+      opts.mode === "timed" ? Math.max(0, Math.ceil((end - now) / 1000)) : 0,
+    countdown =
+      match?.status === "playing"
+        ? Math.max(0, Math.ceil((start - now) / 1000))
+        : 0,
+    terminal = !!match && ["won", "draw"].includes(match.status),
+    board = match?.state.boards[seat] || Array(64).fill(0),
+    shape = match?.state.hands[seat][piece],
+    used = match?.state.used[seat] || [false, false, false],
+    valid =
+      shape !== undefined &&
+      !used[piece] &&
+      heartFits(board, shape, anchor[0], anchor[1]),
+    playing =
+      match?.status === "playing" &&
+      !countdown &&
+      !terminal &&
+      !match.state.stuck[seat] &&
+      (asyncMode || preview || presence.paired) &&
+      (opts.mode !== "timed" || remaining > 0) &&
+      (!opts.coop || match.state.turn === actor) &&
+      (opts.mode !== "endless" || match.state.ready[actor]);
+  const projected =
+    playing && valid
+      ? heartPlace(
+          board,
+          shape,
+          anchor[0],
+          anchor[1],
+          match?.state.combos[seat],
+        )
+      : null;
   useEffect(() => {
     if (
-      match &&
-      ["won", "draw"].includes(match.status) &&
-      finishedId.current !== match.id
-    ) {
-      finishedId.current = match.id;
-      onResult(match.winner);
-      navigator.vibrate?.([35, 40, 35]);
-    }
-  }, [match?.id, match?.status, onResult]);
+      !match ||
+      match.status !== "playing" ||
+      opts.mode !== "timed" ||
+      now <= end + 1000
+    )
+      return;
+    if (preview) {
+      const winner = heartWinner(match.state);
+      setMatch({ ...match, status: winner === null ? "draw" : "won", winner });
+    } else
+      void request(match.id, { type: "finish" })
+        .then(adopt)
+        .catch(() => {});
+  }, [
+    match?.id,
+    match?.status,
+    remaining,
+    now,
+    end,
+    preview,
+    opts.mode,
+    request,
+    adopt,
+  ]);
   useEffect(() => {
-    setPiece(match?.state.used[seat].findIndex((v) => !v) ?? 0);
+    if (!match || !terminal || seenResult.current === match.id) return;
+    seenResult.current = match.id;
+    onResult(match.winner);
+    const n = Math.max(opts.coop ? sharedBest : best, match.state.scores[seat]);
+    if (opts.coop) setSharedBest(n);
+    else setBest(n);
+    localStorage.setItem(
+      opts.coop ? "arcade-heart-shared-best" : "arcade-heart-best",
+      String(n),
+    );
+  }, [match?.id, terminal]);
+  useEffect(() => {
+    if (!match) return;
+    setPiece(match.state.used[seat].findIndex((v) => !v));
     setAnchor([0, 0]);
   }, [match?.id, match?.state.rounds[seat], seat]);
-  async function work(task: () => Promise<void>) {
-    if (lock.current) return;
-    lock.current = true;
-    setBusy(true);
-    setError("");
-    try {
-      await task();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Try again when connected.");
-      if (!preview) void refresh();
-    } finally {
-      setBusy(false);
-      lock.current = false;
-    }
+  useEffect(() => {
+    const last = match?.state.last,
+      key = match ? `${match.id}:${match.state.pieces[seat]}` : "";
+    if (!last || last.seat !== seat || key === lastPopup.current) return;
+    lastPopup.current = key;
+    setCleared(last.cleared);
+    setPopup(
+      `+${last.points}${last.combo >= 4 ? " Perfect!" : last.combo >= 3 ? " Delicious!" : last.combo >= 2 ? " Sweet!" : ""}`,
+    );
+    const t = setTimeout(() => {
+      setCleared([]);
+      setPopup("");
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [match?.state.pieces[seat], match?.id, seat]);
+  async function feedback(lines: number, combo: number) {
+    if (Capacitor.isNativePlatform()) {
+      const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
+      await Haptics.impact({
+        style:
+          combo > 1
+            ? ImpactStyle.Heavy
+            : lines
+              ? ImpactStyle.Medium
+              : ImpactStyle.Light,
+      }).catch(() => {});
+    } else navigator.vibrate?.(combo > 1 ? [20, 30, 40] : lines ? 30 : 10);
+    if (!sound || !lines) return;
+    soundCtx.current ||= new AudioContext();
+    void soundCtx.current.resume();
+    [0, 1, 2].slice(0, Math.min(3, lines)).forEach((_, i) => {
+      const osc = soundCtx.current!.createOscillator(),
+        gain = soundCtx.current!.createGain(),
+        t = soundCtx.current!.currentTime + i * 0.08;
+      osc.frequency.value = 440 + lines * 110 + i * 110;
+      gain.gain.setValueAtTime(0.045, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      osc.connect(gain).connect(soundCtx.current!.destination);
+      osc.start(t);
+      osc.stop(t + 0.2);
+    });
   }
-  async function begin() {
+  async function begin(config = options) {
     await work(async () => {
-      if (preview) setMatch(previewBlockMatch(duration));
-      else adopt(await request(null, {}, duration));
-      setNotice("");
+      if (preview) {
+        const seed =
+          config.mode === "daily"
+            ? Math.floor(Date.now() / 86400000) + 100000
+            : 32767;
+        setMatch({
+          id: crypto.randomUUID(),
+          seed,
+          duration: config.seconds,
+          status: config.mode === "daily" ? "playing" : "waiting",
+          starts_at: config.mode === "daily" ? new Date().toISOString() : null,
+          ends_at:
+            config.mode === "daily"
+              ? new Date(Date.now() + 86400000).toISOString()
+              : null,
+          winner: null,
+          state: initialHeartState(seed, config),
+        });
+      } else adopt(await request(null, {}, config));
     });
   }
   async function ready() {
     await work(async () => {
-      if (preview)
-        setMatch((m) => {
-          if (!m) return m;
-          const next = structuredClone(m);
-          next.state.ready[seat] = true;
-          if (next.state.ready.every(Boolean)) {
-            next.status = "playing";
-            next.starts_at = new Date(Date.now() + 3000).toISOString();
-            next.ends_at = new Date(
-              Date.now() + 3000 + next.duration * 1000,
-            ).toISOString();
-          }
-          return next;
-        });
-      else adopt(await request(match!.id, { type: "ready" }));
+      if (preview) {
+        const m = structuredClone(match!);
+        m.state.ready[actor] = true;
+        if (
+          !m.starts_at &&
+          (opts.mode === "endless" || m.state.ready.every(Boolean))
+        ) {
+          m.status = "playing";
+          m.starts_at = new Date(Date.now() + 3000).toISOString();
+          m.ends_at =
+            opts.mode === "timed"
+              ? new Date(Date.now() + 3000 + opts.seconds * 1000).toISOString()
+              : null;
+        }
+        setMatch(m);
+      } else adopt(await request(match!.id, { type: "ready" }));
     });
   }
-  const board = match?.state.boards[seat] || Array(64).fill(0),
-    shape = match?.state.hands[seat][piece],
-    valid =
-      shape !== undefined &&
-      !match?.state.used[seat][piece] &&
-      blockFits(board, shape, anchor[0], anchor[1]);
-  const active =
-    (preview || attendance.paired) &&
-    match?.status === "playing" &&
-    !countdown &&
-    remaining > 0 &&
-    !match.state.stuck[seat];
-  async function place(selected = piece, target = anchor) {
-    if (!match || !active || match.state.used[seat][selected]) return;
-    const selectedShape = match.state.hands[seat][selected];
-    if (!blockFits(board, selectedShape, target[0], target[1])) return;
+  async function place(p = piece, target = anchor) {
+    if (
+      !playing ||
+      busy ||
+      !match ||
+      used[p] ||
+      !heartFits(board, match.state.hands[seat][p], target[0], target[1])
+    )
+      return;
     await work(async () => {
-      const previous = match.state.scores[seat];
-      let next: BlockMatch;
+      let next: Match;
       if (preview) {
-        next = previewBlockPlace(match, seat, selected, target[0], target[1]);
-        if (next.state.stuck.every(Boolean)) {
-          next.status =
-            next.state.scores[0] === next.state.scores[1] ? "draw" : "won";
+        const s = heartStep(
+          match.state,
+          match.seed,
+          actor,
+          p,
+          target[0],
+          target[1],
+        );
+        next = { ...match, state: s };
+        if (
+          (opts.mode === "race" && s.scores[seat] >= opts.target) ||
+          (opts.coop && s.stuck[0]) ||
+          (opts.mode !== "timed" && s.stuck.every(Boolean))
+        ) {
           next.winner =
-            next.status === "draw"
-              ? null
-              : next.state.scores[0] > next.state.scores[1]
-                ? 0
-                : 1;
+            opts.mode === "race" && !opts.coop ? actor : heartWinner(s);
+          next.status = next.winner === null ? "draw" : "won";
         }
         setMatch(next);
       } else {
-        const data = await request(match.id, {
+        const r = await request(match.id, {
           type: "place",
-          piece: selected,
+          piece: p,
           row: target[0],
           col: target[1],
           move_id: crypto.randomUUID(),
         });
-        adopt(data);
-        next = data.match;
+        adopt(r);
+        next = r.match;
+        if (broadcast.current && Date.now() - lastBroadcast.current > 500) {
+          lastBroadcast.current = Date.now();
+          void broadcast.current.send({
+            type: "broadcast",
+            event: "heart-preview",
+            payload: {
+              match: next.id,
+              seat: actor,
+              board: next.state.boards[seat],
+              score: next.state.scores[seat],
+            },
+          });
+        }
       }
-      const placedCells = blockShapes[selectedShape].map(
-        (o) => (target[0] + Math.floor(o / 8)) * 8 + target[1] + (o % 8),
-      );
-      const removed = board
-        .map((v, i) =>
-          (v || placedCells.includes(i)) && !next.state.boards[seat][i]
-            ? i
-            : -1,
-        )
-        .filter((i) => i >= 0);
-      setCleared(removed);
-      setNotice(
-        `+${next.state.scores[seat] - previous} points${removed.length ? " · line cleared!" : ""}`,
-      );
-      const nextPiece = next.state.used[seat].findIndex((v) => !v);
-      setPiece(nextPiece);
-      if (nextPiece >= 0)
-        setAnchor(
-          blockAnchor(next.state.hands[seat][nextPiece], target[0], target[1]),
-        );
-      navigator.vibrate?.(12);
+      await feedback(next.state.last?.lines || 0, next.state.last?.combo || 0);
+      setPiece(next.state.used[seat].findIndex((v) => !v));
     });
   }
-  function aim(row: number, col: number) {
-    if (shape !== undefined) setAnchor(blockAnchor(shape, row, col));
+  function aim(r: number, c: number, p = piece) {
+    const s = match?.state.hands[seat][p];
+    if (s === undefined) return;
+    const cells = heartShapes[s],
+      w = Math.max(...cells.map((o) => o % 8)) + 1,
+      h = Math.max(...cells.map((o) => Math.floor(o / 8))) + 1;
+    setAnchor([
+      Math.max(0, Math.min(8 - h, r)),
+      Math.max(0, Math.min(8 - w, c)),
+    ]);
   }
-  function selectPiece(index: number) {
-    setPiece(index);
-    setAnchor(
-      blockAnchor(match!.state.hands[seat][index], anchor[0], anchor[1]),
-    );
-  }
-  function dragMove(e: React.PointerEvent<HTMLButtonElement>) {
-    const held = drag.current,
-      grid = boardElement.current;
-    if (!held || !grid) return;
-    if (Math.hypot(e.clientX - held.x, e.clientY - held.y) < 6 && !held.moved)
-      return;
-    held.moved = true;
-    setDragging(true);
-    const first = grid.children[0].getBoundingClientRect(),
-      last = grid.children[63].getBoundingClientRect();
-    const inside =
-      e.clientX >= first.left &&
-      e.clientX <= last.right &&
-      e.clientY >= first.top &&
-      e.clientY <= last.bottom;
-    setDragInside(inside);
+  function moveDrag(e: React.PointerEvent) {
+    const h = held.current;
+    if (!h || !grid.current) return;
+    if (!h.moved && Math.hypot(e.clientX - h.x, e.clientY - h.y) < 6) return;
+    h.moved = true;
+    const first = grid.current.children[0].getBoundingClientRect(),
+      last = grid.current.children[63].getBoundingClientRect(),
+      y = e.clientY - 60,
+      inside =
+        e.clientX >= first.left &&
+        e.clientX <= last.right &&
+        y >= first.top &&
+        y <= last.bottom;
+    setDrag({ x: e.clientX, y, inside });
     if (!inside) {
-      held.anchor = null;
+      h.anchor = null;
       return;
     }
-    const selectedShape = match!.state.hands[seat][held.piece],
-      size = blockSize(selectedShape);
-    held.anchor = blockAnchor(
-      selectedShape,
-      Math.floor((e.clientY - first.top) / ((last.bottom - first.top) / 8)) -
-        Math.floor((size.height - 1) / 2),
-      Math.floor((e.clientX - first.left) / ((last.right - first.left) / 8)) -
-        Math.floor((size.width - 1) / 2),
-    );
-    setAnchor(held.anchor);
+    const s = match!.state.hands[seat][h.piece],
+      cells = heartShapes[s],
+      w = Math.max(...cells.map((o) => o % 8)) + 1,
+      hh = Math.max(...cells.map((o) => Math.floor(o / 8))) + 1;
+    h.anchor = [
+      Math.max(
+        0,
+        Math.min(
+          8 - hh,
+          Math.floor((y - first.top) / ((last.bottom - first.top) / 8)) -
+            Math.floor(hh / 2),
+        ),
+      ),
+      Math.max(
+        0,
+        Math.min(
+          8 - w,
+          Math.floor(
+            (e.clientX - first.left) / ((last.right - first.left) / 8),
+          ) - Math.floor(w / 2),
+        ),
+      ),
+    ];
+    setAnchor(h.anchor);
   }
-  function dragEnd() {
-    const held = drag.current;
-    drag.current = null;
-    setDragging(false);
-    setDragInside(false);
-    if (!held?.moved) return;
-    suppressClick.current = true;
-    if (
-      held.anchor &&
-      blockFits(
-        board,
-        match!.state.hands[seat][held.piece],
-        held.anchor[0],
-        held.anchor[1],
-      )
-    )
-      void place(held.piece, held.anchor);
-    else setNotice("Piece returned to the tray. Drop it on an empty space.");
+  function endDrag() {
+    const h = held.current;
+    held.current = null;
+    setDrag(null);
+    if (h?.moved && h.anchor) void place(h.piece, h.anchor);
   }
-  const terminal = match && ["won", "draw"].includes(match.status),
-    clockLabel = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`;
+  const clockLabel = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`;
   return (
-    <section className="block-duel">
-      <button
-        className="text-button"
-        onClick={() =>
-          void work(async () => {
-            if (!preview && match) await attendance.exit();
-            back();
-          })
-        }
+    <section className="block-duel heart-duel">
+      <Slot
+        name="heartblast-background"
+        alt=""
+        className="heart-duel-background"
       >
-        <ArrowLeft size={18} />
-        {match && ["waiting", "playing"].includes(match.status)
-          ? "Exit game"
-          : "Back to Play"}
-      </button>
+        <span />
+      </Slot>
+      <div className="station-top">
+        <button
+          className="text-button"
+          disabled={busy}
+          onClick={() =>
+            void work(async () => {
+              if (!preview && match) await presence.exit();
+              back();
+            })
+          }
+        >
+          <ArrowLeft size={18} />
+          {match && !terminal && match.status !== "cancelled"
+            ? "Exit game"
+            : "Back to Play"}
+        </button>
+        <button
+          className="icon-button"
+          aria-label={sound ? "Mute game sounds" : "Enable game sounds"}
+          onClick={() => {
+            setSound(!sound);
+            localStorage.setItem("arcade-heart-sound", String(!sound));
+          }}
+        >
+          {sound ? <Volume2 /> : <VolumeX />}
+        </button>
+      </div>
       <div className="page-heading">
-        <div>
-          <h1>Block Hearts Duel</h1>
-          <p>
-            {preview
-              ? "Local demo · switch players to try both boards."
-              : "Two boards. One clock. Your sweetest rivalry."}
-          </p>
-        </div>
-        <Layers3 size={32} />
+        <h1>Block Hearts Duel</h1>
+        <Heart />
       </div>
       {error && (
-        <p className="notice error" role="alert">
+        <p className="notice" role="alert">
           {error}
-        </p>
-      )}
-      {match && !preview && ["waiting", "playing"].includes(match.status) && (
-        <p className="notice" role="status">
-          {attendance.error ||
-            (attendance.paired
-              ? "Both players are here."
-              : "Waiting for your person to join. Leaving cancels the battle for both players.")}
-        </p>
-      )}
-      {match?.status === "cancelled" && (
-        <p className="notice" role="status">
-          Battle cancelled. A player left the session.
         </p>
       )}
       {!match || match.status === "cancelled" ? (
         <div className="block-start">
           <Slot
-            name="block-battle-cover"
+            name="heartblast-cover"
             alt="Block Hearts Duel artwork"
             className="block-cover"
           >
@@ -473,75 +655,191 @@ export default function BlockBattle({
               <Heart size={40} />
             </div>
           </Slot>
-          <h2>Make space. Make points.</h2>
-          <p>
-            Place blocks on your 8 × 8 board. Clear full rows and columns. The
-            highest score when the clock ends wins.
-          </p>
-          <fieldset className="duration-picker">
-            <legend>How long shall we battle?</legend>
-            {durations.map((d) => (
+          <fieldset className="heart-mode">
+            <legend>Mode</legend>
+            {(
+              [
+                ["timed", "Timed Score Attack"],
+                ["endless", "Endless Duel"],
+                ["race", "Race"],
+                ["daily", "Daily Challenge"],
+              ] as const
+            ).map(([mode, label]) => (
               <button
-                key={d}
-                type="button"
-                className={duration === d ? "" : "secondary"}
-                aria-pressed={duration === d}
-                onClick={() => setDuration(d)}
+                key={mode}
+                className={options.mode === mode ? "" : "secondary"}
+                aria-pressed={options.mode === mode}
+                onClick={() =>
+                  setOptions({
+                    ...options,
+                    mode,
+                    coop: mode === "daily" ? false : options.coop,
+                  })
+                }
               >
-                {d / 60} min
+                {label}
               </button>
             ))}
           </fieldset>
+          {options.mode === "timed" && (
+            <fieldset className="duration-picker">
+              <legend>Time</legend>
+              {[60, 120, 180, 300, 600].map((seconds) => (
+                <button
+                  key={seconds}
+                  className={options.seconds === seconds ? "" : "secondary"}
+                  aria-pressed={options.seconds === seconds}
+                  onClick={() => setOptions({ ...options, seconds })}
+                >
+                  {seconds / 60} min
+                </button>
+              ))}
+              <label>
+                Custom · {Math.floor(options.seconds / 60)}:
+                {String(options.seconds % 60).padStart(2, "0")}
+                <input
+                  type="range"
+                  min="30"
+                  max="1800"
+                  step="30"
+                  value={options.seconds}
+                  onChange={(e) =>
+                    setOptions({ ...options, seconds: Number(e.target.value) })
+                  }
+                />
+              </label>
+            </fieldset>
+          )}
+          {options.mode === "race" && (
+            <fieldset className="duration-picker">
+              <legend>Target score</legend>
+              {[500, 1000, 2000].map((target) => (
+                <button
+                  key={target}
+                  aria-pressed={options.target === target}
+                  className={options.target === target ? "" : "secondary"}
+                  onClick={() => setOptions({ ...options, target })}
+                >
+                  {target}
+                </button>
+              ))}
+            </fieldset>
+          )}
+          {options.mode !== "daily" && (
+            <div className="heart-toggles">
+              {(
+                [
+                  ["coop", "Co-op Mode"],
+                  ["junk", "Versus Junk"],
+                  ["preview", "Show Opponent Preview"],
+                ] as const
+              ).map(([key, label]) => (
+                <label key={key}>
+                  <input
+                    type="checkbox"
+                    checked={options[key]}
+                    disabled={key === "junk" && options.coop}
+                    onChange={(e) =>
+                      setOptions({
+                        ...options,
+                        [key]: e.target.checked,
+                        ...(key === "coop" && e.target.checked
+                          ? { junk: false }
+                          : {}),
+                      })
+                    }
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          )}
           <button disabled={busy} onClick={() => void begin()}>
-            {busy ? "Opening…" : "Create or join battle"}
-            <ArrowRight size={18} />
+            {busy
+              ? "Opening…"
+              : options.mode === "daily"
+                ? "Play today"
+                : "Create or join battle"}
           </button>
-          <p className="small">
-            Same piece sequence for both players. A shared match starts only
-            when both are ready.
-          </p>
         </div>
       ) : (
         <>
           <div className="battle-hud">
-            <span>
-              <Clock3 size={22} />
-              <strong>{countdown ? `Go in ${countdown}` : clockLabel}</strong>
-            </span>
-            <div>
-              {names[0]} <b>{match.state.scores[0]}</b>
-              <span>vs</span>
-              {names[1]} <b>{match.state.scores[1]}</b>
+            <div className="heart-clock">
+              {opts.mode === "timed" ? (
+                <>
+                  <svg viewBox="0 0 48 48" aria-hidden="true">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="20"
+                      fill="none"
+                      stroke="var(--line)"
+                      strokeWidth="4"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="20"
+                      fill="none"
+                      stroke="var(--cherry)"
+                      strokeWidth="4"
+                      strokeDasharray={`${126 * Math.min(1, remaining / match.duration)} 126`}
+                      transform="rotate(-90 24 24)"
+                    />
+                  </svg>
+                  <strong>{countdown ? countdown : clockLabel}</strong>
+                </>
+              ) : (
+                <strong>
+                  {countdown
+                    ? countdown
+                    : opts.mode === "race"
+                      ? `Race to ${opts.target}`
+                      : opts.mode === "daily"
+                        ? "Daily Challenge"
+                        : "Endless Duel"}
+                </strong>
+              )}
             </div>
+            <div>
+              {opts.coop ? "Together" : names[actor]}{" "}
+              <b>{match.state.scores[seat]}</b>
+              {!opts.coop && (!asyncMode || terminal) && (
+                <>
+                  {names[other]} <b>{match.state.scores[other]}</b>
+                </>
+              )}
+            </div>
+            <span>
+              {opts.coop ? "Shared record" : "Best"}{" "}
+              {opts.coop ? sharedBest : best}
+            </span>
           </div>
           {preview && (
             <div className="demo-seats">
-              {[0, 1].map((p) => (
+              {names.map((n, i) => (
                 <button
-                  key={p}
                   className="secondary"
-                  aria-pressed={seat === p}
-                  onClick={() => setDemoSlot(p)}
+                  key={i}
+                  aria-pressed={actor === i}
+                  onClick={() => setSeatDemo(i)}
                 >
-                  Control {names[p]}
+                  {n}
                 </button>
               ))}
             </div>
           )}
-          {match.status === "waiting" ? (
+          {match.status === "waiting" ||
+          (opts.mode === "endless" && !match.state.ready[actor]) ? (
             <div className="block-lobby">
-              <h2>Meet at the starting line.</h2>
-              <p>
-                {match.duration / 60}-minute battle · same pieces, separate
-                boards
-              </p>
+              <h2>Ready?</h2>
               <div className="ready-list">
-                {[0, 1].map((p) => (
-                  <p key={p}>
-                    <Heart size={18} />
-                    {names[p]}
+                {names.map((n, i) => (
+                  <p key={i}>
+                    {n}
                     <strong>
-                      {match.state.ready[p] ? "Ready" : "Not ready yet"}
+                      {match.state.ready[i] ? "Ready" : "Not ready yet"}
                     </strong>
                   </p>
                 ))}
@@ -549,59 +847,70 @@ export default function BlockBattle({
               <button
                 disabled={
                   busy ||
-                  (!preview && !attendance.paired) ||
-                  match.state.ready[seat]
+                  (!preview && !asyncMode && !presence.paired) ||
+                  match.state.ready[actor]
                 }
                 onClick={() => void ready()}
               >
-                <Check size={18} />
-                {match.state.ready[seat]
-                  ? "Waiting for your person"
-                  : "I’m ready"}
-              </button>
-              <button
-                className="text-button"
-                disabled={busy}
-                onClick={() =>
-                  void work(async () => {
-                    if (preview) setMatch(null);
-                    else adopt(await request(match.id, { type: "cancel" }));
-                  })
-                }
-              >
-                Cancel waiting match
+                <Check />
+                {match.state.ready[actor] ? "Waiting" : "I’m ready"}
               </button>
             </div>
           ) : (
             <>
+              <div className="heart-combo">
+                <span>
+                  Combo ×
+                  {Math.min(
+                    3,
+                    1 + Math.max(0, match.state.combos[seat] - 1) * 0.5,
+                  )}
+                </span>
+                <meter
+                  min="0"
+                  max="5"
+                  value={Math.min(5, match.state.combos[seat])}
+                  aria-label="Combo streak"
+                />
+              </div>
+              {!asyncMode && !preview && !presence.paired && !terminal && (
+                <p role="status" className="notice">
+                  Waiting for your person.
+                </p>
+              )}
               <div className="battle-layout">
                 <div className="own-block-board">
-                  <div className="board-caption">
-                    <h2>{names[seat]}’s board</h2>
-                    <span role="status">
-                      {notice || "Drag a piece onto the board."}
-                    </span>
-                  </div>
-                  <div
-                    ref={boardElement}
-                    className={`block-grid ${valid ? "valid" : "invalid"}`}
-                    role="grid"
-                    tabIndex={0}
-                    aria-label="Your block board. Arrow keys move the anchor; Enter places the selected piece."
-                    aria-activedescendant={`block-cell-${anchor[0] * 8 + anchor[1]}`}
-                    onKeyDown={(e) => {
-                      if (
-                        [
-                          "ArrowUp",
-                          "ArrowDown",
-                          "ArrowLeft",
-                          "ArrowRight",
-                          "Enter",
-                        ].includes(e.key)
-                      ) {
-                        e.preventDefault();
-                        if (e.key === "Enter") void place();
-                        else
+                  <h2>
+                    {opts.coop
+                      ? `Our board · ${names[match.state.turn]}’s turn`
+                      : `${names[actor]}’s board`}
+                  </h2>
+                  <div className="heart-board-wrap">
+                    <Slot
+                      name="heartblast-board-background"
+                      alt=""
+                      className="heart-board-background"
+                    >
+                      <span />
+                    </Slot>
+                    <div
+                      ref={grid}
+                      className={`block-grid ${valid ? "valid" : "invalid"}`}
+                      role="grid"
+                      tabIndex={0}
+                      aria-label="Block board. Select a piece with 1, 2 or 3. Arrow keys aim; Enter places."
+                      aria-activedescendant={`heart-cell-${anchor[0] * 8 + anchor[1]}`}
+                      onKeyDown={(e) => {
+                        if (["1", "2", "3"].includes(e.key)) {
+                          e.preventDefault();
+                          setPiece(Number(e.key) - 1);
+                        }
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void place();
+                        }
+                        if (e.key.startsWith("Arrow")) {
+                          e.preventDefault();
                           aim(
                             anchor[0] +
                               (e.key === "ArrowDown"
@@ -616,205 +925,235 @@ export default function BlockBattle({
                                   ? -1
                                   : 0),
                           );
-                      }
-                    }}
-                    onPointerDown={(e) => {
-                      if (!active) return;
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      aim(
-                        Math.floor(((e.clientY - rect.top) / rect.height) * 8),
-                        Math.floor(((e.clientX - rect.left) / rect.width) * 8),
-                      );
-                    }}
-                  >
-                    {board.map((v, i) => {
-                      const overlay =
-                        active &&
-                        (!dragging || dragInside) &&
-                        shape !== undefined &&
-                        blockShapes[shape].some(
-                          (o) =>
-                            Math.floor(i / 8) ===
-                              anchor[0] + Math.floor(o / 8) &&
-                            i % 8 === anchor[1] + (o % 8),
+                        }
+                      }}
+                    >
+                      {board.map((v, i) => {
+                        const r = Math.floor(i / 8),
+                          c = i % 8,
+                          ghost =
+                            playing &&
+                            (!drag || drag.inside) &&
+                            shape !== undefined &&
+                            heartShapes[shape].some(
+                              (o) =>
+                                r === anchor[0] + Math.floor(o / 8) &&
+                                c === anchor[1] + (o % 8),
+                            ),
+                          line =
+                            projected &&
+                            (projected.rows.includes(r) ||
+                              projected.cols.includes(c));
+                        return (
+                          <button
+                            key={i}
+                            id={`heart-cell-${i}`}
+                            role="gridcell"
+                            tabIndex={-1}
+                            aria-label={`Row ${r + 1}, column ${c + 1}, ${v === -1 ? "sleepy cloud" : v ? "filled" : "empty"}`}
+                            className={`${v ? "filled" : ""} ${ghost ? "ghost" : ""} ${line ? "will-clear" : ""} ${cleared.includes(i) ? "burst" : ""}`}
+                            style={
+                              v
+                                ? {
+                                    background: colors[v > 0 ? (v - 1) % 5 : 3],
+                                  }
+                                : undefined
+                            }
+                            onClick={() => void place(piece, [r, c])}
+                            disabled={!playing || busy}
+                          >
+                            {v !== 0 && <BlockArt value={v} />}
+                          </button>
                         );
-                      return (
-                        <div
-                          key={i}
-                          id={`block-cell-${i}`}
-                          role="gridcell"
-                          aria-label={`Row ${Math.floor(i / 8) + 1}, column ${(i % 8) + 1}, ${v ? "filled" : "empty"}`}
-                          aria-selected={i === anchor[0] * 8 + anchor[1]}
-                          className={`${v ? "filled" : ""} ${overlay ? "aimed" : ""} ${cleared.includes(i) ? "just-cleared" : ""} ${i === anchor[0] * 8 + anchor[1] ? "anchor" : ""}`}
-                        />
-                      );
-                    })}
+                      })}
+                    </div>
+                    {popup && (
+                      <div className="heart-score-popup" role="status">
+                        {popup}
+                      </div>
+                    )}
+                    {!!cleared.length && (
+                      <div className="heart-particles" aria-hidden="true">
+                        {cleared.flatMap((cell) =>
+                          [0, 1].map((n) => (
+                            <i
+                              key={`${cell}-${n}`}
+                              style={
+                                {
+                                  left: `${((cell % 8) + 0.5) * 12.5}%`,
+                                  top: `${(Math.floor(cell / 8) + 0.5) * 12.5}%`,
+                                  background: colors[cell % 5],
+                                  "--dx": `${(n ? 1 : -1) * (20 + (cell % 20))}px`,
+                                  "--dy": `${-30 - (cell % 40)}px`,
+                                } as React.CSSProperties
+                              }
+                            />
+                          )),
+                        )}
+                      </div>
+                    )}
                   </div>
                   {!terminal && (
                     <>
-                      <div
-                        className="block-tray"
-                        aria-label="Your three pieces"
-                      >
+                      <div className="block-tray">
                         {match.state.hands[seat].map((s, i) => (
                           <button
-                            key={i}
-                            disabled={
-                              busy || match.state.used[seat][i] || !active
-                            }
-                            aria-label={`Select piece ${i + 1}: ${blockShapeNames[s]}`}
+                            key={`${match.state.rounds[seat]}-${i}`}
+                            className={`block-piece ${piece === i ? "selected" : ""}`}
+                            disabled={!playing || busy || used[i]}
                             aria-pressed={piece === i}
+                            aria-label={`Piece ${i + 1}: ${heartShapes[s].length} blocks`}
                             onClick={() => {
-                              if (suppressClick.current) {
-                                suppressClick.current = false;
-                                return;
-                              }
-                              selectPiece(i);
+                              setPiece(i);
+                              aim(0, 0, i);
                             }}
                             onPointerDown={(e) => {
-                              if (!active || busy || e.button !== 0) return;
-                              suppressClick.current = false;
-                              selectPiece(i);
-                              drag.current = {
+                              setPiece(i);
+                              e.currentTarget.setPointerCapture(e.pointerId);
+                              held.current = {
                                 piece: i,
                                 x: e.clientX,
                                 y: e.clientY,
                                 moved: false,
                                 anchor: null,
                               };
-                              e.currentTarget.setPointerCapture(e.pointerId);
                             }}
-                            onPointerMove={dragMove}
-                            onPointerUp={dragEnd}
+                            onPointerMove={moveDrag}
+                            onPointerUp={endDrag}
                             onPointerCancel={() => {
-                              drag.current = null;
-                              setDragging(false);
-                              setDragInside(false);
+                              held.current = null;
+                              setDrag(null);
                             }}
                           >
                             <Piece shape={s} />
-                            <span>
-                              {match.state.used[seat][i]
-                                ? "Placed"
-                                : `Piece ${i + 1}`}
-                            </span>
                           </button>
                         ))}
                       </div>
                       <div className="block-controls">
-                        <div className="aim-pad">
-                          {[
-                            [ArrowLeft, 0, -1, "left"],
-                            [ArrowUp, -1, 0, "up"],
-                            [ArrowDown, 1, 0, "down"],
-                            [ArrowRight, 0, 1, "right"],
-                          ].map(([Icon, dr, dc, label]) => {
-                            const Glyph = Icon as typeof ArrowLeft;
-                            return (
-                              <button
-                                key={String(label)}
-                                className="secondary"
-                                disabled={!active || busy}
-                                aria-label={`Move anchor ${label}`}
-                                onClick={() =>
-                                  aim(
-                                    anchor[0] + Number(dr),
-                                    anchor[1] + Number(dc),
-                                  )
-                                }
-                              >
-                                <Glyph size={18} />
-                              </button>
-                            );
-                          })}
-                        </div>
                         <button
-                          disabled={!active || busy || !valid}
+                          disabled={!playing || busy || !valid}
                           onClick={() => void place()}
                         >
                           Place piece
-                          <Check size={18} />
                         </button>
+                        {asyncMode && (
+                          <button
+                            className="secondary"
+                            disabled={busy || match.state.stuck[seat]}
+                            onClick={() =>
+                              void work(async () => {
+                                if (preview) {
+                                  const m = structuredClone(match);
+                                  m.state.stuck[seat] = true;
+                                  if (m.state.stuck.every(Boolean)) {
+                                    m.winner = heartWinner(m.state);
+                                    m.status =
+                                      m.winner === null ? "draw" : "won";
+                                  }
+                                  setMatch(m);
+                                } else
+                                  adopt(
+                                    await request(match.id, {
+                                      type: "out",
+                                      move_id: crypto.randomUUID(),
+                                    }),
+                                  );
+                              })
+                            }
+                          >
+                            Finish my run
+                          </button>
+                        )}
                       </div>
-                      <p className="small" role="status" aria-live="polite">
-                        {countdown
-                          ? "Both boards unlock after the countdown."
-                          : match.state.stuck[seat]
-                            ? "No pieces fit. Your score is locked while your person finishes."
-                            : `Drag and release to place, or tap a piece and use the controls. Aim: row ${anchor[0] + 1}, column ${anchor[1] + 1}. ${valid ? "Piece fits. Press Enter or choose Place piece." : "Blocked here. Choose another anchor or piece."}`}
-                      </p>
+                      {match.state.stuck[seat] && (
+                        <p role="status">
+                          Your score is locked
+                          {!terminal ? ". Waiting for the finish." : "."}
+                        </p>
+                      )}
                     </>
                   )}
                 </div>
-                <aside className="opponent-block">
-                  <h2>{names[opponent]}</h2>
-                  <strong>
-                    {match.state.scores[opponent]}
-                    <small>points</small>
-                  </strong>
-                  <div
-                    className="mini-block-grid"
-                    aria-label="Partner board preview"
-                  >
-                    {match.state.boards[opponent].map((v, i) => (
-                      <i key={i} className={v ? "filled" : ""} />
-                    ))}
-                  </div>
-                  <p>
-                    {match.state.stuck[opponent]
-                      ? "Board full · score locked"
-                      : "Their board updates live."}
-                  </p>
-                  <div className="block-rules">
-                    <h3>Sweet little rules</h3>
-                    <p>
-                      10 points per block.
-                      <br />
-                      100 per cleared line.
-                      <br />
-                      50 extra per additional line cleared together.
-                    </p>
-                    <p>
-                      Use all three pieces for a fresh tray. Pieces cannot
-                      rotate.
-                    </p>
-                  </div>
-                </aside>
+                {opts.preview && !opts.coop && (!asyncMode || terminal) && (
+                  <aside className="opponent-block">
+                    <h2>{names[other]}</h2>
+                    <strong>
+                      {!terminal && peer?.id === match.id
+                        ? peer.score
+                        : match.state.scores[other]}
+                    </strong>
+                    <MiniBoard
+                      board={
+                        !terminal && peer?.id === match.id
+                          ? peer.board
+                          : match.state.boards[other]
+                      }
+                    />
+                  </aside>
+                )}
               </div>
               {terminal && (
-                <div className="game-result">
-                  <div className="win-confetti" aria-hidden="true">
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <i
-                        key={i}
-                        style={{
-                          left: `${5 + i * 8}%`,
-                          animationDelay: `${(i % 4) * 0.12}s`,
-                        }}
-                      />
+                <div className="block-result">
+                  <h2>
+                    {opts.coop
+                      ? "Our shared score"
+                      : match.winner === null
+                        ? "A perfect match!"
+                        : `${names[match.winner]} wins!`}
+                  </h2>
+                  <div className="heart-final-boards">
+                    {(opts.coop ? [0] : [0, 1]).map((p) => (
+                      <div key={p}>
+                        <h3>
+                          {opts.coop ? "Together" : names[p]} ·{" "}
+                          {match.state.scores[p]}
+                        </h3>
+                        <MiniBoard board={match.state.boards[p]} />
+                        <p>{match.state.pieces[p]} pieces</p>
+                        <dl>
+                          <dt>Placement</dt>
+                          <dd>{match.state.breakdown[p][0]}</dd>
+                          <dt>Line clears</dt>
+                          <dd>{match.state.breakdown[p][1]}</dd>
+                          <dt>Clear-board bonus</dt>
+                          <dd>{match.state.breakdown[p][2]}</dd>
+                        </dl>
+                      </div>
                     ))}
                   </div>
-                  <Trophy size={30} />
-                  <h2>
-                    {match.winner === null
-                      ? "A perfect tie."
-                      : `${names[match.winner]} wins the battle!`}
-                  </h2>
-                  <p>
-                    {match.state.scores[0]} – {match.state.scores[1]} points ·{" "}
-                    {preview
-                      ? "local demo result"
-                      : "saved to your couple scoreboard"}
-                  </p>
-                  <button disabled={busy} onClick={() => void begin()}>
-                    <RotateCcw size={18} />
-                    Battle again
+                  <button
+                    disabled={busy}
+                    onClick={() =>
+                      opts.mode === "daily" ? back() : void begin({ ...opts })
+                    }
+                  >
+                    {opts.mode === "daily" ? "Done" : "Rematch"}
                   </button>
                 </div>
               )}
             </>
           )}
+          {terminal &&
+            (opts.coop || match.winner === actor || match.winner === null) && (
+              <div className="wheel-confetti" aria-hidden="true">
+                {Array.from({ length: 30 }, (_, i) => (
+                  <i
+                    key={i}
+                    style={{
+                      left: `${(i * 37) % 100}%`,
+                      background: colors[i % 5],
+                      animationDelay: `${(i % 8) * 0.06}s`,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
         </>
+      )}
+      {drag && shape !== undefined && (
+        <div className="heart-drag" style={{ left: drag.x, top: drag.y }}>
+          <Piece shape={shape} />
+        </div>
       )}
     </section>
   );

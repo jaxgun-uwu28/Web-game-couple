@@ -40,6 +40,7 @@ import {
 import Ambience from "./Ambience";
 import InstallSupport, { NativeBridge, OfflineShell } from "./InstallSupport";
 import TogetherActivities from "./TogetherActivities";
+import DailyHeartChallenge from "./DailyHeartChallenge";
 import AIQuestions from "./AIQuestions";
 import dynamic from "next/dynamic";
 const PlayArcade = dynamic(() => import("./PlayArcade"), {
@@ -50,7 +51,7 @@ const tabs = [
   { id: "play", name: "Play", icon: Gamepad2 },
   { id: "memories", name: "Memories", icon: Images },
   { id: "notes", name: "Notes", icon: Mail },
-  { id: "us", name: "Us", icon: Heart },
+  { id: "us", name: "Activities", icon: Heart },
 ];
 export default function StageOne() {
   const db = useMemo(createBrowserDb, []),
@@ -221,8 +222,7 @@ export default function StageOne() {
     setError("");
     try {
       if (!db) throw new Error("Sign-in is unavailable. Try again later.");
-      if (!isPrivateEmail(email))
-        throw new Error("Use your account email.");
+      if (!isPrivateEmail(email)) throw new Error("Use your account email.");
       const { error } = await db.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
@@ -338,7 +338,12 @@ export default function StageOne() {
             <aside className="side-rail">
               <a href="/" className="brand">
                 <span>
-                  <img src="/icons/icon-192.png" width={54} height={54} alt="" />
+                  <img
+                    src="/icons/icon-192.png"
+                    width={54}
+                    height={54}
+                    alt=""
+                  />
                 </span>
                 <b>
                   our little
@@ -499,11 +504,10 @@ export default function StageOne() {
                     <KeyRound size={40} />
                     <h1>Your account isn’t connected yet.</h1>
                     <p>
-                      Your account hasn’t been set up yet. Try again after setup.
+                      Your account hasn’t been set up yet. Try again after
+                      setup.
                     </p>
-                    <button onClick={() => void load()}>
-                      Try again
-                    </button>
+                    <button onClick={() => void load()}>Try again</button>
                   </section>
                 ) : !anniversary || editing ? (
                   <section className="setup-page">
@@ -529,7 +533,7 @@ export default function StageOne() {
                       className="text-button"
                       onClick={() => setTab("us")}
                     >
-                      <ArrowLeft size={18} /> Back to Us
+                      <ArrowLeft size={18} /> Back to Activities
                     </button>
                     <div className="page-heading">
                       <div>
@@ -628,7 +632,7 @@ export default function StageOne() {
                   <>
                     <div className="page-heading">
                       <div>
-                        <h1>A little more us.</h1>
+                        <h1>Activities</h1>
                         <p>Shared wishes, plans, and time together.</p>
                       </div>
                       <Heart size={32} />
@@ -770,6 +774,10 @@ export default function StageOne() {
                       <DailyConnection />
                     </div>
                     <ConnectionMoments />
+                    <DailyHeartChallenge
+                      names={names}
+                      go={() => setTab("play")}
+                    />
                     <section className="photo-strip">
                       <Slot
                         name="couple-photo-main"

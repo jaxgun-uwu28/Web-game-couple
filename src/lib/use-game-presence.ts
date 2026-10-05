@@ -6,6 +6,7 @@ export function useGamePresence(
   id: string | undefined,
   kind: string,
   enabled: boolean,
+  cancelOnUnmount = true,
 ) {
   const [paired, setPaired] = useState(false),
     [error, setError] = useState("");
@@ -51,8 +52,8 @@ export function useGamePresence(
     return () => {
       live = false;
       clearInterval(timer);
-      void exit().catch(() => {});
+      if (cancelOnUnmount) void exit().catch(() => {});
     };
-  }, [db, id, kind, enabled, exit]);
+  }, [db, id, kind, enabled, exit, cancelOnUnmount]);
   return { paired, error, exit };
 }

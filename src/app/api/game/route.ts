@@ -49,8 +49,18 @@ export async function POST(req: Request) {
     const body = await req.text();
     if (body.length > 4096)
       return NextResponse.json({ error: "Move too large." }, { status: 400 });
-    const { id, action, kind, duration, topic, count, difficulty, savedOnly } =
-      JSON.parse(body);
+    const {
+      id,
+      action,
+      kind,
+      duration,
+      heartblast,
+      config,
+      topic,
+      count,
+      difficulty,
+      savedOnly,
+    } = JSON.parse(body);
     if (kind === "trivia" && !id) {
       return NextResponse.json(
         { error: "Join the Brain Duel lobby first." },
@@ -59,16 +69,24 @@ export async function POST(req: Request) {
     }
     const { data, error } = await db.rpc(
       kind === "block"
-        ? id
-          ? "block_battle"
-          : "start_block_battle"
+        ? heartblast
+          ? id
+            ? "heartblast_battle"
+            : "start_heartblast"
+          : id
+            ? "block_battle"
+            : "start_block_battle"
         : id
           ? "play_game"
           : "new_game",
       kind === "block"
-        ? id
-          ? { gid: id, action }
-          : { seconds: duration }
+        ? heartblast
+          ? id
+            ? { gid: id, action }
+            : { config }
+          : id
+            ? { gid: id, action }
+            : { seconds: duration }
         : id
           ? { gid: id, action }
           : { k: kind },

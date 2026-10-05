@@ -167,6 +167,19 @@
 .cartridge.draw .cartridge-art {
   background: var(--peach);
 }
+
+.wheel-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(220px,1fr);gap:32px;align-items:center;margin-top:24px}
+.wheel-stage{position:relative;display:grid;justify-items:center;gap:24px;min-width:0}
+.text-wheel{width:100%;max-width:500px;transition:transform 4.4s cubic-bezier(.12,.65,.12,1);filter:drop-shadow(0 10px 14px #50313f18)}
+.wheel-pointer{position:absolute;top:0;left:calc(50% - 13px);width:26px;height:30px;background:var(--cherry);clip-path:polygon(0 0,100% 0,50% 100%);z-index:1}
+.wheel-editor{display:grid;gap:12px}.wheel-editor textarea{width:100%;min-height:280px;resize:vertical}
+.wheel-result{width:min(480px,calc(100% - 32px));border:0;border-radius:28px;padding:32px;background:var(--sheet);color:var(--ink);text-align:center;box-shadow:0 24px 60px #261c2b40}
+.wheel-result h2{overflow-wrap:anywhere;margin:8px 0 32px}.wheel-result::backdrop{background:#261c2b80}
+.wheel-result-actions{display:flex;justify-content:center;gap:16px}
+.wheel-confetti{position:fixed;inset:0;pointer-events:none;z-index:100}.wheel-confetti i{position:absolute;top:-20px;width:9px;height:15px;animation:wheel-fall 2.6s ease-in forwards}
+@keyframes wheel-fall{to{translate:0 100vh;rotate:540deg;opacity:0}}
+@media(max-width:700px){.wheel-layout{grid-template-columns:1fr;gap:28px}.text-wheel{max-width:380px}.wheel-editor textarea{min-height:160px}}
+@media(prefers-reduced-motion:reduce){.text-wheel{transition:none}.wheel-confetti{display:none}}
 .cartridge.know .cartridge-art {
   background: var(--blush);
 }
