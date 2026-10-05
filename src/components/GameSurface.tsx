@@ -74,17 +74,20 @@ export default function GameSurface({
           ? triviaV2
           : trivia;
   const q = questions[s.round];
-  const banner = finished
-    ? s.winner === null
-      ? "A draw. Call it a love-love."
-      : `${names[s.winner]} wins this one.`
-    : game.kind === "draw"
-      ? `${names[s.artist!]} is drawing.`
-      : game.kind === "know" || game.kind === "trivia"
-        ? submitted
-          ? "Your answer is tucked away. Waiting for your partner."
-          : `Round ${s.round + 1} of ${s.count || 5} · answer privately`
-        : `${names[s.turn]}'s turn${s.turn === slot ? " — that’s you" : ""}`;
+  const banner =
+    s.status === "cancelled"
+      ? "Game cancelled. A player left the session."
+      : finished
+        ? s.winner === null
+          ? "A draw. Call it a love-love."
+          : `${names[s.winner]} wins this one.`
+        : game.kind === "draw"
+          ? `${names[s.artist!]} is drawing.`
+          : game.kind === "know" || game.kind === "trivia"
+            ? submitted
+              ? "Your answer is tucked away. Waiting for your partner."
+              : `Round ${s.round + 1} of ${s.count || 5} · answer privately`
+            : `${names[s.turn]}'s turn${s.turn === slot ? " — that’s you" : ""}`;
   return (
     <section className="game-paper" aria-label={definition.name}>
       {!hideBack && (
@@ -150,11 +153,13 @@ export default function GameSurface({
       {game.kind === "draw" && (
         <>
           <p className="handwriting">
-            {finished
-              ? `The word was ${s.word}.`
-              : slot === s.artist
-                ? `Your secret word: ${word || "opening…"}`
-                : "What do you see in the sketch?"}
+            {s.status === "cancelled"
+              ? "The drawing session was cancelled."
+              : finished
+                ? `The word was ${s.word}.`
+                : slot === s.artist
+                  ? `Your secret word: ${word || "opening…"}`
+                  : "What do you see in the sketch?"}
           </p>
           <Doodle
             strokes={strokes}

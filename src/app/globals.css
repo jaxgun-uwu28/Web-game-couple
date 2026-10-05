@@ -1313,3 +1313,7 @@ html[data-time="dusk"] .anniversary-page {
 .lobby-players { list-style:none; padding:0; margin:16px 0 24px; }
 .lobby-players li { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; padding:12px 0; border-bottom:1px solid var(--line); }
 .lobby-players span { display:flex; align-items:center; gap:8px; }
+
+.art-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.thinking-compose { display:grid; gap:8px; grid-column:1 / -1; }
+.thinking-compose textarea { min-height:80px; }

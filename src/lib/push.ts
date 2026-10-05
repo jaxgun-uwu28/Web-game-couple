@@ -40,3 +40,18 @@ export function permittedPushEndpoint(endpoint: string) {
     return false;
   }
 }
+export function thinkingNotification(message: unknown, nickname: unknown) {
+  const clean = (value: unknown, max: number) =>
+    String(value ?? "")
+      .replace(/[\u0000-\u001f\u007f]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, max);
+  const name = clean(nickname, 40);
+  return {
+    title: name ? `${name} · Thinking of you` : "Thinking of you",
+    body:
+      clean(message, 180) ||
+      "Your person is thinking of you. Open Our Little Arcade to send a little love back.",
+  };
+}

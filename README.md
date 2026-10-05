@@ -95,3 +95,5 @@ Tests execute real migration functions and RLS using embedded Postgres, includin
 The acceptance pass still needs both real phones: sign out/in, live turns, private photo upload, a live wishlist update, a hidden gift claim, a future letter unlocking correctly, drop-in image refresh, Android push and iPhone Home Screen installation. These are not claimed complete from local preview.
 
 Heavy games/canvas/backup code load on demand. Drawing publishes complete strokes when the pointer lifts; partial live strokes and undo are not shipped. Queries have bounded limits (3,000 game strokes, 1,500 shared strokes, 1,000 activity records); growing archives need pagination. Biometric app lock and Home Screen widgets remain optional future work.
+
+Migration 011: apply supabase/migrations/011_game_presence_and_taps.sql for the board-game dispatch fix, game-specific partner presence, shared Exit game cancellation, private artwork removal, and custom Thinking of You notification messages. It is safe to re-run. Cancelled sessions do not earn rewards. See the migration and .impeccable/review/games-ui-verification.md for acceptance boundaries.

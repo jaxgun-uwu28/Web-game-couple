@@ -120,6 +120,7 @@
   background: var(--blush);
 }
 .keepsake-empty {
+  display:flex; flex-direction:column; align-items:center; gap:12px;
   padding: 48px 24px;
   text-align: center;
   color: var(--muted);
@@ -284,3 +285,6 @@
     animation: none;
   }
 }
+
+.wishlist-page > .page-heading { justify-content:flex-start; gap:16px; }
+.wishlist-page > .page-heading > svg { order:-1; flex-shrink:0; }

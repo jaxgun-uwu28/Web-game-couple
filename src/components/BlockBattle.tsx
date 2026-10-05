@@ -25,6 +25,7 @@ import {
   type BlockMatch,
 } from "@/lib/block-battle";
 import { Slot } from "./ArtSlots";
+import { useGamePresence } from "@/lib/use-game-presence";
 import { gameRequest } from "@/lib/game-request";
 function Piece({ shape }: { shape: number }) {
   const offsets = blockShapes[shape];
@@ -57,6 +58,7 @@ export default function BlockBattle({
   preview,
   back,
   onResult,
+  active: pageActive = true,
 }: {
   db: SupabaseClient | null;
   session: Session | null;
@@ -64,6 +66,7 @@ export default function BlockBattle({
   slot: number;
   names: string[];
   preview: boolean;
+  active?: boolean;
   back: () => void;
   onResult: (winner: number | null) => void;
 }) {
@@ -77,6 +80,12 @@ export default function BlockBattle({
     [anchor, setAnchor] = useState([0, 0]),
     [demoSlot, setDemoSlot] = useState(0),
     [notice, setNotice] = useState("");
+  const attendance = useGamePresence(
+    db,
+    match?.id,
+    "block",
+    !preview && pageActive,
+  );
   const boardElement = useRef<HTMLDivElement>(null);
   const drag = useRef<{
     piece: number;
@@ -286,6 +295,7 @@ export default function BlockBattle({
       !match?.state.used[seat][piece] &&
       blockFits(board, shape, anchor[0], anchor[1]);
   const active =
+    (preview || attendance.paired) &&
     match?.status === "playing" &&
     !countdown &&
     remaining > 0 &&
@@ -407,9 +417,19 @@ export default function BlockBattle({
     clockLabel = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`;
   return (
     <section className="block-duel">
-      <button className="text-button" onClick={back}>
+      <button
+        className="text-button"
+        onClick={() =>
+          void work(async () => {
+            if (!preview && match) await attendance.exit();
+            back();
+          })
+        }
+      >
         <ArrowLeft size={18} />
-        Back to Play
+        {match && ["waiting", "playing"].includes(match.status)
+          ? "Exit game"
+          : "Back to Play"}
       </button>
       <div className="page-heading">
         <div>
@@ -425,6 +445,19 @@ export default function BlockBattle({
       {error && (
         <p className="notice error" role="alert">
           {error}
+        </p>
+      )}
+      {match && !preview && ["waiting", "playing"].includes(match.status) && (
+        <p className="notice" role="status">
+          {attendance.error ||
+            (attendance.paired
+              ? "Both players are here."
+              : "Waiting for your person to join. Leaving cancels the battle for both players.")}
+        </p>
+      )}
+      {match?.status === "cancelled" && (
+        <p className="notice" role="status">
+          Battle cancelled. A player left the session.
         </p>
       )}
       {!match || match.status === "cancelled" ? (
@@ -514,7 +547,11 @@ export default function BlockBattle({
                 ))}
               </div>
               <button
-                disabled={busy || match.state.ready[seat]}
+                disabled={
+                  busy ||
+                  (!preview && !attendance.paired) ||
+                  match.state.ready[seat]
+                }
                 onClick={() => void ready()}
               >
                 <Check size={18} />

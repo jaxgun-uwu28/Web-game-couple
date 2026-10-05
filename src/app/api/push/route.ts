@@ -1,6 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { timingSafeEqual, createHash } from "node:crypto";
-import { isQuietHour, permittedPushEndpoint } from "@/lib/push";
+import {
+  isQuietHour,
+  permittedPushEndpoint,
+  thinkingNotification,
+} from "@/lib/push";
 export const runtime = "nodejs";
 export async function POST(req: Request) {
   const secret = process.env.PUSH_WEBHOOK_SECRET,
@@ -94,11 +98,21 @@ export async function POST(req: Request) {
     }
     const profiles = await db
       .from("profiles")
-      .select("id,slot")
+      .select("id,slot,nickname")
       .eq("couple_id", couple);
     const recipients = (profiles.data || []).filter((p) =>
       table === "games" ? p.slot === Number(row.state.turn) : p.id !== author,
     );
+    const notification =
+      table === "connection_taps"
+        ? thinkingNotification(
+            row.message,
+            profiles.data?.find((p) => p.id === author)?.nickname,
+          )
+        : {
+            title: "Our Little Arcade",
+            body: "Your person left a little something for you.",
+          };
     const eventKey = createHash("sha256")
       .update(
         `${table}:${id}:${type}:${event.type}:${table === "games" ? JSON.stringify(row.state) : row.status || ""}`,
@@ -142,7 +156,7 @@ export async function POST(req: Request) {
             const webpush = (await import("web-push")).default;
             await webpush.sendNotification(
               subscription,
-              JSON.stringify({ type }),
+              JSON.stringify({ type, ...notification }),
               {
                 vapidDetails: {
                   subject:
@@ -166,10 +180,7 @@ export async function POST(req: Request) {
             const { getMessaging } = await import("firebase-admin/messaging");
             await getMessaging(app).send({
               token: device.token,
-              notification: {
-                title: "Our Little Arcade",
-                body: "Your person left a little something for you.",
-              },
+              notification,
               data: { type },
               android: {
                 priority: "high",

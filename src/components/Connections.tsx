@@ -61,7 +61,7 @@ type ConnectionContext = {
   refresh: () => Promise<void>;
   answer: (kind: "daily" | "choice", value: string) => Promise<void>;
   mood: (value: Mood, note: string) => Promise<void>;
-  tap: () => Promise<void>;
+  tap: (message?: string) => Promise<void>;
 };
 const Context = createContext<ConnectionContext | null>(null);
 function useConnections() {
@@ -374,7 +374,7 @@ export function ConnectionProvider({
         "Your mood is shared with your person. You can update it today.",
       );
     });
-  const tap = async () =>
+  const tap = async (content = "") =>
     work(async () => {
       if (preview)
         setState((s) => ({
@@ -385,12 +385,13 @@ export function ConnectionProvider({
               sender: myId,
               recipient: ids[1 - seat],
               created_at: new Date().toISOString(),
+              message: content.trim(),
             },
             ...s.taps,
           ].slice(0, 20),
         }));
       else {
-        const { error } = await db!.rpc("thinking_of_you");
+        const { error } = await db!.rpc("send_thinking_of_you", { content });
         if (error) throw new Error(error.message);
         await refresh();
       }
@@ -585,7 +586,8 @@ export function ConnectionMoments() {
     refresh,
   } = useConnections();
   const [selected, setSelected] = useState<Mood>("calm"),
-    [note, setNote] = useState("");
+    [note, setNote] = useState(""),
+    [tapMessage, setTapMessage] = useState("");
   const mine = state.moods.find(
       (m) => m.day === state.day && m.user_id === myId,
     ),
@@ -786,22 +788,35 @@ export function ConnectionMoments() {
           <h2>A little tap. A little closer.</h2>
           <p>
             {incoming
-              ? `Your person is thinking of you. A tap arrived at ${stamp(incoming.created_at)}.`
+              ? `${incoming.message || "Your person is thinking of you."} · ${stamp(incoming.created_at)}`
               : "Send a little “thinking of you” to your person."}
           </p>
           <small>
             {preview
               ? "Local preview · switch players above to see the tap."
-              : "Live updates and vibration while the app is open. Background push comes in Stage 5."}
+              : "Notifications follow your person’s preferences and quiet hours."}
           </small>
         </div>
         <button
           disabled={busy || !ready || cooldown > 0}
-          onClick={() => void tap()}
+          onClick={() => void tap(tapMessage)}
         >
           {cooldown ? `Sent · ${cooldown}s` : "Thinking of you"}
           <Heart size={18} />
         </button>
+        <label className="thinking-compose">
+          Your notification message (optional)
+          <textarea
+            maxLength={180}
+            value={tapMessage}
+            onChange={(e) => setTapMessage(e.target.value)}
+            placeholder="Saw something that reminded me of you. Miss you!"
+          />
+          <small>
+            {tapMessage.length}/180 · This message appears in their push
+            notification, including on the lock screen.
+          </small>
+        </label>
       </section>
     </div>
   );

@@ -857,6 +857,7 @@ export default function StageOne() {
                   (preview || coupleId) && (
                     <div hidden={tab !== "play"}>
                       <PlayArcade
+                        active={tab === "play"}
                         db={db}
                         session={session}
                         coupleId={coupleId}

@@ -30,6 +30,7 @@ export type ConnectionTap = {
   sender: string;
   recipient: string;
   created_at: string;
+  message?: string;
 };
 export type ConnectionState = {
   day: string;

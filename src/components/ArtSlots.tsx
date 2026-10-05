@@ -8,19 +8,21 @@ import {
   useCallback,
   ReactNode,
 } from "react";
-import { ImagePlus, Heart, Upload, Check, Music } from "lucide-react";
+import { ImagePlus, Heart, Upload, Check, Music, Trash2 } from "lucide-react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import manifest from "@/generated/art-manifest.json";
 type Asset = { src: string; kind: string; source: "local" | "private" };
 type ArtContext = {
   remote: Record<string, Asset>;
   upload: (slot: string, file: File) => Promise<void>;
+  remove: (slot: string) => Promise<void>;
   error: string;
   ready: boolean;
 };
 const Context = createContext<ArtContext>({
   remote: {},
   upload: async () => {},
+  remove: async () => {},
   error: "",
   ready: false,
 });
@@ -96,11 +98,14 @@ export function ArtProvider({
   }, [db, coupleId, preview, load]);
   const remoteRef = useRef(remote);
   remoteRef.current = remote;
-  useEffect(() => () => {
-    Object.values(remoteRef.current).forEach(a => {
-      if (a.src.startsWith("blob:")) URL.revokeObjectURL(a.src);
-    });
-  }, []);
+  useEffect(
+    () => () => {
+      Object.values(remoteRef.current).forEach((a) => {
+        if (a.src.startsWith("blob:")) URL.revokeObjectURL(a.src);
+      });
+    },
+    [],
+  );
   const upload = async (slot: string, file: File) => {
     if (!/^image\/(jpeg|png|webp|avif|gif)$/.test(file.type))
       throw new Error(
@@ -150,20 +155,45 @@ export function ArtProvider({
         .from("app-art")
         .upload(path, blob, { contentType: "image/webp", upsert: true });
     if (result.error) throw new Error(result.error.message);
-    const row = await db
-      .from("art_slots")
-      .upsert({
-        couple_id: coupleId,
-        slot,
-        path,
-        updated_at: new Date().toISOString(),
-      });
+    const row = await db.from("art_slots").upsert({
+      couple_id: coupleId,
+      slot,
+      path,
+      updated_at: new Date().toISOString(),
+    });
     if (row.error) throw new Error(row.error.message);
     await load();
   };
+  const remove = async (slot: string) => {
+    if (!preview) {
+      if (!db || !coupleId)
+        throw new Error("Sign in to remove your private artwork.");
+      const result = await db.storage
+        .from("app-art")
+        .remove([`${coupleId}/${slot}.webp`]);
+      if (result.error)
+        throw new Error(
+          "Artwork could not be removed. Apply migration 011 and retry.",
+        );
+      const row = await db
+        .from("art_slots")
+        .delete()
+        .eq("couple_id", coupleId)
+        .eq("slot", slot);
+      if (row.error)
+        throw new Error("The artwork slot could not reset. Retry removal.");
+    }
+    const old = remoteRef.current[slot];
+    if (old?.src.startsWith("blob:")) URL.revokeObjectURL(old.src);
+    setRemote((previous) => {
+      const next = { ...previous };
+      delete next[slot];
+      return next;
+    });
+  };
   return (
     <Context.Provider
-      value={{ remote, upload, error, ready: preview || !!coupleId }}
+      value={{ remote, upload, remove, error, ready: preview || !!coupleId }}
     >
       {children}
     </Context.Provider>
@@ -214,7 +244,7 @@ export function Slot({
 }
 function SlotRow({ slot }: { slot: (typeof manifest.slots)[number] }) {
   const asset = useAsset(slot.name),
-    { upload, ready } = useContext(Context),
+    { upload, remove, ready } = useContext(Context),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   return (
@@ -241,38 +271,66 @@ function SlotRow({ slot }: { slot: (typeof manifest.slots)[number] }) {
         </code>
         {message && <p role="status">{message}</p>}
       </div>
-      {slot.width > 0 ? (
-        <label className={`upload-button ${busy || !ready ? "disabled" : ""}`}>
-          <Upload size={16} />
-          <span>{busy ? "Preparing…" : asset ? "Replace" : "Upload"}</span>
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+      <div className="art-actions">
+        {slot.width > 0 ? (
+          <label
+            className={`upload-button ${busy || !ready ? "disabled" : ""}`}
+          >
+            <Upload size={16} />
+            <span>{busy ? "Preparing…" : asset ? "Replace" : "Upload"}</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+              disabled={busy || !ready}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setBusy(true);
+                setMessage("");
+                try {
+                  await upload(slot.name, file);
+                  setMessage("Saved to this slot.");
+                } catch (error) {
+                  setMessage(
+                    error instanceof Error
+                      ? error.message
+                      : "Upload failed. Try again.",
+                  );
+                } finally {
+                  setBusy(false);
+                  e.target.value = "";
+                }
+              }}
+            />
+          </label>
+        ) : (
+          <span className="small">Use folder</span>
+        )}
+        {asset?.source === "private" && (
+          <button
+            className="secondary"
             disabled={busy || !ready}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
+            aria-label={`Remove ${slot.name.replaceAll("-", " ")}`}
+            onClick={async () => {
               setBusy(true);
               setMessage("");
               try {
-                await upload(slot.name, file);
-                setMessage("Saved to this slot.");
-              } catch (error) {
+                await remove(slot.name);
+                setMessage("Removed. The default artwork is back.");
+              } catch (e) {
                 setMessage(
-                  error instanceof Error
-                    ? error.message
-                    : "Upload failed. Try again.",
+                  e instanceof Error ? e.message : "Removal failed. Retry.",
                 );
               } finally {
                 setBusy(false);
-                e.target.value = "";
               }
             }}
-          />
-        </label>
-      ) : (
-        <span className="small">Use folder</span>
-      )}
+          >
+            <Trash2 size={16} />
+            Remove
+          </button>
+        )}
+      </div>
     </article>
   );
 }

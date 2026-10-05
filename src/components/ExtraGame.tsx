@@ -17,6 +17,7 @@ import {
   updateExtraPreview,
 } from "@/lib/extra-games";
 import { recordPreview } from "@/lib/preview-progress";
+import { useGamePresence } from "@/lib/use-game-presence";
 import { gameRequest } from "@/lib/game-request";
 import GameSurface from "./GameSurface";
 import BrainDuel from "./BrainDuel";
@@ -32,6 +33,7 @@ function ExtraGameInternal({
   names,
   preview,
   back,
+  active = true,
 }: {
   kind: ExtraKind;
   db: SupabaseClient | null;
@@ -40,6 +42,7 @@ function ExtraGameInternal({
   slot: number;
   names: string[];
   preview: boolean;
+  active?: boolean;
   back: () => void;
 }) {
   const [game, setGame] = useState<Game | null>(null),
@@ -54,6 +57,7 @@ function ExtraGameInternal({
     [count, setCount] = useState(5),
     [difficulty, setDifficulty] = useState("Easy-Medium"),
     [savedNote, setSavedNote] = useState("");
+  const attendance = useGamePresence(db, game?.id, kind, !preview && active);
   useEffect(() => {
     setTopic(localStorage.getItem("arcade-trivia-topic") || "Surprise Mix");
     setCustom(localStorage.getItem("arcade-trivia-custom") || "");
@@ -300,9 +304,26 @@ function ExtraGameInternal({
   return (
     <div className={`extra-station ${kind}`}>
       <div className="station-top">
-        <button className="text-button" onClick={back}>
+        <button
+          className="text-button"
+          onClick={() =>
+            void work(async () => {
+              if (!preview && game) await attendance.exit();
+              if (preview && game && !finished)
+                updateExtraPreview(kind, {
+                  game: {
+                    ...game,
+                    state: { ...game.state, status: "cancelled" },
+                  },
+                });
+              back();
+            }).catch(() => {})
+          }
+        >
           <ArrowLeft size={18} />
-          Back to Play
+          {game && game.state.status === "playing"
+            ? "Exit game"
+            : "Back to Play"}
         </button>
         <button
           className="icon-button"
@@ -338,6 +359,14 @@ function ExtraGameInternal({
             </button>
           ))}
         </div>
+      )}
+      {game && game.state.status === "playing" && !preview && (
+        <p className="notice" role="status">
+          {attendance.error ||
+            (attendance.paired
+              ? "Both players are here."
+              : "Waiting for your person to join this game. Leaving cancels it for both players.")}
+        </p>
       )}
       {!game ? (
         <section className="extra-start">
@@ -442,7 +471,7 @@ function ExtraGameInternal({
               questions{savedNote && ` · ${savedNote}`}
             </p>
           )}
-          {finished && (
+          {finished && game.state.status !== "cancelled" && (
             <div className="game-confetti" aria-hidden="true">
               {Array.from({ length: 12 }, (_, i) => (
                 <i key={i} style={{ "--i": i } as React.CSSProperties} />
@@ -471,7 +500,7 @@ function ExtraGameInternal({
             }
             strokes={strokes}
             onStroke={stroke}
-            busy={busy}
+            busy={busy || (!preview && !attendance.paired && !finished)}
             report={
               !preview && game.state.pack === "gemini-v1"
                 ? async (position) => {
@@ -501,6 +530,7 @@ export default function ExtraGame(
 ) {
   return props.kind === "trivia" && !props.preview ? (
     <BrainDuel
+      active={props.active}
       db={props.db}
       session={props.session}
       slot={props.slot}

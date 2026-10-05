@@ -24,12 +24,14 @@ export default function BrainDuel({
   slot,
   names,
   back,
+  active = true,
 }: {
   db: SupabaseClient | null;
   session: Session | null;
   slot: number;
   names: string[];
   back: () => void;
+  active?: boolean;
 }) {
   const [lobby, setLobby] = useState<Lobby | null>(null),
     [busy, setBusy] = useState(false),
@@ -61,6 +63,7 @@ export default function BrainDuel({
     [db, session?.user.id],
   );
   useEffect(() => {
+    if (!active) return;
     alive.current = true;
     void request("inspect").catch((e) => setError(e.message));
     const timer = setInterval(() => {
@@ -80,7 +83,7 @@ export default function BrainDuel({
           () => {},
         );
     };
-  }, [db, request]);
+  }, [db, request, active]);
   async function act(op: string, options: Record<string, unknown> = {}) {
     if (busy) return;
     setBusy(true);
@@ -116,7 +119,7 @@ export default function BrainDuel({
     ([, m]) => Date.parse(m.seen) > serverTime - 20000,
   );
   const finished =
-    lobby?.status === "finished" ||
+    ["finished", "cancelled"].includes(lobby?.status || "") ||
     (lobby?.game && lobby.game.state.status !== "playing");
   const configured =
     lobby?.topic === (topic === "Custom Topic" ? custom.trim() : topic) &&
@@ -125,9 +128,23 @@ export default function BrainDuel({
   return (
     <div className="extra-station trivia brain-lobby">
       <div className="station-top">
-        <button className="text-button" onClick={back}>
+        <button
+          className="text-button"
+          onClick={() =>
+            void (async () => {
+              try {
+                if (lobby && !finished) await request("leave");
+                back();
+              } catch {
+                setError(
+                  "The duel could not exit. Check your connection and retry.",
+                );
+              }
+            })()
+          }
+        >
           <ArrowLeft size={18} />
-          Back to Play
+          {lobby && !finished ? "Exit game" : "Back to Play"}
         </button>
       </div>
       {error && (
@@ -145,6 +162,12 @@ export default function BrainDuel({
       {notice && (
         <p className="notice" role="status">
           {notice}
+        </p>
+      )}
+      {lobby?.status === "cancelled" && (
+        <p className="notice" role="status">
+          Duel cancelled. A player left the session. Create a new lobby to play
+          again.
         </p>
       )}
       {!lobby || finished ? (

@@ -1,4 +1,5 @@
 "use client";
+import { useGamePresence } from "@/lib/use-game-presence";
 import { gameRequest } from "@/lib/game-request";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
@@ -30,7 +31,7 @@ const ExtraGame = dynamic(() => import("./ExtraGame"), {
 });
 import type { ExtraKind } from "./ExtraGame";
 import { previewBoard, previewMove, type BoardKind } from "@/lib/board-preview";
-import {recordPreview, previewProgress} from '@/lib/preview-progress';
+import { recordPreview, previewProgress } from "@/lib/preview-progress";
 import { Slot } from "./ArtSlots";
 
 export default function PlayArcade({
@@ -40,6 +41,7 @@ export default function PlayArcade({
   slot,
   names,
   preview,
+  active = true,
 }: {
   db: SupabaseClient | null;
   session: Session | null;
@@ -47,6 +49,7 @@ export default function PlayArcade({
   slot: number;
   names: string[];
   preview: boolean;
+  active?: boolean;
 }) {
   const [games, setGames] = useState<Game[]>([]),
     [selected, setSelected] = useState<string | null>(null),
@@ -64,6 +67,12 @@ export default function PlayArcade({
     audio = useRef<AudioContext | null>(null);
   const game = games.find((g) => g.id === selected),
     finished = game && game.state.status !== "playing";
+  const attendance = useGamePresence(
+    db,
+    game?.id,
+    game?.kind || "tic",
+    !preview && active,
+  );
   const refresh = useCallback(async () => {
     if (!db || !session || preview || !coupleId) return;
     const [g, s] = await Promise.all([
@@ -111,14 +120,26 @@ export default function PlayArcade({
         },
         sharedUpdate,
       )
-      .on("postgres_changes", {
-        event: "*", schema: "public", table: "entries",
-        filter: `couple_id=eq.${coupleId}`,
-      }, sharedUpdate)
-      .on("postgres_changes", {
-        event: "*", schema: "public", table: "together_activities",
-        filter: `couple_id=eq.${coupleId}`,
-      }, sharedUpdate)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "entries",
+          filter: `couple_id=eq.${coupleId}`,
+        },
+        sharedUpdate,
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "together_activities",
+          filter: `couple_id=eq.${coupleId}`,
+        },
+        sharedUpdate,
+      )
       .on("broadcast", { event: "move" }, () => void refresh())
       .on("presence", { event: "sync" }, () =>
         setOnline(Object.keys(live.presenceState())),
@@ -224,7 +245,7 @@ export default function PlayArcade({
         ? previewMove(game, cell)
         : await request(game.kind as BoardKind, game.id, cell);
       setGames((gs) => gs.map((g) => (g.id === next.id ? next : g)));
-      if(preview)recordPreview(next);
+      if (preview) recordPreview(next);
       if (preview && next.state.status === "won")
         setScore((s) => s.map((n, i) => n + (i === next.state.winner ? 1 : 0)));
       tactile(next.state.status !== "playing");
@@ -268,6 +289,7 @@ export default function PlayArcade({
   if (extraOpen)
     return (
       <ExtraGame
+        active={active}
         kind={extraOpen}
         db={db}
         session={session}
@@ -281,6 +303,7 @@ export default function PlayArcade({
   if (blockOpen)
     return (
       <BlockBattle
+        active={active}
         db={db}
         session={session}
         coupleId={coupleId}
@@ -406,9 +429,16 @@ export default function PlayArcade({
           <div className="station-top">
             <button
               className="text-button"
-              onClick={() => window.history.back()}
+              onClick={() =>
+                void work(async () => {
+                  if (!preview && game) await attendance.exit();
+                  if (preview && game && !finished) setGames(gs=>gs.map(g=>g.id===game.id?{...g,state:{...g.state,status:"cancelled"}}:g));
+                  window.history.back();
+                })
+              }
             >
-              <ArrowLeft size={18} /> Back to Play
+              <ArrowLeft size={18} />{" "}
+              {game && !finished ? "Exit game" : "Back to Play"}
             </button>
             <button
               className="icon-button"
@@ -420,6 +450,14 @@ export default function PlayArcade({
             </button>
           </div>
           <h2>{definition?.name}</h2>
+          {game && !finished && !preview && (
+            <p className="notice" role="status">
+              {attendance.error ||
+                (attendance.paired
+                  ? "Both players are in this game."
+                  : "Waiting for your person to join this game. Leaving cancels the session for both players.")}
+            </p>
+          )}
           {!game ? (
             <div className="game-start">
               <div className="start-tokens">
@@ -474,9 +512,11 @@ export default function PlayArcade({
                 <div>
                   <strong>
                     {finished
-                      ? game.state.winner === null
-                        ? "A love-love draw."
-                        : `${names[game.state.winner]} wins!`
+                      ? game.state.status === "cancelled"
+                        ? "Game cancelled."
+                        : game.state.winner === null
+                          ? "A love-love draw."
+                          : `${names[game.state.winner]} wins!`
                       : `${names[game.state.turn]}’s turn`}
                   </strong>
                   <small>
@@ -511,6 +551,7 @@ export default function PlayArcade({
                         disabled={
                           busy ||
                           finished ||
+                          (!preview && !attendance.paired) ||
                           !yourTurn ||
                           game.state.board![i] !== 0
                         }
@@ -551,7 +592,13 @@ export default function PlayArcade({
                         className={`romantic-cell token-${v}`}
                         key={i}
                         aria-label={label}
-                        disabled={busy || finished || !yourTurn || v !== 0}
+                        disabled={
+                          busy ||
+                          finished ||
+                          (!preview && !attendance.paired) ||
+                          !yourTurn ||
+                          v !== 0
+                        }
                         onClick={() => void move(i)}
                       >
                         {piece}
@@ -584,12 +631,12 @@ export default function PlayArcade({
                   </div>
                   <Heart size={27} />
                   <h3>
-                    {game.state.winner === null
+                    {game.state.status === "cancelled" ? "Game cancelled." : game.state.winner === null
                       ? "A perfect excuse for a rematch."
                       : "One win. Two happy hearts."}
                   </h3>
                   <p>
-                    {preview
+                    {game.state.status === "cancelled" ? "A player left. This session does not count toward rewards." : preview
                       ? "Added to this session’s scoreboard."
                       : "Saved to your couple scoreboard."}
                   </p>
