@@ -96,6 +96,10 @@ export default function PlayArcade({
       config: { private: true, presence: { key: session.user.id } },
     });
     channel.current = live;
+    const sharedUpdate = () => {
+      void refresh();
+      window.dispatchEvent(new Event("arcade:couple-update"));
+    };
     live
       .on(
         "postgres_changes",
@@ -105,8 +109,16 @@ export default function PlayArcade({
           table: "games",
           filter: `couple_id=eq.${coupleId}`,
         },
-        () => void refresh(),
+        sharedUpdate,
       )
+      .on("postgres_changes", {
+        event: "*", schema: "public", table: "entries",
+        filter: `couple_id=eq.${coupleId}`,
+      }, sharedUpdate)
+      .on("postgres_changes", {
+        event: "*", schema: "public", table: "together_activities",
+        filter: `couple_id=eq.${coupleId}`,
+      }, sharedUpdate)
       .on("broadcast", { event: "move" }, () => void refresh())
       .on("presence", { event: "sync" }, () =>
         setOnline(Object.keys(live.presenceState())),

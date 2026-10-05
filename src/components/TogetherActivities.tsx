@@ -101,33 +101,14 @@ export default function TogetherActivities() {
     void refresh();
     const timer = setInterval(() => void refresh(), 10000);
     if (!c.db || !c.couple || c.preview) return () => clearInterval(timer);
-    const live = c.db
-      .channel(`couple:${c.couple}`, { config: { private: true } })
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "together_activities",
-          filter: `couple_id=eq.${c.couple}`,
-        },
-        () => void refresh(),
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "entries",
-          filter: `couple_id=eq.${c.couple}`,
-        },
-        () => void refresh(),
-      );
-    live.subscribe();
+    // The persistent arcade owns the private couple channel. Reuse its updates
+    // rather than adding callbacks to an already subscribed Supabase channel.
+    const update = () => void refresh();
+    window.addEventListener("arcade:couple-update", update);
     return () => {
       ++version.current;
       clearInterval(timer);
-      void c.db!.removeChannel(live);
+      window.removeEventListener("arcade:couple-update", update);
     };
   }, [refresh, c.db, c.couple, c.preview]);
   useEffect(() => {

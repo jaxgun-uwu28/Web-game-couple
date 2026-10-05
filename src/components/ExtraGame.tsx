@@ -127,33 +127,13 @@ export default function ExtraGame({
     void refresh();
     const timer = setInterval(() => void refresh(), 5000);
     if (!db || !session || !coupleId) return () => clearInterval(timer);
-    const live = db
-      .channel(`couple:${coupleId}`, { config: { private: true } })
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "games",
-          filter: `couple_id=eq.${coupleId}`,
-        },
-        () => void refresh(),
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "entries",
-          filter: `couple_id=eq.${coupleId}`,
-        },
-        () => void refresh(),
-      );
-    void db.realtime.setAuth(session.access_token).then(() => live.subscribe());
+    // PlayArcade stays mounted and owns this private channel and its auth.
+    const update = () => void refresh();
+    window.addEventListener("arcade:couple-update", update);
     return () => {
       clearInterval(timer);
       ++requestVersion.current;
-      void db.removeChannel(live);
+      window.removeEventListener("arcade:couple-update", update);
     };
   }, [game?.id, db, session?.access_token, coupleId, preview, refresh]);
   useEffect(
