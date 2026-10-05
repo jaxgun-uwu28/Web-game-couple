@@ -1,0 +1,246 @@
+{
+  "dailyQuestions": [
+    {
+      "text": "What would make a rainy afternoon feel extra cozy?",
+      "mood": "cozy"
+    },
+    {
+      "text": "What playful tradition could we invent for a rainy afternoon?",
+      "mood": "silly"
+    },
+    {
+      "text": "What would our dream version of a rainy afternoon look like?",
+      "mood": "dreamy"
+    },
+    {
+      "text": "What happy memory would you bring into a rainy afternoon?",
+      "mood": "nostalgic"
+    },
+    {
+      "text": "What could we learn about each other during a rainy afternoon?",
+      "mood": "deep"
+    },
+    {
+      "text": "What small plan could we make together on a rainy afternoon?",
+      "mood": "future"
+    },
+    {
+      "text": "What delicious treat would you share on a rainy afternoon?",
+      "mood": "food"
+    },
+    {
+      "text": "Where would you take us for a rainy afternoon?",
+      "mood": "travel"
+    },
+    {
+      "text": "What little kindness would you appreciate on a rainy afternoon?",
+      "mood": "gratitude"
+    },
+    {
+      "text": "What song would you choose as the soundtrack for a rainy afternoon?",
+      "mood": "cozy"
+    },
+    {
+      "text": "What would make a slow Sunday feel extra cozy?",
+      "mood": "cozy"
+    },
+    {
+      "text": "What playful tradition could we invent for a slow Sunday?",
+      "mood": "silly"
+    },
+    {
+      "text": "What would our dream version of a slow Sunday look like?",
+      "mood": "dreamy"
+    },
+    {
+      "text": "What happy memory would you bring into a slow Sunday?",
+      "mood": "nostalgic"
+    },
+    {
+      "text": "What could we learn about each other during a slow Sunday?",
+      "mood": "deep"
+    },
+    {
+      "text": "What small plan could we make together on a slow Sunday?",
+      "mood": "future"
+    },
+    {
+      "text": "What delicious treat would you share on a slow Sunday?",
+      "mood": "food"
+    },
+    {
+      "text": "Where would you take us for a slow Sunday?",
+      "mood": "travel"
+    },
+    {
+      "text": "What little kindness would you appreciate on a slow Sunday?",
+      "mood": "gratitude"
+    },
+    {
+      "text": "What song would you choose as the soundtrack for a slow Sunday?",
+      "mood": "cozy"
+    },
+    {
+      "text": "What would make a sunrise walk feel extra cozy?",
+      "mood": "cozy"
+    },
+    {
+      "text": "What playful tradition could we invent for a sunrise walk?",
+      "mood": "silly"
+    },
+    {
+      "text": "What would our dream version of a sunrise walk look like?",
+      "mood": "dreamy"
+    },
+    {
+      "text": "What happy memory would you bring into a sunrise walk?",
+      "mood": "nostalgic"
+    },
+    {
+      "text": "What could we learn about each other during a sunrise walk?",
+      "mood": "deep"
+    },
+    {
+      "text": "What small plan could we make together on a sunrise walk?",
+      "mood": "future"
+    },
+    {
+      "text": "What delicious treat would you share on a sunrise walk?",
+      "mood": "food"
+    },
+    {
+      "text": "Where would you take us for a sunrise walk?",
+      "mood": "travel"
+    },
+    {
+      "text": "What little kindness would you appreciate on a sunrise walk?",
+      "mood": "gratitude"
+    },
+    {
+      "text": "What song would you choose as the soundtrack for a sunrise walk?",
+      "mood": "cozy"
+    }
+  ],
+  "wouldYouRather": [
+    {
+      "optionA": "Sunrise walk",
+      "optionB": "Sunset picnic"
+    },
+    {
+      "optionA": "Sunset picnic",
+      "optionB": "Handwritten note"
+    },
+    {
+      "optionA": "Handwritten note",
+      "optionB": "Surprise playlist"
+    },
+    {
+      "optionA": "Surprise playlist",
+      "optionB": "Cat café"
+    },
+    {
+      "optionA": "Cat café",
+      "optionB": "Garden stroll"
+    },
+    {
+      "optionA": "Garden stroll",
+      "optionB": "Sushi date"
+    },
+    {
+      "optionA": "Sushi date",
+      "optionB": "Burger date"
+    },
+    {
+      "optionA": "Burger date",
+      "optionB": "Museum afternoon"
+    },
+    {
+      "optionA": "Museum afternoon",
+      "optionB": "Bookshop afternoon"
+    },
+    {
+      "optionA": "Bookshop afternoon",
+      "optionB": "Cozy film night"
+    },
+    {
+      "optionA": "Cozy film night",
+      "optionB": "Board game night"
+    },
+    {
+      "optionA": "Board game night",
+      "optionB": "Beach picnic"
+    },
+    {
+      "optionA": "Beach picnic",
+      "optionB": "Mountain picnic"
+    },
+    {
+      "optionA": "Mountain picnic",
+      "optionB": "Bake bread together"
+    },
+    {
+      "optionA": "Bake bread together",
+      "optionB": "Make pasta together"
+    },
+    {
+      "optionA": "Make pasta together",
+      "optionB": "Sketch each other"
+    },
+    {
+      "optionA": "Sketch each other",
+      "optionB": "Take portraits together"
+    },
+    {
+      "optionA": "Take portraits together",
+      "optionB": "Stargazing"
+    },
+    {
+      "optionA": "Stargazing",
+      "optionB": "Cloud watching"
+    },
+    {
+      "optionA": "Cloud watching",
+      "optionB": "Flower market"
+    },
+    {
+      "optionA": "Flower market",
+      "optionB": "Farmers market"
+    },
+    {
+      "optionA": "Farmers market",
+      "optionB": "Train adventure"
+    },
+    {
+      "optionA": "Train adventure",
+      "optionB": "Coastal road trip"
+    },
+    {
+      "optionA": "Coastal road trip",
+      "optionB": "Pottery class"
+    },
+    {
+      "optionA": "Pottery class",
+      "optionB": "Painting class"
+    },
+    {
+      "optionA": "Painting class",
+      "optionB": "Matching mugs"
+    },
+    {
+      "optionA": "Matching mugs",
+      "optionB": "Matching bookmarks"
+    },
+    {
+      "optionA": "Matching bookmarks",
+      "optionB": "Breakfast in bed"
+    },
+    {
+      "optionA": "Breakfast in bed",
+      "optionB": "Late-night pancakes"
+    },
+    {
+      "optionA": "Late-night pancakes",
+      "optionB": "Watercolor cards"
+    }
+  ]
+}

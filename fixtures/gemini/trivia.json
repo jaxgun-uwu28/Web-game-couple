@@ -1,0 +1,110 @@
+{
+  "topic": "Surprise Mix",
+  "questions": [
+    {
+      "topic": "Science",
+      "question": "What force pulls objects toward Earth?",
+      "options": ["Gravity", "Friction", "Magnetism", "Buoyancy"],
+      "correctIndex": 0,
+      "funFact": "Gravity attracts objects with mass."
+    },
+    {
+      "topic": "Science",
+      "question": "What is the chemical symbol for gold?",
+      "options": ["Ag", "Au", "Fe", "Cu"],
+      "correctIndex": 1,
+      "funFact": "Au comes from the Latin word aurum."
+    },
+    {
+      "topic": "Science",
+      "question": "What unit measures electrical resistance?",
+      "options": ["Watt", "Volt", "Ohm", "Ampere"],
+      "correctIndex": 2,
+      "funFact": "Resistance is measured in ohms."
+    },
+    {
+      "topic": "Science",
+      "question": "Which gas do plants absorb during photosynthesis?",
+      "options": ["Hydrogen", "Oxygen", "Helium", "Carbon dioxide"],
+      "correctIndex": 3,
+      "funFact": "Plants use carbon dioxide to make sugars."
+    },
+    {
+      "topic": "Science",
+      "question": "Which particle carries a negative electric charge?",
+      "options": ["Electron", "Proton", "Neutron", "Photon"],
+      "correctIndex": 0,
+      "funFact": "Electrons have a negative electric charge."
+    },
+    {
+      "topic": "Science",
+      "question": "What is the smallest unit of a chemical element?",
+      "options": ["Cell", "Atom", "Crystal", "Organ"],
+      "correctIndex": 1,
+      "funFact": "An atom retains an element's chemical identity."
+    },
+    {
+      "topic": "Science",
+      "question": "At sea level, water normally boils at which temperature?",
+      "options": ["50°C", "0°C", "100°C", "200°C"],
+      "correctIndex": 2,
+      "funFact": "Water boils at 100°C at standard atmospheric pressure."
+    },
+    {
+      "topic": "Science",
+      "question": "What instrument measures temperature?",
+      "options": ["Ruler", "Barometer", "Compass", "Thermometer"],
+      "correctIndex": 3,
+      "funFact": "A thermometer measures temperature."
+    },
+    {
+      "topic": "Science",
+      "question": "Which state of matter has a fixed volume but no fixed shape?",
+      "options": ["Liquid", "Solid", "Gas", "Plasma"],
+      "correctIndex": 0,
+      "funFact": "A liquid takes the shape of its container."
+    },
+    {
+      "topic": "Science",
+      "question": "What type of energy does a moving object have?",
+      "options": ["Chemical", "Kinetic", "Nuclear", "Elastic"],
+      "correctIndex": 1,
+      "funFact": "Kinetic energy is the energy of motion."
+    },
+    {
+      "topic": "Nature and Animals",
+      "question": "Which mammal lays eggs?",
+      "options": ["Dolphin", "Rabbit", "Platypus", "Horse"],
+      "correctIndex": 2,
+      "funFact": "The platypus is an egg-laying mammal."
+    },
+    {
+      "topic": "Nature and Animals",
+      "question": "What do caterpillars develop into?",
+      "options": ["Spiders", "Beetles", "Dragonflies", "Butterflies or moths"],
+      "correctIndex": 3,
+      "funFact": "Caterpillars are the larvae of butterflies and moths."
+    },
+    {
+      "topic": "Nature and Animals",
+      "question": "Which animal has eight arms?",
+      "options": ["Octopus", "Shark", "Crab", "Jellyfish"],
+      "correctIndex": 0,
+      "funFact": "An octopus has eight arms."
+    },
+    {
+      "topic": "Nature and Animals",
+      "question": "Which part of a plant usually absorbs water?",
+      "options": ["Petals", "Roots", "Fruit", "Seeds"],
+      "correctIndex": 1,
+      "funFact": "Roots absorb water from the soil."
+    },
+    {
+      "topic": "Nature and Animals",
+      "question": "What is a group of wolves called?",
+      "options": ["Flock", "Herd", "Pack", "School"],
+      "correctIndex": 2,
+      "funFact": "Wolves often live in packs."
+    }
+  ]
+}

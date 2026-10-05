@@ -455,3 +455,89 @@ html[data-arcade-theme="peach"]:not([data-time="night"]) {
   outline: 2px solid var(--cherry);
   outline-offset: 2px;
 }
+/* Question setup inherits the arcade's rounded paper and pressed controls. */
+.brain-setup {
+  text-align: left;
+  width: 100%;
+  margin-block: 24px;
+}
+.brain-setup fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 24px;
+  min-width: 0;
+}
+.brain-setup legend {
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.topic-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.topic-chips button {
+  white-space: normal;
+  min-height: 44px;
+}
+.topic-chips button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.brain-setup label {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.ai-settings {
+  padding-block: 32px;
+  border-top: 1px solid var(--line);
+}
+.ai-settings h2 .text-button {
+  padding: 0;
+  font: inherit;
+}
+.ai-settings h2 {
+  margin: 0;
+}
+.ai-settings form {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-block: 24px;
+}
+.ai-settings form label {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+  min-width: min(240px, 100%);
+}
+.ai-facts {
+  margin-block: 20px;
+}
+.ai-facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.ai-facts dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.ai-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+}
+.ai-toggle input {
+  width: 22px;
+  height: 22px;
+}
+.ai-settings details {
+  margin-block: 24px;
+}

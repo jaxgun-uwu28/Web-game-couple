@@ -1,4 +1,5 @@
-import { dailyQuestions, dayIndex, manilaDay } from "./games";
+import { dayIndex, manilaDay } from "./games";
+import { seedDaily, seedChoices } from "./ai/content-seeds";
 export const connectionChoices = [
   ["Sunrise walk", "Sunset picnic"],
   ["Cook together", "Try a new restaurant"],
@@ -44,8 +45,11 @@ export type ConnectionState = {
 export function connectionPrompts(day: string) {
   const index = dayIndex(day);
   return {
-    daily: dailyQuestions[index % dailyQuestions.length],
-    choice: connectionChoices[index % connectionChoices.length],
+    daily: seedDaily[index % seedDaily.length].text,
+    choice: [
+      seedChoices[index % seedChoices.length].optionA,
+      seedChoices[index % seedChoices.length].optionB,
+    ],
   };
 }
 export function emptyConnectionState(): ConnectionState {

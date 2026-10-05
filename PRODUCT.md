@@ -1,4 +1,4 @@
-# Our Little Arcade — Stages 4–6 in progress
+# Our Little Arcade — games and shared questions
 
 User-approved addition: Block Hearts Duel, a timed 1v1 score race on independent 8×8 block boards, is active in Play. Durations are 60/120/180/300 seconds, both players must ready up, and the database validates every placement and the shared deadline.
 
@@ -7,6 +7,18 @@ Private two-person couples app. Stage 1's pink keepsake is approved. Stage 2 add
 No personal names, preferences or anniversary date are baked into the active UI. The date is entered in setup and editable in Us; nicknames are optional. Existing database data is preserved. Night Train stays opt-in. No paid services, analytics or advertising. Online board play uses server validation and private Realtime, but hosted setup and two-device acceptance remain owner-dependent. Preview board games are pass-and-play and clear on reload/sign-out. A signed APK and PWA shell are built; installation and real device push acceptance remain unverified.
 
 Stages 4–5 are committed and pushed on main at `1bc6f33`. Stage 6 is implemented locally and remains uncommitted and unpublished at this documentation checkpoint. Independent review passes the four scored fixes with scoped disposition ship; this does not constitute whole-surface, hosted or device acceptance. Play now includes Draw & guess, Know me by heart and A little brain duel. Us includes date ideas with a filtered picker, a shared sketchbook, 36 original conversation prompts, countdowns, optional non-money promises, a yearly recap and a memory-date quiz. Rewards reflect completed games; online progress is server validated, while preview progress stays local. Drawing words and partner answers remain private until their allowed reveal.
+
+Checkpoint update: Stage 6 was subsequently committed and pushed as `068aa87`. Its original review and acceptance boundaries above remain historical evidence; hosted migration and device acceptance were not certified by that push.
+
+## Gemini question engine
+
+Brain Duel now offers remembered topics, a sanitized custom topic, 3/5/10 questions and two difficulty choices. A shared generation lease prevents simultaneous phones from making duplicate batches. Unseen bank questions come first; one generated batch includes extras for later games. Private match snapshots keep correct indices and fun facts sealed until paired reveal, with server scoring and a report action to retire bad questions. Per-couple normalized question history prevents exact reuse, and generation filters close paraphrases against recent topic history.
+
+Daily questions and Would You Rather use one shared 30-day pack assigned in the saved couple timezone. The first authenticated app open tops up below seven days under a lease. Us > AI Questions exposes configuration presence, model, UTC usage, safe errors, bank counts, content runway, an AI toggle, timezone and a guarded refill. No Gemini key or private personal content is sent through the UI or included in generation prompts.
+
+Real calls use server-only credentials, global atomic caps of at most four attempts/minute and sixty/day, one delayed fallback model and a ten-minute circuit breaker. Development, hot reload, CI and automated tests use fixtures; the manual `gemini:check` command is the only local live-call path. The fallback bank contains 150 stable trivia items, 100 daily prompts and 100 appealing pairs. A finite trivia pool cannot promise unlimited unseen offline games; AI must refill it after exhaustion. Daily content can rotate after its recent-history window.
+
+The full 35-test suite passed, followed by six Gemini tests after final content changes, type checking and a final production build. Impeccable inspected 32 captures across day/night at 360/768/1280 and user width 624. The sole material finding, stale settings error after recovery, was corrected and scored with disposition ship from source; that verdict covers the scored fix. Migration 009, server key setup, live Gemini, online settings recovery and two-phone acceptance remain owner-dependent. See GEMINI_SETUP.md and `.impeccable/review/ai-questions-verification.md`.
 
 Automated validation passed: all 29 tests passed before the final copy/style batch; the subsequent production build passed TypeScript and page generation. The raster provenance scan found all 31 native/public icon rasters, with zero missing. Earlier Firebase-enabled debug and release APK builds and signature verification passed. The APK loads the hosted HTTPS origin, so this web source batch does not require rebuilding the APK.
 

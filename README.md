@@ -68,6 +68,10 @@ For Android, put the correct `google-services.json` at `android/app/google-servi
 
 Each person explicitly enables their own device. Preferences default off. Quiet hours skip notifications instead of postponing them. Delivery is best effort, with event deduplication and expired token removal. Messages contain no letter text, photo or gift-claim content. Local Android anniversary reminders are optional and require permission separately.
 
+## AI questions
+
+GEMINI_SETUP.md covers migration 009, the server-only Gemini key, free-project setup, request caps and the manual `npm run gemini:check` command. Brain Duel uses shared, unseen bank questions before one batched generation; daily questions and Would You Rather share a monthly content pack. Development and automated tests always use fixtures. Us > AI Questions shows configuration, usage and saved content, with a shared AI toggle and timezone.
+
 ## Artwork and sound
 
 Drop originals into `public/drop-in/`: backgrounds, couple, game-art, stickers, mascot, app-icon and sounds. Each folder's README.txt lists names and sizes. Filenames/extensions are case-insensitive and numeric suffixes are supported. `npm run assets:generate` refreshes the manifest; dev watches it and build regenerates it.

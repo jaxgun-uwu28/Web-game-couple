@@ -6,6 +6,8 @@ export async function gameRequest(
   db: SupabaseClient | null,
   body: Record<string, unknown>,
   send: typeof fetch = fetch,
+  path = "/api/game",
+  signal?: AbortSignal,
 ) {
   if (!db) throw new Error("The arcade connection is not configured.");
   let { data, error } = await db.auth.getSession();
@@ -17,8 +19,9 @@ export async function gameRequest(
       throw new Error("Your session ended. Sign out, then sign in again.");
   }
   const post = (token: string) =>
-    send("/api/game", {
+    send(path, {
       method: "POST",
+      signal,
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,

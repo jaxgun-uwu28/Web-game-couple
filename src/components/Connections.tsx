@@ -34,6 +34,7 @@ import {
   type Mood,
 } from "@/lib/connections";
 import { manilaDay } from "@/lib/games";
+import { gameRequest } from "@/lib/game-request";
 
 const previewIds = ["preview", "preview-two"];
 const moodIcons = {
@@ -44,6 +45,7 @@ const moodIcons = {
   low: Cloud,
 };
 type ConnectionContext = {
+  prompts: { daily: string; choice: string[]; saved: boolean; ready: boolean };
   state: ConnectionState;
   myId: string;
   names: string[];
@@ -89,6 +91,84 @@ export function ConnectionProvider({
     [error, setError] = useState(""),
     [message, setMessage] = useState(""),
     [clock, setClock] = useState(Date.now());
+  const [prompts, setPrompts] = useState(() => ({
+    ...connectionPrompts(manilaDay()),
+    saved: true,
+    ready: false,
+  }));
+  const [questionTimezone, setQuestionTimezone] = useState("Asia/Manila");
+  useEffect(() => {
+    if (preview) {
+      setPrompts({ ...connectionPrompts(state.day), saved: true, ready: true });
+      return;
+    }
+    if (!db || !session || !coupleId) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const cached = localStorage.getItem(
+      `arcade-content:${coupleId}:${state.day}`,
+    );
+    setPrompts({ ...connectionPrompts(state.day), saved: true, ready: false });
+    if (cached) {
+      try {
+        setPrompts({ ...JSON.parse(cached), ready: true });
+      } catch {}
+    }
+    async function loadPack() {
+      try {
+        const result = await gameRequest(
+          db,
+          { action: "content" },
+          fetch,
+          "/api/ai",
+        );
+        if (cancelled) return;
+        if (result.pending) {
+          timer = setTimeout(() => void loadPack(), 1500);
+          return;
+        }
+        if (typeof result.daily !== "string" || !Array.isArray(result.choice))
+          return;
+        if (result.day !== state.day) {
+          if (result.timezone) setQuestionTimezone(result.timezone);
+          return;
+        }
+        const next = {
+          daily: result.daily,
+          choice: result.choice,
+          saved: Boolean(result.saved),
+          ready: true,
+        };
+        if (result.timezone) setQuestionTimezone(result.timezone);
+        setPrompts(next);
+        localStorage.setItem(
+          `arcade-content:${coupleId}:${result.day}`,
+          JSON.stringify(next),
+        );
+      } catch {
+        if (!cancelled) setPrompts((p) => ({ ...p, ready: Boolean(cached) }));
+      }
+    }
+    void loadPack();
+    const live = db
+      .channel(`ai-content:${coupleId}`, { config: { private: true } })
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "generation_jobs",
+          filter: `couple_id=eq.${coupleId}`,
+        },
+        () => void loadPack(),
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+      void db.removeChannel(live);
+    };
+  }, [db, session?.user.id, coupleId, preview, state.day]);
   const locked = useRef(false),
     channel = useRef<RealtimeChannel | null>(null),
     requestVersion = useRef(0),
@@ -192,7 +272,13 @@ export function ConnectionProvider({
     };
   }, [db, coupleId, session?.access_token, preview, refresh]);
   useEffect(() => {
-    if (!ready || state.day === manilaDay(new Date(clock))) return;
+    const currentDay = new Intl.DateTimeFormat("en-CA", {
+      timeZone: questionTimezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date(clock));
+    if (!ready || state.day === currentDay) return;
     if (preview)
       setState((s) => ({
         ...emptyConnectionState(),
@@ -202,7 +288,7 @@ export function ConnectionProvider({
         taps: s.taps,
       }));
     else void refresh();
-  }, [clock, state.day, preview, ready, refresh]);
+  }, [clock, state.day, preview, ready, refresh, questionTimezone]);
   async function work(task: () => Promise<void>) {
     if (locked.current) return;
     locked.current = true;
@@ -223,6 +309,10 @@ export function ConnectionProvider({
   }
   const answer = async (kind: "daily" | "choice", value: string) =>
     work(async () => {
+      if (!prompts.ready)
+        throw new Error(
+          "Open our shared question pack before answering. Reload this page to retry.",
+        );
       if (!value.trim() || value.length > 2000)
         throw new Error("Write an answer up to 2,000 characters.");
       if (preview) {
@@ -316,6 +406,7 @@ export function ConnectionProvider({
   return (
     <Context.Provider
       value={{
+        prompts,
         state: visible,
         myId,
         names,
@@ -359,7 +450,7 @@ export function DailyConnection() {
     names,
   } = useConnections();
   const [text, setText] = useState("");
-  const prompts = connectionPrompts(state.day),
+  const prompts = useConnections().prompts,
     both = state.daily.length === 2,
     mine = state.daily.some((a) => a.user_id === myId);
   useEffect(() => setText(""), [myId, state.day]);
@@ -377,6 +468,18 @@ export function DailyConnection() {
         just for us.
       </h2>
       <p className="daily-question">{prompts.daily}</p>
+      <p className="small" role="status">
+        {prompts.ready
+          ? prompts.saved
+            ? "Using our saved questions today."
+            : "A fresh question from our shared pack."
+          : "Opening our shared question pack. Answers unlock when it is ready."}
+      </p>
+      {!prompts.ready && (
+        <button className="secondary" onClick={() => window.location.reload()}>
+          Reload questions
+        </button>
+      )}
       {preview && (
         <div className="connection-preview" aria-label="Local preview player">
           {[0, 1].map((s) => (
@@ -391,7 +494,7 @@ export function DailyConnection() {
           ))}
         </div>
       )}
-      {!ready ? (
+      {!ready || !prompts.ready ? (
         <p className="small">
           {error
             ? "These connections need the database update."
@@ -444,7 +547,7 @@ export function DailyConnection() {
         {state.streak
           ? `${state.streak} day${state.streak === 1 ? "" : "s"} answering together`
           : "Both answers open together."}{" "}
-        · A new page at midnight in Manila.
+        · A new page at midnight in our saved timezone.
       </p>
       {(error || message) && (
         <div
@@ -490,7 +593,8 @@ export function ConnectionMoments() {
     partner = state.moods.find(
       (m) => m.day === state.day && m.user_id === partnerId,
     ),
-    choices = connectionPrompts(state.day).choice,
+    choices = useConnections().prompts.choice,
+    useConnectionsReady = useConnections().prompts.ready,
     both = state.choice.length === 2,
     ownChoice = state.choice.find((a) => a.user_id === myId),
     incoming = state.taps.find((t) => t.recipient === myId),
@@ -545,7 +649,7 @@ export function ConnectionMoments() {
           {choices.map((option, index) => (
             <button
               key={option}
-              disabled={busy || !ready || !!ownChoice}
+              disabled={busy || !ready || !useConnectionsReady || !!ownChoice}
               aria-pressed={ownChoice?.answer === String(index)}
               className={ownChoice?.answer === String(index) ? "selected" : ""}
               onClick={() => void answer("choice", String(index))}

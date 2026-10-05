@@ -1,6 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { isPrivateEmail } from "@/lib/private-auth";
+import { aiAuth } from "@/lib/ai/auth";
+import { startDuel } from "@/lib/ai/service";
+export const maxDuration = 20;
 export async function POST(req: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL,
     key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -48,7 +51,19 @@ export async function POST(req: Request) {
     const body = await req.text();
     if (body.length > 4096)
       return NextResponse.json({ error: "Move too large." }, { status: 400 });
-    const { id, action, kind, duration } = JSON.parse(body);
+    const { id, action, kind, duration, topic, count, difficulty, savedOnly } =
+      JSON.parse(body);
+    if (kind === "trivia" && !id) {
+      const { admin, coupleId } = await aiAuth(req);
+      return NextResponse.json(
+        await startDuel(
+          admin,
+          coupleId,
+          { topic, count, difficulty },
+          savedOnly === true,
+        ),
+      );
+    }
     const { data, error } = await db.rpc(
       kind === "block"
         ? id

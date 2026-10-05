@@ -36,6 +36,7 @@ export default function GameSurface({
   onStroke,
   busy,
   hideBack = false,
+  report,
 }: {
   game: Game;
   slot: number;
@@ -48,6 +49,7 @@ export default function GameSurface({
   onStroke: (s: Stroke) => Promise<void>;
   busy: boolean;
   hideBack?: boolean;
+  report?: (position: number) => Promise<void>;
 }) {
   const [guess, setGuess] = useState(""),
     [self, setSelf] = useState(""),
@@ -66,9 +68,11 @@ export default function GameSurface({
       ? s.pack === "general-v2"
         ? knowV2
         : know
-      : s.pack === "general-v2"
-        ? triviaV2
-        : trivia;
+      : s.pack === "gemini-v1"
+        ? s.questions || []
+        : s.pack === "general-v2"
+          ? triviaV2
+          : trivia;
   const q = questions[s.round];
   const banner = finished
     ? s.winner === null
@@ -79,14 +83,16 @@ export default function GameSurface({
       : game.kind === "know" || game.kind === "trivia"
         ? submitted
           ? "Your answer is tucked away. Waiting for your partner."
-          : `Round ${s.round + 1} of 5 · answer privately`
+          : `Round ${s.round + 1} of ${s.count || 5} · answer privately`
         : `${names[s.turn]}'s turn${s.turn === slot ? " — that’s you" : ""}`;
   return (
     <section className="game-paper" aria-label={definition.name}>
-      {!hideBack && <button className="text-button" onClick={back}>
-        <ArrowLeft size={17} />
-        Back to Play
-      </button>}
+      {!hideBack && (
+        <button className="text-button" onClick={back}>
+          <ArrowLeft size={17} />
+          Back to Play
+        </button>
+      )}
       <div className="game-heading">
         <h2>{definition.name}</h2>
       </div>
@@ -155,7 +161,9 @@ export default function GameSurface({
             onStroke={onStroke}
             disabled={busy || finished || slot !== s.artist}
             busy={busy}
-            mode={finished ? "finished" : slot === s.artist ? "drawing" : "viewing"}
+            mode={
+              finished ? "finished" : slot === s.artist ? "drawing" : "viewing"
+            }
           />
           {!finished && slot !== s.artist && (
             <form
@@ -186,7 +194,9 @@ export default function GameSurface({
           )}
           <p className="small">
             {s.pack === "general-v2" &&
-              (finished ? `${s.guesses?.length || 0} ${(s.guesses?.length || 0) === 1 ? "guess" : "guesses"} made · ` : `${Math.max(0, 5 - (s.guesses?.length || 0))} guesses left · `)}
+              (finished
+                ? `${s.guesses?.length || 0} ${(s.guesses?.length || 0) === 1 ? "guess" : "guesses"} made · `
+                : `${Math.max(0, 5 - (s.guesses?.length || 0))} guesses left · `)}
             Guesses: {s.guesses?.join(" · ") || "A fresh page. No guesses yet."}
           </p>
         </>
@@ -194,6 +204,15 @@ export default function GameSurface({
       {(game.kind === "know" || game.kind === "trivia") && !finished && q && (
         <div className="question-game">
           <h3>{q.q}</h3>
+          {game.kind === "trivia" && report && (
+            <button
+              className="text-button small"
+              disabled={busy}
+              onClick={() => void report(s.round + 1).catch(() => {})}
+            >
+              Report a bad question
+            </button>
+          )}
           {game.kind === "know" && (
             <fieldset disabled={busy || submitted}>
               <legend>My own answer</legend>
@@ -281,6 +300,7 @@ export default function GameSurface({
                   }
                 </p>
               )}
+              {s.last.funFact && <p>{s.last.funFact}</p>}
             </details>
           )}
         </>

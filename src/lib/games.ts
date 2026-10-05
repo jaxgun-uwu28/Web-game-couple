@@ -31,12 +31,25 @@ export const registry = [
   },
 ] as const;
 export type GameKind = (typeof registry)[number]["id"];
-export const arcadeRegistry = [...registry,{id:'block',name:'Block Hearts Duel',note:'Two boards. One clock. All the points.',icon:'blocks'}] as const;
+export const arcadeRegistry = [
+  ...registry,
+  {
+    id: "block",
+    name: "Block Hearts Duel",
+    note: "Two boards. One clock. All the points.",
+    icon: "blocks",
+  },
+] as const;
 export type Game = {
   id: string;
   kind: GameKind;
   state: {
     pack?: string;
+    topic?: string;
+    count?: number;
+    difficulty?: string;
+    source?: string;
+    questions?: { q: string; options: string[]; id: string }[];
     status: string;
     turn: number;
     board?: number[];
@@ -47,7 +60,11 @@ export type Game = {
     artist?: number;
     guesses?: string[];
     word?: string;
-    last?: { answers: Record<string, string>[]; correct: string };
+    last?: {
+      answers: Record<string, string>[];
+      correct: string;
+      funFact?: string;
+    };
   };
 };
 export const trivia = [

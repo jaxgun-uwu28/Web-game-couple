@@ -7,14 +7,15 @@
     "build": "node scripts/generate-assets.mjs && node scripts/generate-app-icons.mjs && node scripts/prepare-sw.mjs && next build",
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "node --import ./tests/gemini-env.mjs --import tsx --test tests/*.test.ts",
     "seed": "node scripts/seed.mjs",
     "assets:generate": "node scripts/generate-assets.mjs",
     "assets:watch": "node scripts/watch-assets.mjs",
     "android:prepare": "node scripts/prepare-native.mjs && node scripts/generate-android-art.mjs && cap sync android",
     "android:key": "node scripts/android-signing.mjs",
     "android:build": "node scripts/build-android.mjs",
-    "push:keys": "node scripts/generate-push-keys.mjs"
+    "push:keys": "node scripts/generate-push-keys.mjs",
+    "gemini:check": "node scripts/gemini-check.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
@@ -37,7 +38,8 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "sharp": "^0.35.5",
-    "web-push": "^3.6.7"
+    "web-push": "^3.6.7",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.2",
