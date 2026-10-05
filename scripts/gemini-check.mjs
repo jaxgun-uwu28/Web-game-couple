@@ -5,7 +5,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { createClient } from "@supabase/supabase-js";
 loadEnvConfig(process.cwd());
 const key = process.env.GEMINI_API_KEY,
-  model = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+  model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 if (!key) {
   console.error("GEMINI_API_KEY is missing. Add it to .env.local.");
   process.exit(1);

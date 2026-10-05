@@ -70,7 +70,7 @@ Each person explicitly enables their own device. Preferences default off. Quiet 
 
 ## AI questions
 
-GEMINI_SETUP.md covers migration 009, the server-only Gemini key, free-project setup, request caps and the manual `npm run gemini:check` command. Brain Duel uses shared, unseen bank questions before one batched generation; daily questions and Would You Rather share a monthly content pack. Development and automated tests always use fixtures. Settings > AI Questions shows configuration, usage and saved content, with a shared AI toggle and timezone.
+GEMINI_SETUP.md covers migrations 009 and 010, the server-only Gemini key, free-project setup, request caps and the manual `npm run gemini:check` command. Brain Duel requires a two-player lobby with host-only topic, Easy/Medium/Hard and question-count setup; both players must be present and ready. New online matches use unseen Gemini questions or one generated batch, never hardcoded trivia; daily questions and Would You Rather share a monthly content pack. Development and automated tests always use fixtures. Settings > AI Questions shows configuration, usage and saved content, with a shared AI toggle and timezone.
 
 ## Artwork and sound
 

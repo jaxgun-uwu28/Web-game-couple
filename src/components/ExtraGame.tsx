@@ -19,10 +19,11 @@ import {
 import { recordPreview } from "@/lib/preview-progress";
 import { gameRequest } from "@/lib/game-request";
 import GameSurface from "./GameSurface";
+import BrainDuel from "./BrainDuel";
 import type { Stroke } from "./Doodle";
 import { topics, cleanTopic } from "@/lib/ai/topics";
 export type ExtraKind = "draw" | "know" | "trivia";
-export default function ExtraGame({
+function ExtraGameInternal({
   kind,
   db,
   session,
@@ -492,5 +493,21 @@ export default function ExtraGame({
         </>
       )}
     </div>
+  );
+}
+
+export default function ExtraGame(
+  props: Parameters<typeof ExtraGameInternal>[0],
+) {
+  return props.kind === "trivia" && !props.preview ? (
+    <BrainDuel
+      db={props.db}
+      session={props.session}
+      slot={props.slot}
+      names={props.names}
+      back={props.back}
+    />
+  ) : (
+    <ExtraGameInternal {...props} />
   );
 }

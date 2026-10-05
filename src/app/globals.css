@@ -1306,3 +1306,10 @@ html[data-time="dusk"] .anniversary-page {
     transform: none;
   }
 }
+
+.brain-lobby .brain-setup { max-width: 680px; margin: 24px auto; text-align: left; }
+.brain-lobby h2 { display: flex; align-items: center; gap: 12px; }
+.brain-lobby select { width:100%; min-height:48px; border-radius:12px; padding:12px; color:var(--ink); background:var(--paper); font:inherit; }
+.lobby-players { list-style:none; padding:0; margin:16px 0 24px; }
+.lobby-players li { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; padding:12px 0; border-bottom:1px solid var(--line); }
+.lobby-players span { display:flex; align-items:center; gap:8px; }

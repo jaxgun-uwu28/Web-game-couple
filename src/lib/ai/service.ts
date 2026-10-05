@@ -83,13 +83,18 @@ export async function startDuel(
   if (existing) return { game: existing };
   const topic = cleanTopic(options.topic),
     count = [3, 5, 10].includes(options.count) ? options.count : 5,
-    difficulty = options.difficulty === "Easy" ? "Easy" : "Easy-Medium";
+    difficulty = ["Easy", "Medium", "Hard"].includes(options.difficulty)
+      ? options.difficulty
+      : "Medium";
   const lease = savedOnly
     ? await rpc(db, "ai_claim_saved", { c, t: topic })
     : await rpc(db, "ai_claim", { c, k: "trivia", t: topic });
   if (!lease) return { pending: true };
   try {
     let { available, history } = await bank(db, c, topic, difficulty);
+    available = available.filter(
+      (q) => (q as { source?: string }).source !== "fallback",
+    );
     if (available.length < count) {
       const prefs = await couple(db, c);
       const generated =
@@ -142,25 +147,13 @@ export async function startDuel(
         if (error) throw new Error("AI_DATABASE");
       }
       ({ available } = await bank(db, c, topic, difficulty));
+      available = available.filter(
+        (q) => (q as { source?: string }).source !== "fallback",
+      );
       if (available.length < count) {
-        const fallback = [
-          ...seedTrivia.filter((q) => q.topic === topic),
-          ...seedTrivia.filter((q) => q.topic !== topic),
-        ];
-        const { error } = await db.from("question_bank").upsert(
-          fallback.map((q) => ({
-            topic,
-            difficulty,
-            question: q.question,
-            options: q.options,
-            correct_index: q.correctIndex,
-            fun_fact: q.funFact,
-            hash: questionHash(q.question),
-            source: "fallback",
-          })),
-          { onConflict: "topic,hash", ignoreDuplicates: true },
+        throw new Error(
+          "Gemini questions are unavailable. Check Settings → AI Questions and retry the lobby.",
         );
-        if (error) throw new Error("AI_DATABASE");
       }
     }
     return {
@@ -213,16 +206,22 @@ export async function contentPack(
     return { daily: d.data, choice: w.data };
   };
   let rows = await read();
+  const needsAI = () =>
+    prefs.use_ai_questions &&
+    (rows.daily.some((q) => q.date >= today && q.source !== "ai") ||
+      rows.choice.some((q) => q.date >= today && q.source !== "ai"));
   if (
+    needsAI() ||
     rows.daily.filter((q) => q.date >= today).length < 7 ||
     rows.choice.filter((q) => q.date >= today).length < 7
   ) {
-    const lease = await rpc(db, "ai_claim", { c, k: "content", t: "monthly" });
+    const lease = await rpc(db, "ai_content_claim", { c });
     if (lease) {
       try {
         // Re-read under the lease: a stale app-open must not create a second pack.
         rows = await read();
         if (
+          needsAI() ||
           rows.daily.filter((q) => q.date >= today).length < 7 ||
           rows.choice.filter((q) => q.date >= today).length < 7
         ) {
@@ -281,11 +280,14 @@ export async function contentPack(
             .slice(0, 30);
           const dateStart = (items: { date: string }[]) =>
             items[0]?.date >= today ? addDay(items[0].date, 1) : today;
-          const dStart = dateStart(rows.daily),
-            wStart = dateStart(rows.choice);
+          const upgrading = needsAI();
+          const dStart = upgrading ? today : dateStart(rows.daily),
+            wStart = upgrading ? today : dateStart(rows.choice);
           if (ds.length) {
-            const { error } = await db.from("daily_questions").insert(
-              ds.map((x, i) => ({
+            const { error } = await db.rpc("ai_promote_content", {
+              c,
+              ws: [],
+              ds: ds.map((x, i) => ({
                 couple_id: c,
                 date: addDay(dStart, i),
                 text: x.text,
@@ -293,12 +295,14 @@ export async function contentPack(
                 hash: questionHash(x.text),
                 source: x.source,
               })),
-            );
+            });
             if (error) throw new Error("AI_DATABASE");
           }
           if (ws.length) {
-            const { error } = await db.from("would_you_rather").insert(
-              ws.map((x, i) => ({
+            const { error } = await db.rpc("ai_promote_content", {
+              c,
+              ds: [],
+              ws: ws.map((x, i) => ({
                 couple_id: c,
                 date: addDay(wStart, i),
                 option_a: x.optionA,
@@ -306,7 +310,7 @@ export async function contentPack(
                 hash: questionHash([x.optionA, x.optionB].sort().join(" ")),
                 source: x.source,
               })),
-            );
+            });
             if (error) throw new Error("AI_DATABASE");
           }
         }

@@ -1,8 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { isPrivateEmail } from "@/lib/private-auth";
-import { aiAuth } from "@/lib/ai/auth";
-import { startDuel } from "@/lib/ai/service";
 export const maxDuration = 20;
 export async function POST(req: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -54,14 +52,9 @@ export async function POST(req: Request) {
     const { id, action, kind, duration, topic, count, difficulty, savedOnly } =
       JSON.parse(body);
     if (kind === "trivia" && !id) {
-      const { admin, coupleId } = await aiAuth(req);
       return NextResponse.json(
-        await startDuel(
-          admin,
-          coupleId,
-          { topic, count, difficulty },
-          savedOnly === true,
-        ),
+        { error: "Join the Brain Duel lobby first." },
+        { status: 400 },
       );
     }
     const { data, error } = await db.rpc(

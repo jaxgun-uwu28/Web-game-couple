@@ -28,5 +28,5 @@ export function cleanTopic(value: unknown) {
 export type DuelOptions = {
   topic: string;
   count: 3 | 5 | 10;
-  difficulty: "Easy" | "Easy-Medium";
+  difficulty: "Easy" | "Medium" | "Hard" | "Easy-Medium";
 };

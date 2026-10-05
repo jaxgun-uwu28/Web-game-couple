@@ -409,16 +409,20 @@ test("Database locks, global budgets, private answers, replay protection and rep
       'update games set state=state||\'{"status":"draw"}\'::jsonb where id=$1',
       [two.game.id],
     );
-    const fallback = await startDuel(
-      admin,
-      c,
-      { topic: "Dinosaurs", count: 10, difficulty: "Easy" },
-      false,
-      async () => null,
+    await assert.rejects(
+      startDuel(
+        admin,
+        c,
+        { topic: "Dinosaurs", count: 10, difficulty: "Easy" },
+        false,
+        async () => null,
+      ),
+      /Gemini questions are unavailable/,
     );
-    assert.equal(fallback.game.state.questions.length, 10);
-    assert.equal(fallback.game.state.source, "saved");
-    assert.ok(!JSON.stringify(fallback.game.state).includes("correct_index"));
+    // Apply the upgrade migration for content promotion tests below.
+    await db.exec(
+      await readFile("supabase/migrations/010_brain_lobby.sql", "utf8"),
+    );
     let packs = 0;
     const pack = async () => {
       packs++;
