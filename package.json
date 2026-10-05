@@ -4,19 +4,24 @@
   "private": true,
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "build": "node scripts/generate-assets.mjs && next build",
+    "build": "node scripts/generate-assets.mjs && node scripts/generate-app-icons.mjs && node scripts/prepare-sw.mjs && next build",
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "seed": "node scripts/seed.mjs",
     "assets:generate": "node scripts/generate-assets.mjs",
-    "assets:watch": "node scripts/watch-assets.mjs"
+    "assets:watch": "node scripts/watch-assets.mjs",
+    "android:prepare": "node scripts/prepare-native.mjs && node scripts/generate-android-art.mjs && cap sync android",
+    "android:key": "node scripts/android-signing.mjs",
+    "android:build": "node scripts/build-android.mjs",
+    "push:keys": "node scripts/generate-push-keys.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
     "@capacitor/app": "^8.1.2",
     "@capacitor/camera": "^8.2.5",
     "@capacitor/core": "^8.5.2",
+    "@capacitor/filesystem": "^8.1.4",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/local-notifications": "^8.3.1",
     "@capacitor/push-notifications": "^8.1.3",
@@ -42,6 +47,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/web-push": "^3.6.4",
+    "fake-indexeddb": "^6.2.5",
     "prettier": "^3.9.9",
     "tsx": "^4.20.0",
     "typescript": "^5.8.3"

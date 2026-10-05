@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-04T16:23:10.2547663Z",
+  "generatedAt": "2026-10-04T17:21:26Z",
   "title": "Design System: Our Little Arcade — pink keepsake design",
   "extensions": {
     "colorMeta": {
@@ -230,7 +230,7 @@
       "provenance": "No fabricated couple photographs. Keep shipping artwork provenance and music attribution in CREDITS.md."
     },
     "scope": {
-      "stage": 4,
+      "stage": 5,
       "implementedSurface": [
         "Approved Stage 1 Home/setup and Us/Art Slots",
         "Play chooser, starts, Tic-Tac-Toe and Connect Four boards, HUD, result and scoreboard",
@@ -238,15 +238,57 @@
         "Honest Memories/Notes Stage 4 placeholder destinations",
         "Block Hearts Duel start/duration, ready lobby, shared clock, separate 8 by 8 boards, tray/anchor controls, partner preview and result",
         "Stage 3 daily sealed questions, paired Would You Rather reveal/match percentage, mood check-ins/history and thinking-of-you foreground taps",
-        "Stage 4 Us wishlists, private claims, wish sheet/jar, photographic Memories and sealed text/photo/voice Notes"
+        "Stage 4 Us wishlists, private claims, wish sheet/jar, photographic Memories and sealed text/photo/voice Notes",
+        "Stage 5 Us installation guide, notification choices, quiet hours, permission opt-in, offline/update banners and Android shell"
       ],
       "laterStages": [
-        "Stage 5 packaging/background push excluded from this documentation pass",
         "Stage 6 remaining games excluded from this documentation pass"
       ],
-      "verificationBoundary": "Stage 4 independent review returned ship within local-preview scope. Hosted migration 006 and two-account privacy/media acceptance remain pending. Earlier hosted acceptance limits remain; no deployment, PWA or APK completion claim. Concurrent Stage 5 work is excluded.",
+      "verificationBoundary": "Stage 5 independent review returned ship within web scope after resolving one saved-preference loading/error defect. Installation captures cover 360/768/1280 targets in the inherited night palette; daylight is source-checked only. The signed APK build/signature are reported verified and Capacitor points to https://web-game-couple.vercel.app/. Physical-device installation, native captures, Firebase setup and real push delivery remain unverified. Earlier stage-specific acceptance boundaries remain historical records. Stage 6 is excluded.",
       "preview": "Pass-and-play games and local session wins clear on reload/sign-out; no online game data saved. Stage 1 anniversary remains device-local and preview art tab-local.",
       "personalData": "No baked-in personal names, preferences or anniversary date; optional nicknames are entered in Us."
+    },
+    "installation": {
+      "surface": "Stage 5 installation and notification settings in Us; Operate mode",
+      "direction": "Preserve the approved pink keepsake world, Fredoka/Nunito typography, token-bound surfaces and cherry pill actions. No new visual identity or normative tokens.",
+      "layout": {
+        "maxWidth": "720px",
+        "padding": "28px 0",
+        "margin": "32px 0",
+        "separation": "1px var(--line) rules above and below",
+        "heading": "clamp(1.5rem,3vw,2rem)",
+        "form": "Grid with 16px gaps; labeled 48px inputs/selects, 16px field corners and inherited sheet/ink tokens",
+        "actions": "Flex row with 16px gap, wrapping as space requires; 20px top margin",
+        "checks": "Labeled 24px checkbox marks using var(--cherry); inherit generous check-row targets",
+        "guide": "Disclosure summary with 48px minimum height and 16px vertical padding",
+        "banners": "Butter/ink surface, 24px corners, 20px padding and 16px gap; wraps on narrow screens",
+        "responsive": "Inherited desktop rail, tablet icon rail and safe-area mobile bottom navigation; installation form stays in normal document flow"
+      },
+      "states": {
+        "loading": "Polite saved-choice loading status; fieldset, save and enable controls disabled until preferences are ready",
+        "loadFailure": "Alert explains saved choices failed to load and provides Retry saved choices; readiness stays false to prevent default choices overwriting saved preferences",
+        "busy": "Preference fieldset and enable control are disabled during actions",
+        "feedback": "Action failures use alert role; completed actions use status role",
+        "permission": "Only explicit Enable this device or native reminder actions request notification permission; preview returns explanatory feedback without requesting permission",
+        "install": "Install app appears only when beforeinstallprompt is available; otherwise platform disclosure gives installation guidance",
+        "updates": "Offline status and explicit Update app action reuse token surfaces; service worker registration is production-web only"
+      },
+      "privacyCopy": "Claims and Secret Ideas never send shared notifications. Updates use a discreet message without private note or photo content.",
+      "nativeShell": {
+        "appId": "com.ourlittlearcade.app",
+        "origin": "https://web-game-couple.vercel.app/",
+        "transport": "HTTPS remote origin, cleartext disabled, offline.html error path",
+        "appearance": "Incumbent warm canvas Android background and strawberry splash/status background; original geometric heart/gamepad art",
+        "behavior": "Best-effort native back handling and light button haptics; explicit native push and anniversary-reminder actions",
+        "acceptance": "Signed APK build and signature reported verified; real-device installation, WebView behavior and notifications are unverified"
+      },
+      "verification": {
+        "disposition": "Ship within web scope after the reported independent review's single material loading/error issue was resolved",
+        "record": ".impeccable/review/installation-verification.md",
+        "captures": ".impeccable/review/installation/{desktop,desktop-form,tablet,tablet-form,mobile,mobile-form,mobile-bottom}.png",
+        "themeCoverage": "All available captures use the inherited night palette; daylight inheritance checked in source only",
+        "boundary": "Source and existing web captures document the surface. No fresh browser interaction, hosted preference round trip, real notification delivery or native-device acceptance is certified by this documentation pass. Stage 6 is excluded."
+      }
     },
     "arcade": {
       "surface": "Stage 2 arcade within the approved pink keepsake world",
@@ -737,6 +779,7 @@
     "artwork": "Artwork uses Slot/useAsset: signed private app-art images, generated local manifest, then icon/gradient fallback. No fabricated couple photographs.",
     "stageBoundary": "Stage 2 extends the approved keepsake world into a small arcade. Play uses two cartridge entries: a strawberry Tic-Tac-Toe with cross/ring pieces and a lavender Connect Four with cross/heart tokens. Each opens a focused start screen, then a tactile board, turn HUD, all-time rivalry ribbon and result screen. Boards use geometry rather than stock illustrations; optional artwork resolves through existing slots. Game sound stays off by default; a short synthesized tap sound needs no external audio asset. A single falling confetti moment marks a result, disabled with reduced motion. Online identity comes from the two linked account seats; nicknames are optional and entered in Us. Preview explicitly uses pass-and-play on this device. Memories and Notes have honest later-stage landing screens; mood, nudges and wishlists remain deferred.",
     "connectionPages": "Daily questions remain beside the anniversary on their lavender page. Would You Rather uses a butter/lavender pair of large choice tiles, followed by a quiet shared reveal and match percentage. Mood uses labeled Lucide icons in a horizontal picker, an optional note and expandable history. A full-width peach ribbon holds Thinking of you. Activities stack on phones and tablets to keep controls generous. Night uses the existing plum tokens. Preview seat controls are explicitly local; online identity remains the authenticated profile. No new external artwork or fonts are needed.",
-    "keepsakePages": "Wishlists extend Us with named tabs, paper wish rows, heart levels, an animated butter wish-jar pick and a focused bottom sheet. Memories uses a chronological photo-led album, with captions in the existing handwritten face. Notes uses peach envelopes and white reading paper. Existing tokens, type and 28px keepsake corners remain authoritative. Every private upload is compressed/rasterized; absent photos use honest empty states. Secret ideas and claims have no shared notification or broadcast. Date seals and daily photo swaps are enforced before content or signed media reaches the other account."
+    "keepsakePages": "Wishlists extend Us with named tabs, paper wish rows, heart levels, an animated butter wish-jar pick and a focused bottom sheet. Memories uses a chronological photo-led album, with captions in the existing handwritten face. Notes uses peach envelopes and white reading paper. Existing tokens, type and 28px keepsake corners remain authoritative. Every private upload is compressed/rasterized; absent photos use honest empty states. Secret ideas and claims have no shared notification or broadcast. Date seals and daily photo swaps are enforced before content or signed media reaches the other account.",
+    "installation": "Stage 5 extends Us with installation guidance, opt-in notification choices and quiet hours, inherited from the same typography and palette. The public offline shell never stores private server responses. Android packaging uses the deployed HTTPS origin and an original heart/gamepad geometric icon; no new visual system is introduced."
   }
 }

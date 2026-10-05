@@ -37,6 +37,7 @@ import {
   KeepsakeBackup,
 } from "./Keepsakes";
 import Ambience from "./Ambience";
+import InstallSupport, { NativeBridge, OfflineShell } from "./InstallSupport";
 import dynamic from "next/dynamic";
 const PlayArcade = dynamic(() => import("./PlayArcade"), {
   loading: () => <p className="opening">Opening the arcade…</p>,
@@ -395,13 +396,13 @@ export default function StageOne() {
                     <button
                       className="icon-button"
                       aria-label="Sign out"
-                      onClick={() => {
+                      onClick={async() => {
                         if (preview) {
                           setPreview(false);
                           setLoaded(false);
                           setAnniversary(null);
                           setMessage("");
-                        } else void db?.auth.signOut();
+                        } else {const key=localStorage.getItem('arcade-device-key');if(key&&db&&session)await db.from('push_devices').delete().eq('user_id',session.user.id).eq('device_key',key);await db?.auth.signOut();}
                         setCoupleId(null);
                         setProfiles([]);
                         setNickname("");
@@ -413,7 +414,9 @@ export default function StageOne() {
                   )}
                 </div>
               </header>
+              <NativeBridge back={() => { if (tab === "home") return false; setTab("home"); return true; }} />
               <main id="main">
+                <OfflineShell />
                 {(error || message) && (
                   <div
                     className={error ? "notice error" : "notice"}
@@ -568,6 +571,12 @@ export default function StageOne() {
                     </section>
                     <Wishlists />
                     <KeepsakeBackup />
+                    <InstallSupport
+                      db={db}
+                      session={session}
+                      preview={preview}
+                      anniversary={anniversary}
+                    />
                     <ArtSettings />
                   </>
                 ) : tab === "memories" ? (

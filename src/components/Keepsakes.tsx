@@ -40,6 +40,14 @@ import {
 } from "@/lib/keepsakes";
 import { manilaDay } from "@/lib/games";
 import { Slot } from "./ArtSlots";
+import { Capacitor } from "@capacitor/core";
+import NativePhotoButton from "./NativePhotoButton";
+import {
+  enqueueWish,
+  flushWishes,
+  pendingWishes,
+  clearPending,
+} from "@/lib/outbox";
 type State = {
   lists: WishList[];
   wishes: Wish[];
@@ -72,9 +80,12 @@ type ContextType = State & {
   upload: (file: Blob, kind?: string) => Promise<string>;
   signed: (path: string) => Promise<string>;
   open: (id: string) => Promise<NoteBody>;
+  pending: number;
+  retry: () => Promise<void>;
+  discard: () => Promise<void>;
 };
 const Context = createContext<ContextType | null>(null);
-function useKeepsakes() {
+export function useKeepsakes() {
   const c = useContext(Context);
   if (!c) throw new Error("Keepsakes provider is missing");
   return c;
@@ -97,10 +108,12 @@ export function KeepsakeProvider({
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [message, setMessage] = useState("");
+  const [pending, setPending] = useState(0);
   const lock = useRef(false),
     bodies = useRef<Record<string, NoteBody>>({}),
     blobs = useRef<Record<string, string>>({});
   const user = preview ? `preview-${seat}` : session?.user.id || "";
+  useEffect(()=>()=>{delete document.documentElement.dataset.arcadeTheme;},[]);
   const refresh = useCallback(async () => {
     if (preview || !db || !session || !couple) return;
     const tables = [
@@ -143,6 +156,28 @@ export function KeepsakeProvider({
       window.removeEventListener("online", online);
     };
   }, [refresh]);
+  const retry = useCallback(async () => {
+    if (preview || !db || !user || !couple) return;
+    try {
+      await flushWishes(db, user, couple);
+      setPending((await pendingWishes(user)).length);
+      await refresh();
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Queued wishes could not sync. Retry when connected.",
+      );
+    }
+  }, [db, user, couple, preview, refresh]);
+  useEffect(() => {
+    if (preview || !user) return;
+    void pendingWishes(user).then((j) => setPending(j.length));
+    if (navigator.onLine) void retry();
+    const online = () => void retry();
+    window.addEventListener("online", online);
+    return () => window.removeEventListener("online", online);
+  }, [user, retry, preview]);
   useEffect(() => {
     if (preview || !db || !session || !couple) return;
     const channel = db.channel(`keepsakes:${couple}`, {
@@ -185,7 +220,13 @@ export function KeepsakeProvider({
       await fn();
       await refresh();
       navigator.vibrate?.(12);
-      setMessage("Saved in your private keepsake.");
+      const queued = preview ? 0 : (await pendingWishes(user)).length;
+      setPending(queued);
+      setMessage(
+        queued
+          ? "Saved on this device. Queued wishes will sync when connected."
+          : "Saved in your private keepsake.",
+      );
       return true;
     } catch (e) {
       setError(
@@ -270,6 +311,12 @@ export function KeepsakeProvider({
         upload,
         signed,
         open,
+        pending,
+        retry,
+        discard: async () => {
+          await clearPending(user);
+          setPending(0);
+        },
       }}
     >
       <PreviewBodies.Provider value={bodies.current}>
@@ -283,6 +330,24 @@ export function KeepsakeFeedback() {
   const c = useKeepsakes();
   return (
     <>
+      {c.pending > 0 && (
+        <div className="install-banner" role="status">
+          <span>
+            {c.pending} wish{c.pending === 1 ? "" : "es"} waiting to sync on
+            this device.
+          </span>
+          <button
+            className="secondary"
+            disabled={c.busy}
+            onClick={() => void c.retry()}
+          >
+            Retry sync
+          </button>
+          <button className="secondary" onClick={() => void c.discard()}>
+            Discard queued wishes
+          </button>
+        </div>
+      )}
       {c.preview && (
         <div className="keepsake-seats">
           <span>Local preview</span>
@@ -307,7 +372,7 @@ export function KeepsakeFeedback() {
     </>
   );
 }
-function Photo({ path, alt }: { path: string | null; alt: string }) {
+export function Photo({ path, alt }: { path: string | null; alt: string }) {
   const c = useKeepsakes(),
     [url, setUrl] = useState(""),
     [failed, setFailed] = useState(false);
@@ -437,8 +502,31 @@ export function KeepsakeBackup() {
                 );
               zip.file("media/" + path.split("/").at(-1), await r.blob());
             }
-            const blob = await zip.generateAsync({ type: "blob" }),
-              url = URL.createObjectURL(blob),
+            const blob = await zip.generateAsync({ type: "blob" });
+            if (Capacitor.isNativePlatform()) {
+              const { Filesystem, Directory } =
+                  await import("@capacitor/filesystem"),
+                { Share } = await import("@capacitor/share");
+              const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () =>
+                  resolve(String(reader.result).split(",")[1]);
+                reader.onerror = () =>
+                  reject(new Error("Backup could not be prepared."));
+                reader.readAsDataURL(blob);
+              });
+              const result = await Filesystem.writeFile({
+                path: "our-little-arcade-backup.zip",
+                data: base64,
+                directory: Directory.Cache,
+              });
+              await Share.share({
+                title: "Our Little Arcade backup",
+                files: [result.uri],
+              });
+              return;
+            }
+            const url = URL.createObjectURL(blob),
               a = document.createElement("a");
             a.href = url;
             a.download = "our-little-arcade-backup.zip";
@@ -588,6 +676,32 @@ export function Wishlists() {
     const ok = await c.run(async () => {
       if (!list) throw new Error("Create a list first.");
       if (url && !safeLink(url)) throw new Error("Use an http or https link.");
+      if (!c.preview && !navigator.onLine) {
+        if (editing)
+          throw new Error(
+            "Wish edits need a connection. Your changes are still here.",
+          );
+        if (!title.trim()) throw new Error("Give your wish a title.");
+        await enqueueWish(
+          c.user,
+          c.couple!,
+          {
+            id: crypto.randomUUID(),
+            list_id: list.id,
+            created_by: c.user,
+            title: title.trim(),
+            note,
+            url: safeLink(url),
+            price: price ? Number(price) : null,
+            currency: currency.toUpperCase(),
+            priority,
+            category,
+            planned_date: planned || null,
+          },
+          file ? await compressPhoto(file) : null,
+        );
+        return;
+      }
       const data = {
         title: title.trim(),
         note,
@@ -1016,6 +1130,11 @@ export function Wishlists() {
                 <X />
               </button>
             </div>
+            {c.error && (
+              <p className="error" role="alert">
+                {c.error}
+              </p>
+            )}
             <form onSubmit={save}>
               <label>
                 Wish title
@@ -1102,6 +1221,7 @@ export function Wishlists() {
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
                 />
               </label>
+              <NativePhotoButton onPhoto={setFile} />
               <button disabled={c.busy}>
                 {c.busy ? "Saving…" : "Save wish"}
               </button>
@@ -1165,10 +1285,12 @@ export function Memories() {
           <input
             type="file"
             accept="image/*"
-            required
+            required={!file}
             onChange={(e) => setFile(e.target.files?.[0] || null)}
           />
         </label>
+        <NativePhotoButton onPhoto={setFile} />
+        {file && <p className="small">Selected: {file.name}</p>}
         <label>
           Caption
           <textarea
@@ -1423,6 +1545,12 @@ export function Notes() {
               }}
             />
           </label>
+          <NativePhotoButton
+            onPhoto={(photo) => {
+              setFile(photo);
+              setKind("photo");
+            }}
+          />
           <button
             type="button"
             className="secondary"

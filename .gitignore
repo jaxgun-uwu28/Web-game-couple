@@ -7,3 +7,12 @@ playwright-report/
 *.tsbuildinfo
 impeccable-source/
 .impeccable-runtime/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/google-services.json
+.local-signing/
+*.jks
+*.keystore
+dist-apk/

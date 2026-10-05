@@ -22,3 +22,5 @@ Daily questions remain beside the anniversary on their lavender page. Would You 
 ## Stage 4 keepsakes
 
 Wishlists extend Us with named tabs, paper wish rows, heart levels, an animated butter wish-jar pick and a focused bottom sheet. Memories uses a chronological photo-led album, with captions in the existing handwritten face. Notes uses peach envelopes and white reading paper. Existing tokens, type and 28px keepsake corners remain authoritative. Every private upload is compressed/rasterized; absent photos use honest empty states. Secret ideas and claims have no shared notification or broadcast. Date seals and daily photo swaps are enforced before content or signed media reaches the other account.
+
+Stage 5 extends Us with installation guidance, opt-in notification choices and quiet hours, inherited from the same typography and palette. The public offline shell never stores private server responses. Android packaging uses the deployed HTTPS origin and an original heart/gamepad geometric icon; no new visual system is introduced.

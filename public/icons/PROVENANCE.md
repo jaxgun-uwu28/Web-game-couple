@@ -1,0 +1,2 @@
+Original geometric heart/gamepad SVG in scripts/generate-app-icons.mjs. Drop-in icon-foreground and icon-background override it at build time. No external image or personal photograph is used by the fallback.
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 354 144 242c-75-83 46-175 112-79 66-96 187-4 112 79Z" fill="#fff8f3" stroke="#9d304f" stroke-width="22" stroke-linejoin="round"/><path d="M185 218h45m-22-22v44m86-18h1m27-24h1" stroke="#9d304f" stroke-width="17" stroke-linecap="round"/></svg>
