@@ -296,7 +296,7 @@ export default function StageOne() {
         required
       />
       <p className="small">
-        Just your anniversary date. You can change it in Us anytime.
+        Just your anniversary date. You can change it in Settings anytime.
       </p>
       <div className="form-actions">
         <button disabled={busy}>
@@ -802,7 +802,16 @@ export default function StageOne() {
                         </p>
                         <button
                           className="secondary"
-                          onClick={() => setTab("us")}
+                          onClick={() => {
+                            setNickname(
+                              profiles.find(
+                                (p) =>
+                                  p.id ===
+                                  (preview ? "preview" : session?.user.id),
+                              )?.nickname || "",
+                            );
+                            setTab("settings");
+                          }}
                         >
                           <ImagePlus size={17} />
                           Choose our artwork
