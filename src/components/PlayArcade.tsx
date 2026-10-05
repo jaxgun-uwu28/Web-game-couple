@@ -1,4 +1,5 @@
 "use client";
+import GameCover from "./GameCover";
 import { useGamePresence } from "@/lib/use-game-presence";
 import { gameRequest } from "@/lib/game-request";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -17,9 +18,6 @@ import {
   Wifi,
   Gamepad2,
   Sparkles,
-  Layers3,
-  Pencil,
-  Brain,
 } from "lucide-react";
 import { type Game, registry, arcadeRegistry } from "@/lib/games";
 import dynamic from "next/dynamic";
@@ -382,30 +380,7 @@ export default function PlayArcade({
                     }
                     alt={`${g.name} cover`}
                   >
-                    <div className={`cartridge-symbols ${g.id}`}>
-                      {g.id === "block" ? (
-                        <Layers3 size={75} />
-                      ) : g.id === "draw" ? (
-                        <Pencil size={75} />
-                      ) : g.id === "know" ? (
-                        <Heart size={75} />
-                      ) : g.id === "trivia" ? (
-                        <Brain size={75} />
-                      ) : g.id === "tic" ? (
-                        <>
-                          <X />
-                          <Circle />
-                          <X />
-                        </>
-                      ) : (
-                        <>
-                          <Heart />
-                          <X />
-                          <Heart />
-                          <X />
-                        </>
-                      )}
-                    </div>
+                    <GameCover kind={g.id} />
                   </Slot>
                 </div>
                 <div className="cartridge-label">
@@ -432,7 +407,14 @@ export default function PlayArcade({
               onClick={() =>
                 void work(async () => {
                   if (!preview && game) await attendance.exit();
-                  if (preview && game && !finished) setGames(gs=>gs.map(g=>g.id===game.id?{...g,state:{...g.state,status:"cancelled"}}:g));
+                  if (preview && game && !finished)
+                    setGames((gs) =>
+                      gs.map((g) =>
+                        g.id === game.id
+                          ? { ...g, state: { ...g.state, status: "cancelled" } }
+                          : g,
+                      ),
+                    );
                   window.history.back();
                 })
               }
@@ -631,14 +613,18 @@ export default function PlayArcade({
                   </div>
                   <Heart size={27} />
                   <h3>
-                    {game.state.status === "cancelled" ? "Game cancelled." : game.state.winner === null
-                      ? "A perfect excuse for a rematch."
-                      : "One win. Two happy hearts."}
+                    {game.state.status === "cancelled"
+                      ? "Game cancelled."
+                      : game.state.winner === null
+                        ? "A perfect excuse for a rematch."
+                        : "One win. Two happy hearts."}
                   </h3>
                   <p>
-                    {game.state.status === "cancelled" ? "A player left. This session does not count toward rewards." : preview
-                      ? "Added to this session’s scoreboard."
-                      : "Saved to your couple scoreboard."}
+                    {game.state.status === "cancelled"
+                      ? "A player left. This session does not count toward rewards."
+                      : preview
+                        ? "Added to this session’s scoreboard."
+                        : "Saved to your couple scoreboard."}
                   </p>
                   <button disabled={busy} onClick={() => void begin(kind)}>
                     <RotateCcw size={18} />

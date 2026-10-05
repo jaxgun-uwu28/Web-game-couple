@@ -338,7 +338,7 @@ export default function StageOne() {
             <aside className="side-rail">
               <a href="/" className="brand">
                 <span>
-                  <Heart size={23} />
+                  <img src="/icons/icon-192.png" width={54} height={54} alt="" />
                 </span>
                 <b>
                   our little

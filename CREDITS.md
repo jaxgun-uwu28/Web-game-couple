@@ -6,8 +6,8 @@
 - DM Sans: https://github.com/googlefonts/dm-fonts — SIL OFL 1.1.
 - Caveat: https://github.com/googlefonts/caveat — SIL OFL 1.1.
 - Lucide React icons: https://lucide.dev/license — ISC.
-- Favicon: original geometric heart created for this project.
+- Favicon and default website/PWA/Android launcher logo: user-supplied kitty doodle JPG, preserved at public/icons/kitty-original.jpg. White JPEG background preserved; blank margins trimmed during icon sizing. Original artist/license not supplied.
 - Background music: user-supplied `Night-Train_chosic.com_(chosic.com).mp3`, self-hosted as `public/audio/night-train.mp3`. Filename identifies Chosic (https://www.chosic.com/); artist and exact license were not supplied or independently verified. Preserve the original track's license/attribution when available.
 - Design guidance: https://impeccable.style and https://github.com/pbakaus/impeccable. Applied the user-installed Impeccable plugin, ran its context loader and detector, and completed independent review/documentation. The npm installer failed to read its ZIP; the official repository was downloaded as fallback. Initial engine cache permissions were resolved by using a workspace cache. No comp-led fidelity certification is claimed.
-- PWA/Android icons and launch art: original code-native geometric heart/gamepad from scripts/generate-app-icons.mjs; drop-in artwork overrides the fallback. No external image is used.
+- PWA/Android icons and launch art: generated from the user-supplied kitty doodle; drop-in artwork overrides the default.
 - 36 questions: original conversation prompts authored for this app; not a reproduction of a published questionnaire.

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Our Little Arcade",
   description: "A little place to play, make things, and be together.",
   robots: { index: false, follow: false },
-  icons: { icon: "/favicon.svg", apple: "/icons/icon-192.png" },
+  icons: { icon: "/icons/favicon.png", apple: "/icons/icon-192.png" },
   appleWebApp: {
     capable: true,
     title: "Little Arcade",

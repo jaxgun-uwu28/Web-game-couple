@@ -100,28 +100,6 @@
   place-items: center;
   padding: 0;
 }
-.cartridge-symbols {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  transform: rotate(-8deg);
-  color: var(--cherry);
-}
-.cartridge-symbols svg {
-  width: 60px;
-  height: 60px;
-  stroke-width: 4;
-}
-.cartridge-symbols.connect {
-  display: grid;
-  grid-template-columns: repeat(2, 50px);
-  gap: 14px;
-  transform: rotate(8deg);
-}
-.cartridge-symbols.connect svg {
-  width: 45px;
-  height: 45px;
-}
 .cartridge-label {
   padding: 25px 30px 30px;
 }
@@ -543,10 +521,6 @@ img.token-art {
     font-size: 12px;
     margin-bottom: 18px;
   }
-  .cartridge-symbols svg {
-    width: 49px;
-    height: 49px;
-  }
   .board-station {
     padding: 17px 10px 24px;
     border-radius: 24px;
@@ -623,3 +597,38 @@ img.token-art {
 .cartridge { display:flex; flex-direction:column; }
 .cartridge-label { flex:1; display:flex; flex-direction:column; }
 .cartridge-label span { margin-top:auto; }
+
+/* Full-width covers avoid shrinking to the size of an icon in a flex card. */
+html .cartridge.block { align-items:stretch; gap:0; }
+html .cartridge .cartridge-art { width:calc(100% - 40px); align-self:center; flex:none; height:190px; margin:20px 20px 0; background:transparent; color:var(--cherry); }
+.cartridge-art > .art-slot { width:100%; min-width:0; height:100%; }
+.cartridge-art .slot-fallback { background:transparent; }
+.cover-board { display:grid; color:var(--cherry); }
+.cover-tic { width:156px; height:156px; grid-template-columns:repeat(3,1fr); transform:rotate(-7deg); }
+.cover-tic > div { display:grid; place-items:center; border:solid var(--cherry); border-width:0 2px 2px 0; }
+.cover-tic > div:nth-child(3n) { border-right:0; }
+.cover-tic > div:nth-child(n+7) { border-bottom:0; }
+.cover-tic svg { width:32px; height:32px; stroke-width:3; }
+.cover-connect { grid-template-columns:repeat(7,1fr); gap:7px; width:210px; padding:14px; border:3px solid currentColor; border-radius:16px; transform:rotate(5deg); }
+.cover-connect i { aspect-ratio:1; border:2px solid currentColor; border-radius:50%; opacity:.35; }
+.cover-connect i.filled { background:currentColor; opacity:1; }
+.cover-connect i.partner { background:var(--sheet); opacity:1; }
+.cover-blocks { display:flex; align-items:center; gap:22px; }
+.cover-piece { display:grid; grid-template-columns:repeat(2,24px); gap:4px; transform:rotate(-8deg); }
+.cover-piece i { width:24px; height:24px; border-radius:5px; background:currentColor; }
+.cover-piece.piece-1 { grid-template-columns:repeat(3,24px); transform:rotate(8deg); }
+.piece-1 i:nth-child(4),.piece-1 i:nth-child(5) { grid-column:2; }
+.cover-piece.piece-2 { grid-template-columns:24px; transform:rotate(-8deg); }
+.cover-drawing { width:210px; height:130px; position:relative; }
+.cover-drawing > svg:first-child { width:100%; height:100%; }
+.cover-drawing > svg:last-child { position:absolute; width:52px; height:52px; right:0; bottom:18px; transform:rotate(-12deg); }
+.cover-hearts { display:flex; align-items:center; }
+.cover-hearts svg { width:100px; height:100px; stroke-width:2; transform:rotate(-14deg); }
+.cover-hearts svg + svg { margin-left:-26px; transform:rotate(14deg); fill:var(--pink); }
+.cover-brain { display:flex; align-items:center; gap:20px; }
+.cover-brain svg { width:100px; height:100px; stroke-width:1.8; }
+.cover-brain i { width:14px; height:14px; border:3px solid currentColor; border-radius:50%; }
+.brand span:has(img) { overflow:hidden; background:#fff; transform:none; }
+.brand img { display:block; width:100%; height:100%; object-fit:contain; }
+@media(max-width:850px) { html .cartridge .cartridge-art { height:160px; } }
+@media(max-width:600px) { html .cartridge .cartridge-art { width:calc(100% - 32px); margin:16px 16px 0; height:160px; } }
