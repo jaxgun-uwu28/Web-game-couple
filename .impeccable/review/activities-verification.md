@@ -9,3 +9,4 @@ Date: 2026-10-05 (Asia/Manila).
 - No additional live Gemini requests or partner push notifications were sent.
 - Current desktop/mobile/Android captures remain absent. Independent finishing review is recapture; the known browser restriction was not bypassed. Fixture/build success does not certify rendered or physical-device acceptance.
 - The APK loads the hosted web app; this update changes no native launcher/configuration code and requires no new native build.
+- Published implementation commit e987dd8 to main. The deployed public service worker reports `arcade-shell-40813c671244`, matching the current source fingerprint with Linux checkout line endings. This confirms publication, not authenticated gameplay or visual acceptance.
