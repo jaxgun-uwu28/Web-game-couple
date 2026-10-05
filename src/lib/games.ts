@@ -36,6 +36,7 @@ export type Game = {
   id: string;
   kind: GameKind;
   state: {
+    pack?: string;
     status: string;
     turn: number;
     board?: number[];

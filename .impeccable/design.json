@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-04T17:21:26Z",
+  "generatedAt": "2026-10-05T02:53:31Z",
   "title": "Design System: Our Little Arcade — pink keepsake design",
   "extensions": {
     "colorMeta": {
@@ -193,6 +193,7 @@
           "--blush": "#493040",
           "--peach": "#65474c",
           "--lavender": "#493956",
+          "--butter": "#66512f",
           "--line": "#654756",
           "--leaf": "#493040",
           "--on-primary": "#382033",
@@ -780,6 +781,8 @@
     "stageBoundary": "Stage 2 extends the approved keepsake world into a small arcade. Play uses two cartridge entries: a strawberry Tic-Tac-Toe with cross/ring pieces and a lavender Connect Four with cross/heart tokens. Each opens a focused start screen, then a tactile board, turn HUD, all-time rivalry ribbon and result screen. Boards use geometry rather than stock illustrations; optional artwork resolves through existing slots. Game sound stays off by default; a short synthesized tap sound needs no external audio asset. A single falling confetti moment marks a result, disabled with reduced motion. Online identity comes from the two linked account seats; nicknames are optional and entered in Us. Preview explicitly uses pass-and-play on this device. Memories and Notes have honest later-stage landing screens; mood, nudges and wishlists remain deferred.",
     "connectionPages": "Daily questions remain beside the anniversary on their lavender page. Would You Rather uses a butter/lavender pair of large choice tiles, followed by a quiet shared reveal and match percentage. Mood uses labeled Lucide icons in a horizontal picker, an optional note and expandable history. A full-width peach ribbon holds Thinking of you. Activities stack on phones and tablets to keep controls generous. Night uses the existing plum tokens. Preview seat controls are explicitly local; online identity remains the authenticated profile. No new external artwork or fonts are needed.",
     "keepsakePages": "Wishlists extend Us with named tabs, paper wish rows, heart levels, an animated butter wish-jar pick and a focused bottom sheet. Memories uses a chronological photo-led album, with captions in the existing handwritten face. Notes uses peach envelopes and white reading paper. Existing tokens, type and 28px keepsake corners remain authoritative. Every private upload is compressed/rasterized; absent photos use honest empty states. Secret ideas and claims have no shared notification or broadcast. Date seals and daily photo swaps are enforced before content or signed media reaches the other account.",
-    "installation": "Stage 5 extends Us with installation guidance, opt-in notification choices and quiet hours, inherited from the same typography and palette. The public offline shell never stores private server responses. Android packaging uses the deployed HTTPS origin and an original heart/gamepad geometric icon; no new visual system is introduced."
+    "installation": "Stage 5 extends Us with installation guidance, opt-in notification choices and quiet hours, inherited from the same typography and palette. The public offline shell never stores private server responses. Android packaging uses the deployed HTTPS origin and an original heart/gamepad geometric icon; no new visual system is introduced.",
+    "togetherActivities": "Stage 6 extends existing cartridges with peach Draw & guess, blush Know me by heart and butter A little brain duel stations. Us adds Dates, Sketchbook, 36 questions, Countdowns, Silly stakes and Our year, with earned theme/sticker choices using existing colors and icons. Drawing paper and ink-pot grounds stay fixed cream #fff8f3 in both palettes; named fixed inks and a saving gate support readable, serialized marks. Night --butter is #66512f. Existing type, cherry controls and rounded paper remain authoritative.",
+    "togetherVerification": "Stage 6 remains uncommitted and unpublished at this documentation checkpoint. Full review accepted 80 required captures; 43 updated captures supported a scoped independent pass after the four material fixes. Disposition ship covers cream ink pots, one active Back to Play action, truthful preview/retry descriptions and distinct saving/live/completed drawing instructions, not the whole surface. All 29 tests passed before the copy/style batch; the subsequent production build passed. Hosted migration 008, live two-account behavior, device UI and push delivery remain unverified. Evidence: .impeccable/review/together-verification.md and together-verdict.md."
   }
 }

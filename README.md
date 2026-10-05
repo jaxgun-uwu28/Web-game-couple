@@ -1,144 +1,93 @@
 # Our Little Arcade
 
-Sign in with either provisioned account's email and password. Public signup is unavailable; the app and game route accept only the two configured private email addresses. Game requests use the latest session and refresh expired tokens. The sign-in update needs no database migration.
+Private couples app at https://web-game-couple.vercel.app/. Sign in with either provisioned account's email and password. No public signups or new invitation link is needed. Game requests resolve the current session and refresh expired tokens.
 
-## Block Hearts Duel
+## Current features
 
-Play now includes a timed 1v1 block puzzle with independent 8×8 boards. Choose 1, 2, 3 or 5 minutes; both players ready up before a shared countdown. Both receive the same piece sequence. Place pieces without rotation, clear full rows and columns, and compete for points: 10 per block, 100 per line, plus 50 per additional line cleared together. A blocked board locks its score while the other player continues. Ties are supported.
+- Home: editable anniversary, countdown and milestones, daily sealed questions, Would You Rather, mood history, thinking-of-you taps, latest-wish shortcut, optional music and weather.
+- Play: Tic-tac-toe, Connect Four, timed Block Hearts Duel, Draw & guess, Know me by heart and five-round trivia. Every online move is validated in Postgres. Quiz answers remain sealed until both people submit; only the artist can fetch the drawing word.
+- Memories: private compressed photos, captions, date timeline, daily photo swap and hearts. A swap stays hidden until both share that day.
+- Notes: text, optional photo or one-minute voice recording, dated seals and open-when envelopes. Recipient content and media are withheld by database/storage policies until the opening rules are satisfied.
+- Us: shared, personal, secret and custom wishlists; invisible gift claims, priorities, prices, links, photos, comments, reactions, ordering, wish jar and private backup. Date ideas with mood/weather filters and a picker, a shared sketchbook, 36 original conversation prompts, countdowns, optional silly stakes and annual memories recap live here too. Completed games earn server-derived XP and coins toward cosmetic theme/sticker thresholds. Installation and notification settings live here.
 
-For the already configured fresh project, run **`supabase/migrations/004_block_battle.sql` once** in Supabase SQL Editor. Keep your existing accounts and earlier migrations. Server functions validate placements, compute scores and enforce the deadline; private updates and polling refresh the partner board. Local preview supports switching between both seats. Hosted two-device acceptance requires this migration and both signed-in accounts.
-
-The cover art slot is `block-battle-cover` in `public/drop-in/game-art/`.
-
-Drag a tray piece onto the board and release to place it. Valid previews use the full shape and stay inside the arena; outside or occupied drops return the piece to the tray. Tap/select, arrow controls and Enter/Place piece remain available. Tray artwork is centered and line clears briefly flash, respecting reduced motion. The supplied video informed the interaction; its artwork is not used in the app. This controls update needs no extra migration beyond 004.
-
-A private couples app. The active interface includes **Stages 1–3 of the new pink brief**: Home, editable anniversary, artwork slots, private sign-in, optional nicknames/music, three arcade games, daily connection activities and mood check-ins. Memories and Notes have labelled Stage 4 destinations. Additional earlier game modules remain for Stage 6.
-
-## Stage 3 connections
-
-## Stage 4 keepsakes
-
-Us now has shared, personal, secret and custom wishlists with heart priorities, planned/done status, optional price/link/photo, comments, reactions, private partner claims, filters, ordering and a wish jar. Supported shop links can suggest a title/price; manual input always works. The metadata endpoint uses a public-shop allowlist and refuses redirects.
-
-Memories has a private photographic timeline and daily photo swap. Notes has text, optional photo or a one-minute voice recording, date seals and open-when letters. Photos are rasterized to compressed WebP before upload, stripping location/EXIF metadata. Private media links expire after five minutes. The ZIP backup in Us includes only content accessible to the signed-in account.
-
-Run `supabase/migrations/006_keepsakes.sql` once after the prior updates. Automated tests prove claims/secret lists/sealed content and media stay private through direct database queries. Browser local preview covers complete wishes, photo compression and opening a partner letter; hosted and physical-device acceptance remain pending.
-
-## Daily connections
-
-Home now includes sealed daily answers, Would You Rather and a running match percentage. Both answers reveal only once both people submit. The database sets the Manila day; stale submissions across midnight are rejected. Mood check-ins include an optional 160-character note, can be updated today, and show the latest 40 entries in shared private history.
-
-Thinking of you saves a private tap for the other account. Both phones refresh through private Realtime with a ten-second reconnect fallback. A new incoming tap can vibrate while the app is open; background delivery and push notifications are deferred to Stage 5. Each person can send one tap per minute, enforced by the server. No external message or email is sent by this feature.
-
-Run `supabase/migrations/005_connections.sql` once on the configured project after your existing setup. Do not rerun migrations 001–004. Local preview can switch between both people to demonstrate sealing, reveals, moods and taps; it remains in memory and resets on sign-out/reload. Hosted two-account acceptance requires applying migration 005 and checking both devices.
-
-## Stage 2 arcade
-
-For dashboard migration and private-account instructions, follow [SUPABASE-SETUP.md](SUPABASE-SETUP.md). Use its fresh-project path for the currently configured backend; the read-only schema check is for existing installations.
-
-The backend has been switched to the new fresh project `ohjeloskpjsynhbddgch`. Use the guide's **Current fresh project** path: run `supabase/setup_fresh_project.sql` once instead of the three separate migration files. The combined transaction is generated by `scripts/generate-fresh-setup.mjs` and starts with first-run anniversary setup. The old project was not migrated. Dashboard SQL and account provisioning still require the project owner.
-
-Play opens a cartridge chooser, start screen, turn HUD, tactile board and result. Private online moves go through `/api/game` and validated Postgres functions. Private Presence/Broadcast/Postgres changes refresh saved games, with a 15-second reconnect fallback. Scoreboard totals completed wins. Synthesized sound effects stay off by default; supported devices receive short haptics. Game Back returns through browser history.
-
-Local preview is pass-and-play; games and wins survive tab navigation but clear on reload/sign-out. Us permits an optional nickname. Online identity comes from linked profile seats, never a selectable login seat. Both profiles must exist before starting games.
-
-Apply `003_stage_two.sql` once after 001 and 002. It adds member-only nickname updates and requires both linked accounts to start. The seed script now uses generic PLAYER_ONE/PLAYER_TWO environment variables, preserves existing profile settings and refuses to transfer a linked account. Hosted two-device play, invitations and storage still need owner configuration and are not claimed tested.
-
-Acceptance after setup: sign in on two devices, choose the same game, confirm Presence, attempt an out-of-turn move, play a win and verify both scoreboards, reconnect and continue, then confirm an unrelated account cannot read or move it. Stage 3 includes Would You Rather, mood and thinking-of-you; Stage 4 adds wishlists, Memories and Notes; Stage 5 adds PWA/APK/push.
-
-## Current Stage 1
-
-- Run `npm run dev`, open http://localhost:3000 and choose “Review locally”. This button appears only in development. Preview dates persist in this browser; preview uploads stay in memory until reload. Production requires a provisioned private account.
-- Drop originals into `public/drop-in/`. Seven folders contain README.txt instructions with filenames and sizes. Dev watches files; build regenerates the manifest. Raster images become resized, metadata-free WebP. SVG/GIF/audio are copied. Originals stay untouched. Missing images use designed fallbacks.
-- Us lists artwork slots and permits image uploads. Signed-in uploads override folder artwork and use a private bucket after migration 002. Folder artwork is public static content: use private uploads for private photos. Future feature/icon slots are registered now; APK/PWA packaging is deferred.
-- Apply migration `002_stage_one.sql` once after reconciling migration 001 with the existing database. It preserves existing dates, removes the anniversary default for new couples and enables couple-scoped private artwork. New private Realtime topics are `art:<uuid>` and `anniversary:<uuid>`.
-- Home uses the saved anniversary or first-run setup; Us edits it. Night Train remains off by default and plays with the sound control.
-- Tests cover date/leap-day arithmetic, asset optimization/original preservation and migration access rules. Screenshots cover Home, Us, setup and sign-in on desktop, tablet and mobile, plus night palette. Hosted authentication, remote upload persistence, email delivery and Realtime still require owner setup and two-account verification. No live deployment or APK/PWA is claimed.
-
-The setup and architecture below document the **earlier cabin implementation**. Its games and activity modules are retained but are not active in the Stage 1 interface. The old local preview behavior described below applies to that earlier interface.
-
-## Earlier implementation stages
-
-1. Design and foundation: `DESIGN.md`, `PRODUCT.md`, assets and credits.
-2. App and database: five games, private daily questions, all-time scoreboard and shared activities.
-3. Verification and setup: embedded Postgres security/rules tests, responsive review, production build and deployment instructions.
+Artwork uses the approved pink keepsake design. Real names and preferences are not baked into the active UI. Nicknames are optional. The anniversary is entered in setup, rather than prescribed by the app. Development preview is local pass-and-play and never writes to the online accounts.
 
 ## Run locally
 
-Requires Node 22 or newer.
+Use Node 22+.
 
 ```sh
 npm ci
-cp .env.example .env.local
 npm run dev
 ```
 
-On PowerShell use `Copy-Item .env.example .env.local`. Open http://localhost:3000. The provided publishable key is a browser-safe key; security is enforced by Auth and RLS. Never put a service-role key into a `NEXT_PUBLIC_*` variable or commit `.env.local`.
+Open http://localhost:3000. “Review locally” appears only in development. Copy `.env.example` to `.env.local` and set the two NEXT_PUBLIC_SUPABASE variables for real sign-in. Do not put server secrets in NEXT_PUBLIC variables.
 
-The **local design preview** button exists only in development. It uses isolated in-memory data, supports pass-and-play board games and activity previews, and disappears from production. Reloading clears it. It does not bypass Supabase or show saved private data. Knowledge/trivia online rounds require two real accounts. Private profiles are the source of player identity; nobody can choose a seat at login.
+The development watcher regenerates drop-in artwork. If game verification temporarily cannot reach Supabase, check the dev server has network access before changing Auth or table permissions.
 
-## Supabase setup (project owner)
+## Supabase setup
 
-The publishable key cannot create tables or administer accounts. These steps must be completed in your Supabase project before online play works.
+The active fresh project is `ohjeloskpjsynhbddgch`. The previous project is not used.
 
-1. In the SQL editor run `supabase/migrations/001_arcade.sql` **once** on a fresh schema. It creates the couple, private profiles, games, answers, shared entries, RLS, validated functions, and Realtime policies. It does not reset other application tables or publications. The supplied project already responds with a protected `profiles` table; inspect its schema/migration history first and reconcile existing objects rather than blindly rerunning creation SQL. A 401 from an anonymous table request is expected; do not grant anonymous access to fix it.
-2. In Auth settings disable public user signups. Enable email/password and email magic links. Set the Site URL to the production Vercel URL; add `http://localhost:3000` and the production URL to allowed redirects. Configure email delivery/SMTP for dependable magic links. Do not use an unrestricted wildcard production redirect.
-3. In Realtime settings disable public channels. The app uses a private `couple:<uuid>` channel with membership-scoped RLS. Database changes for games, entries and profiles are added to the existing publication by the migration.
-4. Provision exactly two users and their profile rows. Either use the script below or create users through the Auth dashboard and insert profiles manually. There are only two seats, enforced by the unique `(couple_id, slot)` constraint.
+For a completely fresh schema, run `supabase/setup_fresh_project.sql` once; this contains migrations 001–003. Then apply migrations 004 through 008 in filename order. For your existing configured project, apply only the files that have not yet been run. Do not rerun table-creation migrations.
 
-### Account seed
+| Migration | Adds |
+|---|---|
+| 004_block_battle.sql | Timed, server-scored block duel |
+| 005_connections.sql | Daily questions, choices, moods and taps |
+| 006_keepsakes.sql | Wishlists, private claims/media, Memories and sealed Notes |
+| 007_installation.sql | Private notification choices and device registrations |
+| 008_together.sql | Remaining game rules, activities and server-derived progress |
 
-Put these variables in ignored `.env.local`:
+See SUPABASE-SETUP.md for account provisioning. Both Auth users need linked profile seats 0 and 1 in the same couple. Keep public signups disabled. Only the two configured private emails are accepted by the app and game route. Passwords and server credentials belong in owner-managed environment variables, not chat or GitHub.
 
-```dotenv
-SUPABASE_SERVICE_ROLE_KEY=YOUR_OWNER_SERVICE_ROLE_KEY
-PLAYER_ONE_EMAIL=FIRST_INVITATION_EMAIL
-PLAYER_TWO_EMAIL=SECOND_INVITATION_EMAIL
-```
+Authentication URL Configuration: Site URL `https://web-game-couple.vercel.app`; allow that HTTPS origin as a redirect. Use localhost as an additional development redirect only if needed.
 
-Then run:
+RLS protects each table independently. Do not grant anonymous access to resolve an Auth or setup error. Secret Ideas and claims are excluded from shared notifications. Photo signed URLs expire after five minutes; compression strips EXIF/location metadata before upload. Backup exports only the current account's accessible content and media.
+
+## Vercel and installation
+
+The deployed app uses the Next.js preset, Node 22+, `npm ci` and `npm run build`. Required public environment variables are NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Add the server-only notification variables only when configuring push, then redeploy.
+
+INSTALL.md explains Android sideload and iPhone Home Screen installation. The Android package is `com.ourlittlearcade.app` and loads the deployed HTTPS origin. Website changes update the app; native/icon changes need another APK.
 
 ```sh
-node --env-file=.env.local scripts/seed.mjs
+npm run android:key
+npm run android:build
 ```
 
-Passwords are optional (`PLAYER_ONE_PASSWORD`, `PLAYER_TWO_PASSWORD`); leave them unset to use email links. The script creates email-confirmed users but **does not send email**; request a private link on the login screen afterward. Keep the service-role key local, remove it after provisioning, and do not add it to Vercel. Existing account linkage is preserved. An optional COUPLE_ID selects an existing couple; otherwise the initial migration record is used.
+The generated release key is in the ignored `.local-signing/` folder. Back up that folder privately; losing the key prevents updating the existing installation. Debug and signed release APKs are generated in `dist-apk/`. The GitHub Actions workflow builds a debug APK on main pushes; optional signing and Firebase configuration use repository secrets.
 
-For manual profiles, use the users’ real Auth UUIDs:
+The service worker caches the public shell/static assets only. API responses, private media, signed URLs and Supabase traffic are excluded. Only new wishes can queue offline; claims, edits, game moves and sealed notes require a connection. Queued wishes are scoped to their original account and retried idempotently after it signs back in.
 
-```sql
-insert into public.profiles(id,couple_id,slot,name,color) values
-('LANCE_AUTH_UUID','06092025-0000-4000-8000-000000000001',0,'Lance','#262821'),
-('ELAINE_AUTH_UUID','06092025-0000-4000-8000-000000000001',1,'Elaine','#344f3f');
-```
+## Optional push
 
-## Vercel deploy
+PUSH-SETUP.md gives the complete setup. Android remote push uses Firebase Cloud Messaging; web Home Screen push uses VAPID Web Push. Either transport can remain disabled while ordinary app features work.
 
-Push this repository to GitHub, then import `jaxgun-uwu28/Web-game-couple` in Vercel. Select the Next.js preset and Node 22+. Set **only** `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from `.env.example`. Build command `npm run build`, install `npm ci`; keep the default Next.js output setting. Deploy, then configure Supabase Site URL and redirect URLs as above. Rebuild whenever public environment variables change.
+For Android, put the correct `google-services.json` at `android/app/google-services.json` and rebuild. Firebase Admin JSON and SUPABASE_SERVICE_ROLE_KEY stay server-only in Vercel. The generated webhook secret is stored privately in `.local-signing/push.env`. Supabase Database Webhooks call `/api/push` with that secret. No service-role credential is shipped in the browser or APK.
 
-## How the shared table works
+Each person explicitly enables their own device. Preferences default off. Quiet hours skip notifications instead of postponing them. Delivery is best effort, with event deduplication and expired token removal. Messages contain no letter text, photo or gift-claim content. Local Android anniversary reminders are optional and require permission separately.
 
-- **Games:** `src/lib/games.ts` is the registry and shared game contract. The same inline game surface renders all modules; heavy canvas code loads on demand. Starting the same type joins its current game. SQL serializes starts and locks game rows for every move. Board games check turn, bounds, occupied space, wins and draws. Quiz/knowledge rounds seal each answer exactly once and score only after both submit. Drawing words are stored in a private table and exposed only to the artist; only the artist can save game strokes. Completed games build the all-time scoreboard in Postgres.
-- **Realtime:** private Presence shows who is here; Postgres changes refresh persisted records. Broadcast nudges and daily-answer refresh signals contain no private answers. A 30-second refresh covers reconnects and Manila date rollover. Browser notifications are opt-in and work while the tab is open; there is no service-worker push notification system.
-- **Daily question:** answers cannot be queried directly. A validated RPC returns the caller’s own answer and a sealed placeholder for the partner until both respond. Dates and streaks use Asia/Manila so both devices share a day. An incomplete current day preserves yesterday’s streak until the day passes.
-- **Together:** daily choices reveal together with historical match percentage; date picking uses custom ideas or personal suggestions; bucket/movie/restaurant lists can be checked off and deleted; notes open randomly from the partner’s messages; doodles persist normalized strokes. Notes are shared couple data with a surprise UI, not private-from-partner encryption.
-- **Ambience:** local time changes the cabin tint and palette; night mode can be manually toggled. Seasonal accents use a decorative northern-calendar window label. Optional geolocation sends rounded coordinates to Open-Meteo only after choosing weather and granting permission. Location is not saved. User-supplied Night Train music loops at 30% volume using the sound button, stays off by default, and loads only when requested. Pausing and resuming keeps your place in the track. Reduced motion disables animations.
+## Artwork and sound
 
-## Verification
+Drop originals into `public/drop-in/`: backgrounds, couple, game-art, stickers, mascot, app-icon and sounds. Each folder's README.txt lists names and sizes. Filenames/extensions are case-insensitive and numeric suffixes are supported. `npm run assets:generate` refreshes the manifest; dev watches it and build regenerates it.
+
+Resolution order is private app-art upload, local drop-in asset, then built-in fallback. Us > Art Slots shows every slot and supports private upload. Native camera/library is offered explicitly in the APK; web uses the browser file picker.
+
+Drop-in `icon-foreground` and `icon-background` override the code-native heart/gamepad at APK/PWA build time. Existing installed icons need reinstall/update to change; private uploads alone cannot rewrite an installed Android launcher icon.
+
+Night Train is user supplied, self-hosted, and off by default. CREDITS.md records licenses and the music attribution limitation. No analytics or ad SDK is included.
+
+## Verification and limits
 
 ```sh
 npm run typecheck
 npm test
 npm run build
-npm audit
 ```
 
-Embedded Postgres tests run the real migration and functions with simulated Auth users: active-game joining, turn rejection, tic-tac-toe/Connect Four wins, outsider isolation, sealed/revealed daily answers, private quiz rows, duplicate-answer rejection, artist-only drawing and secret guessing. Separate tests cover board edge wrapping and Manila anniversary arithmetic. No production data is changed by tests.
+Tests execute real migration functions and RLS using embedded Postgres, including outsiders, direct-query secrecy, sealed rounds, artist-only words, private media, gift claims, device-token isolation and offline queue retries. Browser review evidence is in `.impeccable/review/` at 360, 768 and 1280px. A signed APK build/signature is verified, but physical-device installation and delivery still require owner setup and testing. Lighthouse 90+ is a target, not a measured result.
 
-Responsive evidence is in `.impeccable/review/`. Preview flows were inspected at 360, 768 and 1280px. Production build and dependency audit pass. A Lighthouse 90+ score is a target, not yet a measured result. Two-device Supabase Auth/Presence/Broadcast and email delivery must be verified after owner setup. Recommended acceptance: open both accounts in separate browsers, play each game, seal/reveal daily answers, draw on both devices, save a list entry, sign out, and check an unrelated account cannot read data.
+The acceptance pass still needs both real phones: sign out/in, live turns, private photo upload, a live wishlist update, a hidden gift claim, a future letter unlocking correctly, drop-in image refresh, Android push and iPhone Home Screen installation. These are not claimed complete from local preview.
 
-## Practical limits
-
-Daily/trivia questions are a curated initial set (five trivia rounds, seven daily prompts); edit the corresponding SQL scoring answers together with `src/lib/games.ts`. Drawing points publish when a stroke is released; no partial stroke previews or undo are shipped. The shared-entry query currently loads up to 3,000 items per visit; add pagination/archiving if your sketchbook grows past that. The app uses trusted database functions instead of a service-role runtime. Client UI is login-gated and every data operation is protected independently by RLS/function authorization.
-
-See `CREDITS.md` for asset licenses and `DESIGN.md` for visual decisions.
+Heavy games/canvas/backup code load on demand. Drawing publishes complete strokes when the pointer lifts; partial live strokes and undo are not shipped. Queries have bounded limits (3,000 game strokes, 1,500 shared strokes, 1,000 activity records); growing archives need pagination. Biometric app lock and Home Screen widgets remain optional future work.

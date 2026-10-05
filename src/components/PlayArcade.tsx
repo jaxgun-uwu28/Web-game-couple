@@ -17,13 +17,20 @@ import {
   Gamepad2,
   Sparkles,
   Layers3,
+  Pencil,
+  Brain,
 } from "lucide-react";
 import { type Game, registry, arcadeRegistry } from "@/lib/games";
 import dynamic from "next/dynamic";
 const BlockBattle = dynamic(() => import("./BlockBattle"), {
   loading: () => <p>Opening the block duel…</p>,
 });
+const ExtraGame = dynamic(() => import("./ExtraGame"), {
+  loading: () => <p>Opening our game…</p>,
+});
+import type { ExtraKind } from "./ExtraGame";
 import { previewBoard, previewMove, type BoardKind } from "@/lib/board-preview";
+import {recordPreview, previewProgress} from '@/lib/preview-progress';
 import { Slot } from "./ArtSlots";
 
 export default function PlayArcade({
@@ -50,7 +57,8 @@ export default function PlayArcade({
     [sound, setSound] = useState(false),
     [connection, setConnection] = useState("Connecting…"),
     [online, setOnline] = useState<string[]>([]),
-    [blockOpen, setBlockOpen] = useState(false);
+    [blockOpen, setBlockOpen] = useState(false),
+    [extraOpen, setExtraOpen] = useState<ExtraKind | null>(null);
   const locked = useRef(false),
     channel = useRef<ReturnType<SupabaseClient["channel"]> | null>(null),
     audio = useRef<AudioContext | null>(null);
@@ -125,10 +133,12 @@ export default function PlayArcade({
       setSelected(null);
       setStart(null);
       setBlockOpen(false);
+      setExtraOpen(null);
+      if (preview) setScore([previewProgress(0).wins, previewProgress(1).wins]);
     };
     window.addEventListener("popstate", back);
     return () => window.removeEventListener("popstate", back);
-  }, []);
+  }, [preview]);
   useEffect(
     () => () => {
       void audio.current?.close();
@@ -202,6 +212,7 @@ export default function PlayArcade({
         ? previewMove(game, cell)
         : await request(game.kind as BoardKind, game.id, cell);
       setGames((gs) => gs.map((g) => (g.id === next.id ? next : g)));
+      if(preview)recordPreview(next);
       if (preview && next.state.status === "won")
         setScore((s) => s.map((n, i) => n + (i === next.state.winner ? 1 : 0)));
       tactile(next.state.status !== "playing");
@@ -242,6 +253,19 @@ export default function PlayArcade({
       </p>
     </section>
   );
+  if (extraOpen)
+    return (
+      <ExtraGame
+        kind={extraOpen}
+        db={db}
+        session={session}
+        coupleId={coupleId}
+        slot={slot}
+        names={names}
+        preview={preview}
+        back={() => window.history.back()}
+      />
+    );
   if (blockOpen)
     return (
       <BlockBattle
@@ -288,71 +312,82 @@ export default function PlayArcade({
       {!game && !start ? (
         <>
           <div className="cartridge-shelf">
-            {arcadeRegistry
-              .filter(
-                (g) => g.id === "tic" || g.id === "connect" || g.id === "block",
-              )
-              .map((g) => (
-                <button
-                  key={g.id}
-                  className={`cartridge ${g.id}`}
-                  onClick={() => {
-                    if (g.id === "block") {
-                      window.history.pushState({ arcadeGame: true }, "");
-                      setBlockOpen(true);
-                    } else open(g.id as BoardKind);
-                  }}
-                >
-                  <div className="cartridge-art">
-                    <Slot
-                      name={
-                        g.id === "tic"
-                          ? "tictactoe-cover"
-                          : g.id === "block"
-                            ? "block-battle-cover"
-                            : "connect4-cover"
-                      }
-                      alt={`${g.name} cover`}
-                    >
-                      <div className={`cartridge-symbols ${g.id}`}>
-                        {g.id === "block" ? (
-                          <Layers3 size={75} />
-                        ) : g.id === "tic" ? (
-                          <>
-                            <X />
-                            <Circle />
-                            <X />
-                          </>
-                        ) : (
-                          <>
-                            <Heart />
-                            <X />
-                            <Heart />
-                            <X />
-                          </>
-                        )}
-                      </div>
-                    </Slot>
-                  </div>
-                  <div className="cartridge-label">
-                    <h2>{g.name}</h2>
-                    <p>{g.note}</p>
-                    <span>
-                      {games.some(
-                        (x) => x.kind === g.id && x.state.status === "playing",
-                      )
-                        ? "Continue our game"
-                        : "Let’s play"}{" "}
-                      <ArrowRight size={20} />
-                    </span>
-                  </div>
-                </button>
-              ))}
+            {arcadeRegistry.map((g) => (
+              <button
+                key={g.id}
+                className={`cartridge ${g.id}`}
+                onClick={() => {
+                  if (g.id === "block") {
+                    window.history.pushState({ arcadeGame: true }, "");
+                    setBlockOpen(true);
+                  } else if (
+                    g.id === "draw" ||
+                    g.id === "know" ||
+                    g.id === "trivia"
+                  ) {
+                    window.history.pushState({ arcadeGame: true }, "");
+                    setExtraOpen(g.id);
+                  } else open(g.id as BoardKind);
+                }}
+              >
+                <div className="cartridge-art">
+                  <Slot
+                    name={
+                      g.id === "tic"
+                        ? "tictactoe-cover"
+                        : g.id === "block"
+                          ? "block-battle-cover"
+                          : g.id === "connect"
+                            ? "connect4-cover"
+                            : g.id === "draw"
+                              ? "drawing-cover"
+                              : g.id === "know"
+                                ? "knowme-cover"
+                                : "trivia-cover"
+                    }
+                    alt={`${g.name} cover`}
+                  >
+                    <div className={`cartridge-symbols ${g.id}`}>
+                      {g.id === "block" ? (
+                        <Layers3 size={75} />
+                      ) : g.id === "draw" ? (
+                        <Pencil size={75} />
+                      ) : g.id === "know" ? (
+                        <Heart size={75} />
+                      ) : g.id === "trivia" ? (
+                        <Brain size={75} />
+                      ) : g.id === "tic" ? (
+                        <>
+                          <X />
+                          <Circle />
+                          <X />
+                        </>
+                      ) : (
+                        <>
+                          <Heart />
+                          <X />
+                          <Heart />
+                          <X />
+                        </>
+                      )}
+                    </div>
+                  </Slot>
+                </div>
+                <div className="cartridge-label">
+                  <h2>{g.name}</h2>
+                  <p>{g.note}</p>
+                  <span>
+                    {games.some(
+                      (x) => x.kind === g.id && x.state.status === "playing",
+                    )
+                      ? "Continue our game"
+                      : "Let’s play"}{" "}
+                    <ArrowRight size={20} />
+                  </span>
+                </div>
+              </button>
+            ))}
           </div>
-          <p className="arcade-later">
-            <Sparkles size={18} /> Drawing, knowing each other and trivia join
-            in a later stage.
-          </p>
         </>
       ) : (
         <section className={`board-station ${kind}`}>

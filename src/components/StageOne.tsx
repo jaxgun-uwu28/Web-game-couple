@@ -38,6 +38,7 @@ import {
 } from "./Keepsakes";
 import Ambience from "./Ambience";
 import InstallSupport, { NativeBridge, OfflineShell } from "./InstallSupport";
+import TogetherActivities from './TogetherActivities';
 import dynamic from "next/dynamic";
 const PlayArcade = dynamic(() => import("./PlayArcade"), {
   loading: () => <p className="opening">Opening the arcade…</p>,
@@ -570,6 +571,7 @@ export default function StageOne() {
                       </form>
                     </section>
                     <Wishlists />
+                    <TogetherActivities />
                     <KeepsakeBackup />
                     <InstallSupport
                       db={db}

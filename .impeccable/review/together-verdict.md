@@ -1,0 +1,16 @@
+## verdict
+
+Scoped verdict pass on the four material fixes from together-finish.md. Inspected the updated draw-active, know-active, trivia-active, trivia-start, sketchbook, draw-result, and rewards captures in both palettes at 360, 768, and 1280, plus draw-result-bottom-day-360.png. Evidence is valid for these fixes: game full-page captures establish the complete content; Sketchbook and rewards viewport pairs establish the changed descriptions and ink controls; the mobile result supplement establishes the completion caption and reachable replay action. Fixed navigation appearing within a full-page raster is a capture artifact already covered by the viewport supplement.
+
+1. **Resolved — ink visibility.** draw-active-night-{360,768,1280}.png and sketchbook-night-{360,768,1280}.png visibly separate all four ink colors from cream pot grounds. Matching day captures retain the original colors and clear selection. together.css gives the pots the same cream ground as the canvas; named ink labels and pressed-state outline remain.
+2. **Resolved — repeated game exit.** draw-active, know-active, and trivia-active captures in both palettes at all three widths now show one Back to Play control. The duplicate above the game heading is gone and the mobile content begins earlier. GameSurface defaults hideBack to false, while ExtraGame opts in, preserving the reusable component's normal exit.
+3. **Resolved — context-accurate preview descriptions.** trivia-start-{day,night}-{360,768,1280}.png explains device-local scores; sketchbook equivalents explain temporary page-local marks and no online saving; rewards equivalents explain simulated rewards that do not carry into accounts. The conditional source retains the online descriptions for connected accounts. TogetherActivities' connection failure now gives connection/retry guidance without exposing the migration name; that error-copy portion is source-verified, not a captured error-state claim.
+4. **Resolved — drawing-state instructions.** draw-result-{day,night}-{360,768,1280}.png shows the saved cherry mark, revealed word, finished drawing heading, and final “1 guess made” count. draw-result-bottom-day-360.png visibly establishes “This drawing is complete” and Play another above the bottom navigation. Source separates drawing, viewing, and finished modes, gives the finished canvas its own label, and prioritizes saving instructions while busy. The transient saving wording is source-verified; no screenshot or hosted saving behavior is claimed. The existing savePending pointer gate remains.
+
+## remaining
+
+No material item remains open among the four scored fixes, and no material regression introduced by this batch is evident in the supplied captures and targeted source checks. The established pink Fredoka/Nunito couples world is preserved.
+
+Validation provenance supplied by the builder: all 29 tests passed before this copy/style batch; the subsequent production rebuild passed TypeScript and page generation. This reviewer did not rerun tests or use the browser. Hosted migration 008, real two-account networking, Android UI, and push delivery remain unverified.
+
+**Disposition: ship. Ship covers the scored fixes, not the whole surface.**

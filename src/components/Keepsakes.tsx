@@ -42,6 +42,8 @@ import { manilaDay } from "@/lib/games";
 import { Slot } from "./ArtSlots";
 import { Capacitor } from "@capacitor/core";
 import NativePhotoButton from "./NativePhotoButton";
+import {resetExtraPreviews} from '@/lib/extra-games';
+import {resetPreviewProgress} from '@/lib/preview-progress';
 import {
   enqueueWish,
   flushWishes,
@@ -113,7 +115,7 @@ export function KeepsakeProvider({
     bodies = useRef<Record<string, NoteBody>>({}),
     blobs = useRef<Record<string, string>>({});
   const user = preview ? `preview-${seat}` : session?.user.id || "";
-  useEffect(()=>()=>{delete document.documentElement.dataset.arcadeTheme;},[]);
+  useEffect(()=>()=>{delete document.documentElement.dataset.arcadeTheme;resetExtraPreviews();resetPreviewProgress();},[]);
   const refresh = useCallback(async () => {
     if (preview || !db || !session || !couple) return;
     const tables = [

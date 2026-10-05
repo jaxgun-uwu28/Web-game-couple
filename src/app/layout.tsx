@@ -5,6 +5,7 @@ import "./block-battle.css";
 import "./connections.css";
 import "./keepsakes.css";
 import "./install.css";
+import "./together.css";
 export const metadata: Metadata = {
   title: "Our Little Arcade",
   description: "A little place to play, make things, and be together.",

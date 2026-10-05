@@ -6,14 +6,20 @@ export default function Doodle({
   strokes,
   onStroke,
   disabled = false,
+  busy = false,
+  mode = disabled ? "viewing" : "drawing",
 }: {
   strokes: Stroke[];
   onStroke: (s: Stroke) => Promise<void>;
   disabled?: boolean;
+  busy?: boolean;
+  mode?: "drawing" | "viewing" | "finished";
 }) {
   const ref = useRef<HTMLCanvasElement>(null),
-    points = useRef<number[][]>([]);
-  const [color, setColor] = useState("#344f3f"),
+    points = useRef<number[][]>([]),
+    savePending = useRef(false);
+  const [color, setColor] = useState("#9d304f"),
+    [saving, setSaving] = useState(false),
     [local, setLocal] = useState<Stroke[]>([]);
   const paint = (stroke: Stroke) => {
     const ctx = ref.current?.getContext("2d");
@@ -47,13 +53,18 @@ export default function Doodle({
     if (!points.current.length) return;
     const stroke = { points: points.current, color };
     points.current = [];
-    setLocal((x) => [...x, stroke]);
+    savePending.current = true;
+    setSaving(true);
     try {
       await onStroke(stroke);
+      setLocal((x) => [...x, stroke]);
     } catch {
       const ctx = ref.current?.getContext("2d");
       ctx?.clearRect(0, 0, 900, 550);
       strokes.forEach(paint);
+    } finally {
+      savePending.current = false;
+      setSaving(false);
     }
   };
   return (
@@ -61,15 +72,15 @@ export default function Doodle({
       <div className="draw-tools">
         <span>
           <Pencil size={16} />{" "}
-          {disabled ? "Watch the sketch come to life" : "Leave a little mark"}
+          {saving || busy ? "Saving your mark…" : mode === "finished" ? "The finished drawing" : mode === "viewing" ? "Watch the sketch come to life" : "Leave a little mark"}
         </span>
         {!disabled && (
           <div className="ink-pots">
-            {["#344f3f", "#262821", "#713a45", "#806132"].map((c) => (
+            {["#9d304f", "#50313f", "#765b94", "#a05b32"].map((c) => (
               <button
                 key={c}
                 type="button"
-                aria-label={`Use ${c} ink`}
+                aria-label={`Use ${{ "#9d304f": "cherry", "#50313f": "plum", "#765b94": "lavender", "#a05b32": "brown" }[c]} ink`}
                 aria-pressed={color === c}
                 style={{ color: c }}
                 onClick={() => setColor(c)}
@@ -85,19 +96,19 @@ export default function Doodle({
         width={900}
         height={550}
         aria-label={
-          disabled
+          mode === "finished" ? "Finished drawing" : mode === "viewing"
             ? "Live drawing from your partner"
             : "Shared drawing canvas. Use touch, mouse or pen."
         }
         onPointerDown={(e) => {
-          if (disabled) return;
+          if (disabled || savePending.current) return;
           e.currentTarget.setPointerCapture(e.pointerId);
           points.current = [point(e)];
           paint({ points: points.current, color });
         }}
         onPointerMove={(e) => {
           if (
-            disabled ||
+            disabled || savePending.current ||
             !points.current.length ||
             points.current.length >= 500
           )
@@ -115,14 +126,14 @@ export default function Doodle({
         }}
       />
       <p className="small">
-        {disabled
+        {saving || busy ? "Your mark is saving. Please wait before drawing again." : mode === "finished" ? "This drawing is complete." : mode === "viewing"
           ? "Your partner is holding the pencil."
           : "Drawing uses a pointer or touch. You can also leave a written note in the jar."}{" "}
         {local.length > 0 && `${local.length} marks made this visit.`}
       </p>
       <span className="sr-only">
         <RotateCcw />
-        Drawings are saved together. Switch to the notes jar for a text
+        Drawing supports touch or a pointer. Switch to the notes jar for a text
         alternative.
       </span>
     </div>

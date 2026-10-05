@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Game, GameKind, registry, trivia, know } from "@/lib/games";
+import { triviaV2, knowV2 } from "@/lib/extra-games";
 import type { Stroke } from "./Doodle";
 const Doodle = dynamic(() => import("./Doodle"), {
   loading: () => <p>Opening the sketchbook…</p>,
@@ -34,6 +35,7 @@ export default function GameSurface({
   strokes,
   onStroke,
   busy,
+  hideBack = false,
 }: {
   game: Game;
   slot: number;
@@ -45,6 +47,7 @@ export default function GameSurface({
   strokes: Stroke[];
   onStroke: (s: Stroke) => Promise<void>;
   busy: boolean;
+  hideBack?: boolean;
 }) {
   const [guess, setGuess] = useState(""),
     [self, setSelf] = useState(""),
@@ -53,12 +56,20 @@ export default function GameSurface({
     setSelf("");
     setPrediction("");
     setGuess("");
-  }, [game.id, game.state.round]);
+  }, [game.id, game.state.round, slot]);
   const s = game.state,
     definition = registry.find((g) => g.id === game.kind)!,
     finished = s.status !== "playing";
   const submitted = s.submitted?.includes(slot);
-  const q = (game.kind === "know" ? know : trivia)[s.round];
+  const questions =
+    game.kind === "know"
+      ? s.pack === "general-v2"
+        ? knowV2
+        : know
+      : s.pack === "general-v2"
+        ? triviaV2
+        : trivia;
+  const q = questions[s.round];
   const banner = finished
     ? s.winner === null
       ? "A draw. Call it a love-love."
@@ -72,13 +83,12 @@ export default function GameSurface({
         : `${names[s.turn]}'s turn${s.turn === slot ? " — that’s you" : ""}`;
   return (
     <section className="game-paper" aria-label={definition.name}>
-      <button className="text-button" onClick={back}>
+      {!hideBack && <button className="text-button" onClick={back}>
         <ArrowLeft size={17} />
-        Back to our table
-      </button>
+        Back to Play
+      </button>}
       <div className="game-heading">
         <h2>{definition.name}</h2>
-        <span className="stamp">Just us two</span>
       </div>
       <p className="turn" role="status" aria-live="polite">
         {banner}
@@ -134,21 +144,27 @@ export default function GameSurface({
       {game.kind === "draw" && (
         <>
           <p className="handwriting">
-            {slot === s.artist
-              ? `Your secret word: ${word || "opening…"}`
-              : "What do you see in the sketch?"}
+            {finished
+              ? `The word was ${s.word}.`
+              : slot === s.artist
+                ? `Your secret word: ${word || "opening…"}`
+                : "What do you see in the sketch?"}
           </p>
           <Doodle
             strokes={strokes}
             onStroke={onStroke}
-            disabled={finished || slot !== s.artist}
+            disabled={busy || finished || slot !== s.artist}
+            busy={busy}
+            mode={finished ? "finished" : slot === s.artist ? "drawing" : "viewing"}
           />
           {!finished && slot !== s.artist && (
             <form
               className="inline-form"
               onSubmit={(e) => {
                 e.preventDefault();
-                void move({ guess }).then(() => setGuess(""));
+                void move({ guess })
+                  .then(() => setGuess(""))
+                  .catch(() => {});
               }}
             >
               <label className="sr-only" htmlFor="guess">
@@ -169,6 +185,8 @@ export default function GameSurface({
             </form>
           )}
           <p className="small">
+            {s.pack === "general-v2" &&
+              (finished ? `${s.guesses?.length || 0} ${(s.guesses?.length || 0) === 1 ? "guess" : "guesses"} made · ` : `${Math.max(0, 5 - (s.guesses?.length || 0))} guesses left · `)}
             Guesses: {s.guesses?.join(" · ") || "A fresh page. No guesses yet."}
           </p>
         </>
@@ -228,7 +246,7 @@ export default function GameSurface({
                 game.kind === "know"
                   ? { self, guess: prediction }
                   : { answer: prediction },
-              )
+              ).catch(() => {})
             }
           >
             Seal my answer <Heart size={17} />
@@ -247,8 +265,8 @@ export default function GameSurface({
                 <p key={i}>
                   {names[i]}:{" "}
                   {game.kind === "know"
-                    ? `self: ${know[Math.max(0, s.round - 1)].options[Number(a.self)]}; guess: ${know[Math.max(0, s.round - 1)].options[Number(a.guess)]}`
-                    : trivia[Math.max(0, s.round - 1)].options[
+                    ? `self: ${questions[Math.max(0, s.round - 1)].options[Number(a.self)]}; guess: ${questions[Math.max(0, s.round - 1)].options[Number(a.guess)]}`
+                    : questions[Math.max(0, s.round - 1)].options[
                         Number(a.answer)
                       ]}
                 </p>
@@ -257,7 +275,7 @@ export default function GameSurface({
                 <p>
                   Correct:{" "}
                   {
-                    trivia[Math.max(0, s.round - 1)].options[
+                    questions[Math.max(0, s.round - 1)].options[
                       Number(s.last.correct)
                     ]
                   }
