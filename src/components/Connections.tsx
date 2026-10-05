@@ -189,7 +189,7 @@ export function ConnectionProvider({
     if (error) {
       setError(
         error.message.includes("function")
-          ? "Run Stage 3 migration 005 in Supabase to open these connections."
+          ? "These updates could not load. Try again."
           : "Our connection could not refresh. Try again.",
       );
       return;
@@ -498,7 +498,7 @@ export function DailyConnection() {
       {!ready || !prompts.ready ? (
         <p className="small">
           {error
-            ? "These connections need the database update."
+            ? "These updates are unavailable. Try again."
             : "Opening today’s page…"}
         </p>
       ) : both ? (
@@ -528,7 +528,7 @@ export function DailyConnection() {
           }}
         >
           <label className="sr-only" htmlFor="daily-answer">
-            Your private answer
+            Your answer
           </label>
           <textarea
             id="daily-answer"

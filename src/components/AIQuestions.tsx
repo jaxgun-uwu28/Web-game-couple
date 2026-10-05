@@ -200,7 +200,7 @@ export default function AIQuestions({
                     ))}
                   </dl>
                 ) : (
-                  <p>No saved trivia yet. Our built-in fallback is ready.</p>
+                  <p>No saved trivia yet.</p>
                 )}
               </details>
               <button

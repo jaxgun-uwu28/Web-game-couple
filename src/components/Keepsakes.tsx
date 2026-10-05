@@ -133,7 +133,7 @@ export function KeepsakeProvider({
     if (failed) {
       setError(
         failed.error?.code === "42P01"
-          ? "Run migration 006 in Supabase to open wishes, memories and notes."
+          ? "Your wishes, memories and notes could not load. Try again."
           : failed.error!.message,
       );
       return;
@@ -227,7 +227,7 @@ export function KeepsakeProvider({
       setMessage(
         queued
           ? "Saved on this device. Queued wishes will sync when connected."
-          : "Saved in your private keepsake.",
+          : "Saved.",
       );
       return true;
     } catch (e) {
@@ -400,7 +400,7 @@ export function Photo({ path, alt }: { path: string | null; alt: string }) {
     <p>
       {failed
         ? "Photo could not load. Refresh to retry."
-        : "Opening private photo…"}
+        : "Opening photo…"}
     </p>
   ) : null;
 }
@@ -443,8 +443,7 @@ export function KeepsakeBackup() {
     <section className="nickname-setting">
       <h2>A copy of our little world.</h2>
       <p>
-        Download your visible wishes, memories and opened letters with their
-        private media. Sealed contents and your partner’s secrets stay sealed.
+        Download your wishes, memories and opened letters.
       </p>
       <button
         disabled={c.busy}
@@ -537,7 +536,7 @@ export function KeepsakeBackup() {
           })
         }
       >
-        Download private backup <Download size={18} />
+        Download backup <Download size={18} />
       </button>
     </section>
   );
@@ -1357,10 +1356,6 @@ export function Memories() {
             <ImagePlus size={56} />
           </Slot>
           <h2>Our album is waiting.</h2>
-          <p>
-            Photos are private, compressed and stripped of location metadata
-            before upload.
-          </p>
         </div>
       )}
     </section>
@@ -1629,8 +1624,7 @@ export function Notes() {
           <Mail size={54} />
           <h2>A jar full of things to say.</h2>
           <p>
-            Write your first letter above. Sealed contents stay private until
-            their date.
+            Write your first letter above.
           </p>
         </div>
       )}

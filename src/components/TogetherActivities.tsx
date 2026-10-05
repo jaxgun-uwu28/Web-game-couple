@@ -445,7 +445,7 @@ export default function TogetherActivities() {
           <>
             <h3>One page. Both our pencils.</h3>
             <p>
-              {c.preview ? "Try drawing on this device. Preview marks last while this page is open and are not saved online." : "Marks appear on the other phone after you lift your finger. Every stroke is saved privately."}
+              {c.preview ? "Try drawing on this device. Preview marks last while this page is open and are not saved online." : "Marks appear on the other phone after you lift your finger. Your drawings are saved."}
             </p>
             <Doodle
               strokes={strokes}
@@ -698,7 +698,7 @@ export default function TogetherActivities() {
               <div className="memory-quiz">
                 <Photo
                   path={memory.image_path}
-                  alt="A private memory for our date quiz"
+                  alt="A memory for our date quiz"
                 />
                 <p>{memory.caption}</p>
                 <div className="install-actions">

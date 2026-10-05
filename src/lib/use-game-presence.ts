@@ -36,7 +36,7 @@ export function useGamePresence(
           setPaired(r.data === true);
           setError(
             r.error
-              ? "Game presence could not load. Apply migration 011 and retry."
+              ? "The game connection could not load. Try again."
               : "",
           );
         }

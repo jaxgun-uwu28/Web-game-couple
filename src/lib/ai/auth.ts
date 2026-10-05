@@ -31,7 +31,7 @@ export function aiError(e: unknown) {
     {
       error:
         message === "AI_AUTH"
-          ? "Sign in with your private account."
+          ? "Sign in to continue."
           : "Saved questions could not load. Check the connection and try again.",
     },
     { status: message === "AI_AUTH" ? 401 : 503 },

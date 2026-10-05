@@ -104,7 +104,7 @@ export default function StageOne() {
     if (!isPrivateEmail(session.user.email)) {
       setCoupleId(null);
       setLoaded(true);
-      setError("Only the two private accounts can enter this arcade.");
+      setError("This email is not connected to our arcade.");
       return;
     }
     const profile = await db
@@ -114,7 +114,7 @@ export default function StageOne() {
       .single();
     if (profile.error) {
       setCoupleId(null);
-      setError("This account needs a private couple invitation.");
+      setError("This account has not been connected yet.");
       setLoaded(true);
       return;
     }
@@ -198,7 +198,7 @@ export default function StageOne() {
         localStorage.setItem("arcade-stage1-anniversary", selectedDate);
       else {
         if (!db || !coupleId)
-          throw new Error("Your private couple invitation is required.");
+          throw new Error("Your account has not been connected yet.");
         const { error } = await db.rpc("set_anniversary", {
           value: selectedDate,
         });
@@ -220,9 +220,9 @@ export default function StageOne() {
     setBusy(true);
     setError("");
     try {
-      if (!db) throw new Error("The private connection is not configured yet.");
+      if (!db) throw new Error("Sign-in is unavailable. Try again later.");
       if (!isPrivateEmail(email))
-        throw new Error("Use one of the two private account emails.");
+        throw new Error("Use your account email.");
       const { error } = await db.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
@@ -230,7 +230,7 @@ export default function StageOne() {
       if (error)
         throw new Error(
           error.status === 400
-            ? "Email or password is incorrect. Use the password set for this account in Supabase."
+            ? "Email or password is incorrect. Try again."
             : error.message,
         );
       setPassword("");
@@ -486,10 +486,6 @@ export default function StageOne() {
                         <ArrowRight size={19} />
                       </button>
                     </form>
-                    <p className="small">
-                      <KeyRound size={14} /> Two private accounts. No public
-                      sign-ups.
-                    </p>
                     {process.env.NODE_ENV === "development" && (
                       <button className="text-button" onClick={openPreview}>
                         Review locally <ChevronRight size={17} />
@@ -501,13 +497,12 @@ export default function StageOne() {
                 ) : !preview && !coupleId ? (
                   <section className="welcome">
                     <KeyRound size={40} />
-                    <h1>A private invitation is needed.</h1>
+                    <h1>Your account isn’t connected yet.</h1>
                     <p>
-                      This signed-in account is not linked to a couple yet. Ask
-                      the project owner to provision your profile, then retry.
+                      Your account hasn’t been set up yet. Try again after setup.
                     </p>
                     <button onClick={() => void load()}>
-                      Retry invitation
+                      Try again
                     </button>
                   </section>
                 ) : !anniversary || editing ? (

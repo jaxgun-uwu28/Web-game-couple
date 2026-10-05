@@ -172,7 +172,7 @@ export default function InstallSupport({
         if (!alive) return;
         if (r.error) {
           setLoadError(
-            "Your saved notification choices could not load. Check your connection and migration 007, then retry.",
+            "Your notification choices could not load. Check your connection and retry.",
           );
           return;
         }
@@ -209,7 +209,7 @@ export default function InstallSupport({
       .upsert({ user_id: session!.user.id, ...prefs });
     if (r.error)
       throw new Error(
-        "Notification preferences need migration 007. " + r.error.message,
+        "Notification choices could not be saved. " + r.error.message,
       );
     setMessage("Your quiet hours and notification choices are saved.");
   }
@@ -409,9 +409,8 @@ export default function InstallSupport({
         <p>
           iPhone: open the deployed site in Safari, tap Share, then Add to Home
           Screen and Open as Web App. Android: use the browser’s Install app
-          option, or install the private APK from your trusted download.
+          option, or install the APK.
         </p>
-        <p>Your login remains private in every version.</p>
       </details>
       <h3>Your gentle updates</h3>
       {!preferencesReady &&
@@ -428,10 +427,6 @@ export default function InstallSupport({
         ) : (
           <p role="status">Loading your saved notification choices…</p>
         ))}
-      <p>
-        Claims and Secret Ideas never send shared notifications. Updates use a
-        discreet message without private note or photo content.
-      </p>
       <form
         onSubmit={(e) => {
           e.preventDefault();

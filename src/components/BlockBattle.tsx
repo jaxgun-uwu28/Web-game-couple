@@ -166,7 +166,7 @@ export default function BlockBattle({
         if (cancelled) return;
         if (error) {
           setError(
-            "Block Battle needs migration 004 in your Supabase SQL Editor.",
+            "Block Battle could not load. Try again.",
           );
           return;
         }

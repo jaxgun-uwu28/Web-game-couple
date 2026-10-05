@@ -8,7 +8,7 @@ import {
   useCallback,
   ReactNode,
 } from "react";
-import { ImagePlus, Heart, Upload, Check, Music, Trash2 } from "lucide-react";
+import { ImagePlus, Heart, Upload, Music, Trash2 } from "lucide-react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import manifest from "@/generated/art-manifest.json";
 type Asset = { src: string; kind: string; source: "local" | "private" };
@@ -47,7 +47,7 @@ export function ArtProvider({
       .eq("couple_id", coupleId);
     if (error) {
       setError(
-        "Private artwork needs the Stage 1 database update. Local artwork still works.",
+        "Artwork could not load. Try again.",
       );
       return;
     }
@@ -109,7 +109,7 @@ export function ArtProvider({
   const upload = async (slot: string, file: File) => {
     if (!/^image\/(jpeg|png|webp|avif|gif)$/.test(file.type))
       throw new Error(
-        "Choose a JPG, PNG, WebP, AVIF or GIF image. Local folders also support trusted SVG.",
+        "Choose a JPG, PNG, WebP, AVIF or GIF image.",
       );
     if (file.size > 10 * 1024 * 1024)
       throw new Error("Choose an image under 10 MB.");
@@ -149,7 +149,7 @@ export function ArtProvider({
       return;
     }
     if (!db || !coupleId)
-      throw new Error("Sign in to upload your private artwork.");
+      throw new Error("Sign in to add artwork.");
     const path = `${coupleId}/${slot}.webp`,
       result = await db.storage
         .from("app-art")
@@ -167,13 +167,13 @@ export function ArtProvider({
   const remove = async (slot: string) => {
     if (!preview) {
       if (!db || !coupleId)
-        throw new Error("Sign in to remove your private artwork.");
+        throw new Error("Sign in to remove artwork.");
       const result = await db.storage
         .from("app-art")
         .remove([`${coupleId}/${slot}.webp`]);
       if (result.error)
         throw new Error(
-          "Artwork could not be removed. Apply migration 011 and retry.",
+          "Artwork could not be removed. Try again.",
         );
       const row = await db
         .from("art_slots")
@@ -258,17 +258,6 @@ function SlotRow({ slot }: { slot: (typeof manifest.slots)[number] }) {
       </Slot>
       <div>
         <h3>{slot.name.replaceAll("-", " ")}</h3>
-        <p>
-          {slot.width ? `${slot.width} × ${slot.height} px` : "Optional audio"}{" "}
-          ·{" "}
-          {asset
-            ? `${asset.source === "local" ? "Folder" : "Private"} artwork`
-            : "Built-in fallback"}
-        </p>
-        <code>
-          {slot.folder}/{slot.name}
-          {slot.width ? ".webp" : ".mp3"}
-        </code>
         {message && <p role="status">{message}</p>}
       </div>
       <div className="art-actions">
@@ -289,7 +278,7 @@ function SlotRow({ slot }: { slot: (typeof manifest.slots)[number] }) {
                 setMessage("");
                 try {
                   await upload(slot.name, file);
-                  setMessage("Saved to this slot.");
+                  setMessage("Saved.");
                 } catch (error) {
                   setMessage(
                     error instanceof Error
@@ -303,9 +292,7 @@ function SlotRow({ slot }: { slot: (typeof manifest.slots)[number] }) {
               }}
             />
           </label>
-        ) : (
-          <span className="small">Use folder</span>
-        )}
+        ) : null}
         {asset?.source === "private" && (
           <button
             className="secondary"
@@ -316,7 +303,7 @@ function SlotRow({ slot }: { slot: (typeof manifest.slots)[number] }) {
               setMessage("");
               try {
                 await remove(slot.name);
-                setMessage("Removed. The default artwork is back.");
+                setMessage("Removed.");
               } catch (e) {
                 setMessage(
                   e instanceof Error ? e.message : "Removal failed. Retry.",
@@ -341,14 +328,13 @@ export function ArtSettings() {
     <section className="art-settings">
       <div className="section-title">
         <h2>Make it look like us.</h2>
-        <p>Drop a file into a named folder, or upload a private image here.</p>
       </div>
       {error && (
         <p className="notice" role="status">
           {error}
         </p>
       )}
-      <div className="folder-tabs" aria-label="Artwork folders">
+      <div className="folder-tabs" aria-label="Artwork categories">
         {Array.from(new Set(manifest.slots.map((s) => s.folder))).map((f) => (
           <button
             key={f}
@@ -366,11 +352,6 @@ export function ArtSettings() {
             <SlotRow key={s.name} slot={s} />
           ))}
       </div>
-      <p className="small">
-        <Check size={14} /> Private images override folder files. Originals stay
-        in your folders. Uploaded images are compressed and have metadata
-        removed.
-      </p>
     </section>
   );
 }

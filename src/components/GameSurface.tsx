@@ -86,7 +86,7 @@ export default function GameSurface({
           : game.kind === "know" || game.kind === "trivia"
             ? submitted
               ? "Your answer is tucked away. Waiting for your partner."
-              : `Round ${s.round + 1} of ${s.count || 5} · answer privately`
+              : `Round ${s.round + 1} of ${s.count || 5}`
             : `${names[s.turn]}'s turn${s.turn === slot ? " — that’s you" : ""}`;
   return (
     <section className="game-paper" aria-label={definition.name}>
