@@ -143,6 +143,24 @@ test("Stage 4 RLS hides secret lists, gift claims, sealed notes and unpaired pho
         .rows.length,
       1,
     );
+    await db.exec("reset role");
+    await db.exec(await readFile("supabase/migrations/013_memory_album.sql", "utf8"));
+    await db.exec(await readFile("supabase/migrations/013_memory_album.sql", "utf8"));
+    await db.exec("set role authenticated");
+    await as(a);
+    const memoryId=(await db.query<{id:string}>("select id from memories where author=$1",[a])).rows[0].id;
+    await db.query("update memories set caption='Edited caption',archived_at=now() where id=$1",[memoryId]);
+    assert.equal((await db.query("select * from memories where id=$1",[memoryId])).rows.length,1);
+    await as(b);
+    assert.equal((await db.query("select * from memories where id=$1",[memoryId])).rows.length,0);
+    assert.equal((await db.query("select * from storage.objects where name=$1",[path])).rows.length,0);
+    await db.query("update memories set caption='Partner edit' where id=$1",[memoryId]);
+    await assert.rejects(db.query("update memories set image_path='forged'"),/permission denied/);
+    await as(a);
+    assert.equal((await db.query<{caption:string}>("select caption from memories where id=$1",[memoryId])).rows[0].caption,"Edited caption");
+    await db.query("update memories set archived_at=null where id=$1",[memoryId]);
+    await as(b);
+    assert.equal((await db.query("select * from memories where id=$1",[memoryId])).rows.length,1);
     await as(outsider);
     for (const table of [
       "wishlists",

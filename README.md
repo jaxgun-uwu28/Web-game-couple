@@ -6,7 +6,7 @@ Private couples app at https://web-game-couple.vercel.app/. Sign in with either 
 
 - Home: editable anniversary, countdown and milestones, daily sealed questions, Would You Rather, mood history, thinking-of-you taps, latest-wish shortcut, optional music and weather.
 - Play: Tic-tac-toe, Connect Four, timed Block Hearts Duel, Draw & guess, Know me by heart and five-round trivia. Every online move is validated in Postgres. Quiz answers remain sealed until both people submit; only the artist can fetch the drawing word.
-- Memories: private compressed photos, captions, date timeline, daily photo swap and hearts. A swap stays hidden until both share that day.
+- Memories: shared photos grouped into date albums, batch uploads, camera snaps, caption editing and recoverable Archive/Restore. New photos are shared immediately. Earlier locked photo swaps keep their original visibility until explicitly released.
 - Notes: text, optional photo or one-minute voice recording, dated seals and open-when envelopes. Recipient content and media are withheld by database/storage policies until the opening rules are satisfied.
 - Us: shared, personal, secret and custom wishlists; invisible gift claims, priorities, prices, links, photos, comments, reactions, ordering, wish jar and private backup. Date ideas with mood/weather filters and a picker, a shared sketchbook, 36 original conversation prompts, countdowns, optional silly stakes and annual memories recap live here too. Completed games earn server-derived XP and coins toward cosmetic theme/sticker thresholds. Installation and notification settings live here.
 
@@ -99,3 +99,5 @@ Heavy games/canvas/backup code load on demand. Drawing publishes complete stroke
 Migration 011: apply supabase/migrations/011_game_presence_and_taps.sql for the board-game dispatch fix, game-specific partner presence, shared Exit game cancellation, private artwork removal, and custom Thinking of You notification messages. It is safe to re-run. Cancelled sessions do not earn rewards. See the migration and .impeccable/review/games-ui-verification.md for acceptance boundaries.
 
 Migration 012 adds the shared Activities wheel and expanded Block Hearts Duel. The owner confirmed applying it. See [Heartblast rules](docs/heartblast.md) for scoring, seeded fairness, modes and artwork slots. Timed and Race require both players; Endless and Daily support independent play. Explicit Exit cancels the shared match in every mode.
+
+Migration 013 adds author-only caption editing and recoverable photo archiving. The owner confirmed applying it. APK 1.0.2 (version code 3) uses the supplied kitty-couple artwork for the launcher and splash screen and loads the current hosted app.

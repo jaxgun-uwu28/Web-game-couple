@@ -53,6 +53,10 @@ export function fitsAnywhere(board: number[], shape: number) {
     heartFits(board, shape, Math.floor(i / 8), i % 8),
   );
 }
+export function firstHeartPlacement(board:number[],shape:number):[number,number]|null {
+  for(let row=0;row<8;row++)for(let col=0;col<8;col++)if(heartFits(board,shape,row,col))return [row,col];
+  return null;
+}
 export function heartScore(
   cells: number,
   lines: number,

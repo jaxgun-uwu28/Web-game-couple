@@ -1,1 +1,1 @@
-Owner-supplied kitty doodle #1 (transparent background).jpg. JPEG has an opaque white background; original preserved in public/icons/kitty-original.jpg. Empty margins trimmed and image resized within launcher safe areas. Drop-in icon assets override the default.
+Owner-supplied kitty-couple.jpg. JPEG has an opaque white background; original preserved in public/icons/kitty-original.jpg. Empty margins trimmed and image resized within launcher safe areas. Drop-in icon assets override the default.

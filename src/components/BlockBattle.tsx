@@ -1,24 +1,16 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
-import {
-  ArrowLeft,
-  Heart,
-  Cherry,
-  Apple,
-  Cloud,
-  Sparkles,
-  Volume2,
-  VolumeX,
-  Check,
-} from "lucide-react";
+import { ArrowLeft, Heart, Volume2, VolumeX, Check, Eye } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
-import { Slot, useAsset } from "./ArtSlots";
+import { Slot } from "./ArtSlots";
 import { gameRequest } from "@/lib/game-request";
 import { useGamePresence } from "@/lib/use-game-presence";
 import {
   heartShapes,
   heartFits,
+  fitsAnywhere,
+  firstHeartPlacement,
   heartPlace,
   heartStep,
   heartWinner,
@@ -44,34 +36,30 @@ function Piece({ shape }: { shape: number }) {
     w = Math.max(...cells.map((o) => o % 8)) + 1,
     h = Math.max(...cells.map((o) => Math.floor(o / 8))) + 1;
   return (
-    <svg
-      viewBox={`0 0 ${w * 22} ${h * 22}`}
+    <div
       className="heart-piece"
       aria-hidden="true"
+      style={{
+        gridTemplateColumns: `repeat(${w}, 1fr)`,
+        aspectRatio: `${w}/${h}`,
+        width: `calc(${w} * var(--hb-piece-cell, 10px) + ${w - 1} * 2px)`,
+        height: `calc(${h} * var(--hb-piece-cell, 10px) + ${h - 1} * 2px)`,
+      }}
     >
-      {cells.map((o) => (
-        <rect
-          key={o}
-          x={(o % 8) * 22 + 1}
-          y={Math.floor(o / 8) * 22 + 1}
-          width="20"
-          height="20"
-          rx="5"
-          fill={colors[shape % 5]}
-        />
-      ))}
-    </svg>
-  );
-}
-function BlockArt({ value }: { value: number }) {
-  const asset = useAsset(`heartblast-block-${value > 0 ? value : 4}`),
-    Icon = [Heart, Cherry, Apple, Cloud, Sparkles][
-      value > 0 ? (value - 1) % 5 : 3
-    ];
-  return asset?.kind === "image" ? (
-    <img src={asset.src} alt="" />
-  ) : (
-    <Icon aria-hidden="true" />
+      {Array.from({ length: w * h }, (_, i) => {
+        const o = Math.floor(i / w) * 8 + (i % w);
+        return (
+          <span
+            key={i}
+            className={
+              cells.includes(o)
+                ? `hb-tile hb-style-${(shape % 5) + 1}`
+                : "hb-piece-space"
+            }
+          ></span>
+        );
+      })}
+    </div>
   );
 }
 function MiniBoard({ board }: { board: number[] }) {
@@ -80,10 +68,7 @@ function MiniBoard({ board }: { board: number[] }) {
       {board.map((v, i) => (
         <i
           key={i}
-          className={v ? "filled" : ""}
-          style={
-            v ? { background: colors[v > 0 ? (v - 1) % 5 : 3] } : undefined
-          }
+          className={v ? `filled hb-tile hb-style-${v > 0 ? v : 6}` : ""}
         />
       ))}
     </div>
@@ -129,6 +114,8 @@ export default function BlockBattle({
     } | null>(null),
     [popup, setPopup] = useState(""),
     [cleared, setCleared] = useState<number[]>([]),
+    [placedCells, setPlacedCells] = useState<number[]>([]),
+    [opponentOpen, setOpponentOpen] = useState(false),
     [drag, setDrag] = useState<{
       x: number;
       y: number;
@@ -350,6 +337,11 @@ export default function BlockBattle({
         )
       : null;
   useEffect(() => {
+    if (shape === undefined || used[piece] || held.current?.moved) return;
+    const open = firstHeartPlacement(board, shape);
+    if (open) setAnchor(open);
+  }, [match?.id, shape, piece, match?.state.rounds[seat]]);
+  useEffect(() => {
     if (
       !match ||
       match.status !== "playing" ||
@@ -532,6 +524,12 @@ export default function BlockBattle({
           });
         }
       }
+      setPlacedCells(
+        heartShapes[match.state.hands[seat][p]].map(
+          (o) => (target[0] + Math.floor(o / 8)) * 8 + target[1] + (o % 8),
+        ),
+      );
+      setTimeout(() => setPlacedCells([]), 350);
       await feedback(next.state.last?.lines || 0, next.state.last?.combo || 0);
       setPiece(next.state.used[seat].findIndex((v) => !v));
     });
@@ -598,7 +596,9 @@ export default function BlockBattle({
   }
   const clockLabel = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`;
   return (
-    <section className="block-duel heart-duel">
+    <section
+      className={`block-duel heart-duel ${match?.status === "playing" ? "is-playing" : ""}`}
+    >
       <Slot
         name="heartblast-background"
         alt=""
@@ -858,7 +858,23 @@ export default function BlockBattle({
             </div>
           ) : (
             <>
-              <div className="heart-combo">
+              <div
+                className="heart-combo"
+                role="meter"
+                aria-label="Combo multiplier"
+                aria-valuemin={1}
+                aria-valuemax={3}
+                aria-valuenow={Math.min(
+                  3,
+                  1 + Math.max(0, match.state.combos[seat] - 1) * 0.5,
+                )}
+              >
+                <i
+                  style={{
+                    width: `${Math.min(100, Math.max(0, match.state.combos[seat] - 1) * 25)}%`,
+                  }}
+                  aria-hidden="true"
+                />
                 <span>
                   Combo ×
                   {Math.min(
@@ -866,12 +882,6 @@ export default function BlockBattle({
                     1 + Math.max(0, match.state.combos[seat] - 1) * 0.5,
                   )}
                 </span>
-                <meter
-                  min="0"
-                  max="5"
-                  value={Math.min(5, match.state.combos[seat])}
-                  aria-label="Combo streak"
-                />
               </div>
               {!asyncMode && !preview && !presence.paired && !terminal && (
                 <p role="status" className="notice">
@@ -880,10 +890,10 @@ export default function BlockBattle({
               )}
               <div className="battle-layout">
                 <div className="own-block-board">
-                  <h2>
+                  <h2 className="hb-board-chip">
                     {opts.coop
                       ? `Our board · ${names[match.state.turn]}’s turn`
-                      : `${names[actor]}’s board`}
+                      : "Your board"}
                   </h2>
                   <div className="heart-board-wrap">
                     <Slot
@@ -933,6 +943,8 @@ export default function BlockBattle({
                           c = i % 8,
                           ghost =
                             playing &&
+                            !used[piece] &&
+                            (drag ? true : valid) &&
                             (!drag || drag.inside) &&
                             shape !== undefined &&
                             heartShapes[shape].some(
@@ -951,18 +963,11 @@ export default function BlockBattle({
                             role="gridcell"
                             tabIndex={-1}
                             aria-label={`Row ${r + 1}, column ${c + 1}, ${v === -1 ? "sleepy cloud" : v ? "filled" : "empty"}`}
-                            className={`${v ? "filled" : ""} ${ghost ? "ghost" : ""} ${line ? "will-clear" : ""} ${cleared.includes(i) ? "burst" : ""}`}
-                            style={
-                              v
-                                ? {
-                                    background: colors[v > 0 ? (v - 1) % 5 : 3],
-                                  }
-                                : undefined
-                            }
+                            className={`${v ? `filled hb-tile hb-style-${v > 0 ? v : 6}` : ""} ${(Math.floor(r / 2) + Math.floor(c / 2)) % 2 ? "empty-alt" : ""} ${ghost ? `ghost hb-style-${((shape ?? 0) % 5) + 1}` : ""} ${line ? "will-clear" : ""} ${cleared.includes(i) ? "burst" : ""} ${placedCells.includes(i) ? "just-placed" : ""}`}
                             onClick={() => void place(piece, [r, c])}
                             disabled={!playing || busy}
                           >
-                            {v !== 0 && <BlockArt value={v} />}
+                            {ghost && <span className="hb-ghost-tile" />}
                           </button>
                         );
                       })}
@@ -999,13 +1004,14 @@ export default function BlockBattle({
                         {match.state.hands[seat].map((s, i) => (
                           <button
                             key={`${match.state.rounds[seat]}-${i}`}
-                            className={`block-piece ${piece === i ? "selected" : ""}`}
+                            className={`block-piece ${piece === i ? "selected" : ""} ${!fitsAnywhere(board, s) ? "no-room" : ""}`}
                             disabled={!playing || busy || used[i]}
                             aria-pressed={piece === i}
                             aria-label={`Piece ${i + 1}: ${heartShapes[s].length} blocks`}
                             onClick={() => {
                               setPiece(i);
-                              aim(0, 0, i);
+                              const open = firstHeartPlacement(board, s);
+                              if (open) setAnchor(open);
                             }}
                             onPointerDown={(e) => {
                               setPiece(i);
@@ -1026,6 +1032,9 @@ export default function BlockBattle({
                             }}
                           >
                             <Piece shape={s} />
+                            {!used[i] && !fitsAnywhere(board, s) && (
+                              <small>No room</small>
+                            )}
                           </button>
                         ))}
                       </div>
@@ -1075,7 +1084,23 @@ export default function BlockBattle({
                   )}
                 </div>
                 {opts.preview && !opts.coop && (!asyncMode || terminal) && (
-                  <aside className="opponent-block">
+                  <aside
+                    className="opponent-block"
+                    aria-label="Opponent preview"
+                    data-expanded={opponentOpen}
+                  >
+                    <button
+                      className="hb-opponent-toggle"
+                      aria-label={
+                        opponentOpen
+                          ? "Hide opponent board"
+                          : "Show opponent board"
+                      }
+                      aria-expanded={opponentOpen}
+                      onClick={() => setOpponentOpen(!opponentOpen)}
+                    >
+                      <Eye size={16} />
+                    </button>
                     <h2>{names[other]}</h2>
                     <strong>
                       {!terminal && peer?.id === match.id

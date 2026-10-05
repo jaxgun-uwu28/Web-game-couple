@@ -374,12 +374,13 @@ export function KeepsakeFeedback() {
     </>
   );
 }
-export function Photo({ path, alt }: { path: string | null; alt: string }) {
+export function Photo({ path, alt, onOpen }: { path: string | null; alt: string; onOpen?:()=>void }) {
   const c = useKeepsakes(),
     [url, setUrl] = useState(""),
     [failed, setFailed] = useState(false);
   useEffect(() => {
     let canceled = false;
+    setUrl("");setFailed(false);
     if (path)
       c.signed(path)
         .then((u) => {
@@ -392,7 +393,7 @@ export function Photo({ path, alt }: { path: string | null; alt: string }) {
       canceled = true;
     };
   }, [path, c.user]);
-  return url ? (
+  return url && onOpen ? <button type="button" className="memory-photo-button" onClick={onOpen}><img src={url} alt={alt} loading="lazy"/></button> : url ? (
     <a href={url} target="_blank" rel="noreferrer" className="private-photo">
       <img src={url} alt={alt} loading="lazy" />
     </a>
@@ -1233,134 +1234,7 @@ export function Wishlists() {
     </section>
   );
 }
-export function Memories() {
-  const c = useKeepsakes(),
-    [caption, setCaption] = useState(""),
-    [file, setFile] = useState<File | null>(null),
-    [swap, setSwap] = useState(false);
-  const visible = c.memories
-    .filter(
-      (m) =>
-        !m.swap_day ||
-        m.author === c.user ||
-        c.memories.filter((i) => i.swap_day === m.swap_day).length === 2,
-    )
-    .sort((a, b) => b.created_at.localeCompare(a.created_at));
-  return (
-    <section className="keepsake-page">
-      <div className="page-heading">
-        <div>
-          <h1>Keep this little moment.</h1>
-          <p>Your shared album, one ordinary day at a time.</p>
-        </div>
-        <ImagePlus size={32} />
-      </div>
-      <KeepsakeFeedback />
-      <form
-        className="memory-composer"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void c.run(async () => {
-            if (!file) throw new Error("Choose a photo first.");
-            const data = {
-              id: crypto.randomUUID(),
-              caption,
-              image_path: await c.upload(file),
-              swap_day: swap ? manilaDay() : null,
-              author: c.user,
-              created_at: new Date().toISOString(),
-            };
-            if (c.preview)
-              c.local((s) => ({ ...s, memories: [data, ...s.memories] }));
-            else {
-              const r = await c.db!.from("memories").insert(data);
-              if (r.error) throw new Error(r.error.message);
-            }
-            setCaption("");
-            setFile(null);
-          });
-        }}
-      >
-        <label>
-          Photo from camera or library
-          <input
-            type="file"
-            accept="image/*"
-            required={!file}
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-          />
-        </label>
-        <NativePhotoButton onPhoto={setFile} />
-        {file && <p className="small">Selected: {file.name}</p>}
-        <label>
-          Caption
-          <textarea
-            value={caption}
-            maxLength={2000}
-            onChange={(e) => setCaption(e.target.value)}
-            placeholder="What would you like to remember?"
-          />
-        </label>
-        <label className="check-row">
-          <input
-            type="checkbox"
-            checked={swap}
-            onChange={(e) => setSwap(e.target.checked)}
-          />
-          Today’s photo swap · opens after you both post
-        </label>
-        <button disabled={c.busy}>
-          {c.busy ? "Preparing and uploading…" : "Save our moment"}{" "}
-          <ImagePlus size={18} />
-        </button>
-      </form>
-      <div className="memory-timeline">
-        {visible.map((m) => (
-          <article key={m.id}>
-            <time>
-              {new Date(m.created_at).toLocaleDateString(undefined, {
-                dateStyle: "long",
-              })}
-            </time>
-            <Photo path={m.image_path} alt={m.caption || "Shared memory"} />
-            <p className="handwritten">{m.caption}</p>
-            {m.swap_day && (
-              <p>
-                {c.memories.filter((i) => i.swap_day === m.swap_day).length ===
-                2
-                  ? "Both photos are open."
-                  : "Your photo is saved. Waiting for your person."}
-              </p>
-            )}
-            <button
-              className="secondary"
-              disabled={c.busy}
-              onClick={() =>
-                void c.run(async () => {
-                  if (c.preview) return;
-                  const r = await c
-                    .db!.from("memory_reactions")
-                    .upsert({ memory_id: m.id, kind: "heart" });
-                  if (r.error) throw new Error(r.error.message);
-                })
-              }
-            >
-              <Heart size={17} /> Send a heart
-            </button>
-          </article>
-        ))}
-      </div>
-      {!visible.length && (
-        <div className="keepsake-empty">
-          <Slot name="memories-background" alt="Album artwork">
-            <ImagePlus size={56} />
-          </Slot>
-          <h2>Our album is waiting.</h2>
-        </div>
-      )}
-    </section>
-  );
-}
+export { default as Memories } from "./MemoryAlbum";
 export function Notes() {
   const c = useKeepsakes(),
     bodies = useContext(PreviewBodies),

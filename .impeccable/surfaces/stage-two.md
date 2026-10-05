@@ -1,4 +1,6 @@
 # Stage 2 arcade
+
+October 6 refinement: Heartblast cells explicitly target button grid cells, preserving square geometry instead of global pill styles. Empty wells recede with gentle 2x2 shading, while six theme-aware tile tokens pass 4.5:1 contrast checks against both empty shades. The owner's later plain-color instruction supersedes block emblems/custom pictures. Newly selected pieces preview in the first legal open position; idle no-fit previews are hidden. A viewport station groups compact scores/clock, multiplier pill, board and tray; intermediate/phone opponent previews collapse into an expandable strip. Source checks and the supplied partial night screenshot do not establish the full three-width/theme/device acceptance matrix.
 Mode Operate. Expand the approved pink keepsake world; code-led, no replacement direction or generated comp.
 
 Path: private sign-in → linked couple → Play cartridges → focused start → shared board → result and scoreboard. Settings permits an optional nickname; the first-run form still asks only for the anniversary. Play uses equal-width grid tracks and removes the former Connect Four stagger; narrow viewports stack the shelf.

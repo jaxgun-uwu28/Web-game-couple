@@ -3,6 +3,7 @@ import {readFile, writeFile} from 'node:fs/promises';
 export async function pngOrigin(file, origin) {
   const png = await readFile(file);
   const data = Buffer.from('impeccable:prompt\0' + origin, 'latin1');
+  if(png.includes(data))return;
   const type = Buffer.from('tEXt');
   let crc = 0xffffffff;
   for (const byte of Buffer.concat([type, data])) {

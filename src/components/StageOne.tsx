@@ -454,8 +454,7 @@ export default function StageOne() {
                 ) : !session && !preview ? (
                   <section className="welcome">
                     <div className="welcome-sticker">
-                      <Heart size={54} />
-                      <Sparkles size={24} />
+                      <img src="/icons/icon-192.png" width={150} height={150} alt="Two kitties together"/>
                     </div>
                     <h1>
                       A little world.

@@ -2,6 +2,15 @@ import sharp from "sharp";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { pngOrigin } from "./png-origin.mjs";
+sharp.cache(false);
+async function writeIcon(file, buffer) {
+  try {
+    const existing=await readFile(file);
+    const [current,next]=await Promise.all([sharp(existing).ensureAlpha().raw().toBuffer(),sharp(buffer).ensureAlpha().raw().toBuffer()]);
+    if(current.equals(next))return;
+  } catch {}
+  await writeFile(file,buffer);
+}
 await mkdir("public/icons", { recursive: true });
 let assets = {};
 try {
@@ -46,17 +55,17 @@ const icon = await sharp(base)
   .png()
   .toBuffer();
 for (const n of [192, 512])
-  await sharp(icon).resize(n, n).png().toFile(`public/icons/icon-${n}.png`);
-await sharp(icon).resize(64, 64).png().toFile("public/icons/favicon.png");
-await writeFile("public/icons/maskable-512.png", icon);
-await sharp({
+  await writeIcon(`public/icons/icon-${n}.png`,await sharp(icon).resize(n, n).png().toBuffer());
+await writeIcon("public/icons/favicon.png",await sharp(icon).resize(64, 64).png().toBuffer());
+await writeIcon("public/icons/maskable-512.png", icon);
+await writeIcon("public/icons/adaptive-foreground.png",await sharp({
   create: { width: 512, height: 512, channels: 4, background: "#00000000" },
 })
   .composite([{ input: fg, gravity: "centre" }])
   .png()
-  .toFile("public/icons/adaptive-foreground.png");
+  .toBuffer());
 const origin =
-  "Owner-supplied kitty doodle #1 (transparent background).jpg. JPEG has an opaque white background; original preserved in public/icons/kitty-original.jpg. Empty margins trimmed and image resized within launcher safe areas. Drop-in icon assets override the default.";
+  "Owner-supplied kitty-couple.jpg. JPEG has an opaque white background; original preserved in public/icons/kitty-original.jpg. Empty margins trimmed and image resized within launcher safe areas. Drop-in icon assets override the default.";
 await writeFile("public/icons/PROVENANCE.md", origin + "\n");
 for (const file of [
   "icon-192",

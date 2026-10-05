@@ -393,12 +393,7 @@
         "radius": "30px",
         "padding": "28px 40px; 22px mobile",
         "heading": "36px desktop, 29px mobile",
-        "durationChoicesSeconds": [
-          60,
-          120,
-          180,
-          300
-        ],
+        "durationChoicesSeconds": [60, 120, 180, 300],
         "defaultDurationSeconds": 120,
         "durationState": "aria-pressed; selected cherry pill, unselected secondary pill",
         "artSlot": "block-battle-cover with geometric SVG block and heart fallback"
@@ -619,6 +614,38 @@
         "disposition": "Ship within local-preview scope, per independent Stage 4 review",
         "captures": ".impeccable/review/keepsakes/ — desktop/tablet/mobile wishes, memories, notes and photo states; mobile wish sheet and open letter",
         "boundary": "Hosted migration 006 and two-account privacy/media acceptance remain pending. This document records implemented UX and supplied validation wiring, not verified hosted deployment. Stage 5 files/work are excluded from this pass."
+      }
+    },
+    "heartblast": {
+      "tiles": "Plain matching raised colors per latest owner correction; no emblems",
+      "source": "src/app/block-battle.css",
+      "contrastMinimum": 4.5,
+      "light": {
+        "blocks": [
+          "#97294e",
+          "#246749",
+          "#915016",
+          "#5e418a",
+          "#775510",
+          "#31627b"
+        ],
+        "empty": "#f2e7eb",
+        "emptyAlt": "#e8dce2",
+        "board": "#fff8f3"
+      },
+      "emptyWells": "Recessed square wells with gentle 2x2 shading",
+      "night": {
+        "blocks": [
+          "#ffadd0",
+          "#9be0b0",
+          "#ffd09c",
+          "#d7bcff",
+          "#ffe481",
+          "#a8dcf5"
+        ],
+        "empty": "#392d42",
+        "emptyAlt": "#403348",
+        "board": "#241c2b"
       }
     }
   },

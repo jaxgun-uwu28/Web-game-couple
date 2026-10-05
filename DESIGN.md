@@ -1,5 +1,9 @@
 # Our Little Arcade — pink keepsake design
 
+## Heartblast and album refinement, October 6 2026
+
+Heartblast uses square wells and chunky raised plain-color tiles; the owner's latest plain-block correction supersedes emblem decoration. Light wells are blush-grey, night wells deep plum; six mode-specific tile tokens contrast at least 4.5:1 with both well shades. Board, tray and preview share these tokens, with a compact multiplier pill and viewport-driven sizing. Memories uses real photo covers grouped by day and a focused viewer. The supplied couple-kitty JPEG is the default identity and sign-in artwork. Existing global palette and typography remain unchanged. Current responsive/device acceptance requires fresh captures.
+
 A pocket keepsake book: strawberry cover, lavender question page, framed personal artwork. Desktop side rail and mobile bottom bar. Home opens on the anniversary, not a marketing hero or card grid.
 
 Palette: canvas #FFF8F3; white #FFFFFF; ink #50313F; muted #795562; strawberry #F8C9D8; blush #FFE6EC; cherry #9D304F; peach #F8DCC4; lavender #EAE1F5; butter #F7E6A6. White on cherry and berry on pastels meet AA. Night: canvas #261C2B, surface #38283E, ink #FFF0F4, muted #D8BCCA, cherry #F7B5CD with plum foreground, butter #66512F. Night butter supports readable light text on yellow game and activity surfaces. Drawing paper stays #FFF8F3 in both modes so the fixed cherry, plum, lavender and brown inks retain contrast. Never pure black.

@@ -29,6 +29,7 @@ export type Memory = {
   caption: string;
   image_path: string | null;
   swap_day: string | null;
+  archived_at?: string | null;
   created_at: string;
 };
 export type Letter = {
