@@ -8,6 +8,7 @@ import {
   Images,
   Mail,
   ArrowRight,
+  ArrowLeft,
   CalendarDays,
   Sparkles,
   Settings,
@@ -397,30 +398,21 @@ export default function StageOne() {
                   {(session || preview) && (
                     <button
                       className="icon-button"
-                      aria-label="Sign out"
-                      onClick={async () => {
-                        if (preview) {
-                          setPreview(false);
-                          setLoaded(false);
-                          setAnniversary(null);
-                          setMessage("");
-                        } else {
-                          const key = localStorage.getItem("arcade-device-key");
-                          if (key && db && session)
-                            await db
-                              .from("push_devices")
-                              .delete()
-                              .eq("user_id", session.user.id)
-                              .eq("device_key", key);
-                          await db?.auth.signOut();
-                        }
-                        setCoupleId(null);
-                        setProfiles([]);
-                        setNickname("");
-                        setTab("home");
+                      aria-label="Settings"
+                      aria-pressed={tab === "settings"}
+                      disabled={!preview && !coupleId}
+                      onClick={() => {
+                        setNickname(
+                          profiles.find(
+                            (p) =>
+                              p.id === (preview ? "preview" : session?.user.id),
+                          )?.nickname || "",
+                        );
+                        setTab("settings");
+                        setEditing(false);
                       }}
                     >
-                      <LogOut size={18} />
+                      <Settings size={20} />
                     </button>
                   )}
                 </div>
@@ -536,12 +528,18 @@ export default function StageOne() {
                     </p>
                     {dateForm}
                   </section>
-                ) : tab === "us" ? (
+                ) : tab === "settings" ? (
                   <>
+                    <button
+                      className="text-button"
+                      onClick={() => setTab("us")}
+                    >
+                      <ArrowLeft size={18} /> Back to Us
+                    </button>
                     <div className="page-heading">
                       <div>
-                        <h1>Our little details.</h1>
-                        <p>Make this place feel more like you.</p>
+                        <h1>Settings</h1>
+                        <p>Preferences for our little world.</p>
                       </div>
                       <Settings size={32} />
                     </div>
@@ -586,8 +584,6 @@ export default function StageOne() {
                         <button disabled={busy}>Save nickname</button>
                       </form>
                     </section>
-                    <Wishlists />
-                    <TogetherActivities />
                     <AIQuestions db={db} preview={preview} />
                     <KeepsakeBackup />
                     <InstallSupport
@@ -597,6 +593,53 @@ export default function StageOne() {
                       anniversary={anniversary}
                     />
                     <ArtSettings />
+                    <section className="nickname-setting">
+                      <h2>Your account</h2>
+                      <p>
+                        {preview
+                          ? "Local preview on this device."
+                          : session?.user.email}
+                      </p>
+                      <button
+                        className="secondary"
+                        onClick={async () => {
+                          if (preview) {
+                            setPreview(false);
+                            setLoaded(false);
+                            setAnniversary(null);
+                            setMessage("");
+                          } else {
+                            const key =
+                              localStorage.getItem("arcade-device-key");
+                            if (key && db && session)
+                              await db
+                                .from("push_devices")
+                                .delete()
+                                .eq("user_id", session.user.id)
+                                .eq("device_key", key);
+                            await db?.auth.signOut();
+                          }
+                          setCoupleId(null);
+                          setProfiles([]);
+                          setNickname("");
+                          setTab("home");
+                        }}
+                      >
+                        <LogOut size={18} /> Sign out
+                      </button>
+                    </section>
+                  </>
+                ) : tab === "us" ? (
+                  <>
+                    <div className="page-heading">
+                      <div>
+                        <h1>A little more us.</h1>
+                        <p>Shared wishes, plans, and time together.</p>
+                      </div>
+                      <Heart size={32} />
+                    </div>
+                    <Wishlists />
+                    <TogetherActivities />
                   </>
                 ) : tab === "memories" ? (
                   <Memories />

@@ -70,13 +70,13 @@ Each person explicitly enables their own device. Preferences default off. Quiet 
 
 ## AI questions
 
-GEMINI_SETUP.md covers migration 009, the server-only Gemini key, free-project setup, request caps and the manual `npm run gemini:check` command. Brain Duel uses shared, unseen bank questions before one batched generation; daily questions and Would You Rather share a monthly content pack. Development and automated tests always use fixtures. Us > AI Questions shows configuration, usage and saved content, with a shared AI toggle and timezone.
+GEMINI_SETUP.md covers migration 009, the server-only Gemini key, free-project setup, request caps and the manual `npm run gemini:check` command. Brain Duel uses shared, unseen bank questions before one batched generation; daily questions and Would You Rather share a monthly content pack. Development and automated tests always use fixtures. Settings > AI Questions shows configuration, usage and saved content, with a shared AI toggle and timezone.
 
 ## Artwork and sound
 
 Drop originals into `public/drop-in/`: backgrounds, couple, game-art, stickers, mascot, app-icon and sounds. Each folder's README.txt lists names and sizes. Filenames/extensions are case-insensitive and numeric suffixes are supported. `npm run assets:generate` refreshes the manifest; dev watches it and build regenerates it.
 
-Resolution order is private app-art upload, local drop-in asset, then built-in fallback. Us > Art Slots shows every slot and supports private upload. Native camera/library is offered explicitly in the APK; web uses the browser file picker.
+Resolution order is private app-art upload, local drop-in asset, then built-in fallback. Settings > Art Slots shows every slot and supports private upload. Native camera/library is offered explicitly in the APK; web uses the browser file picker.
 
 Drop-in `icon-foreground` and `icon-background` override the code-native heart/gamepad at APK/PWA build time. Existing installed icons need reinstall/update to change; private uploads alone cannot rewrite an installed Android launcher icon.
 

@@ -5,7 +5,7 @@
 3. Add `GEMINI_API_KEY` in `.env.local` for the manual check and in Vercel's server environment for production. Keep `SUPABASE_SERVICE_ROLE_KEY` in the server environment too. Neither variable may use `NEXT_PUBLIC_`. Redeploy Vercel after changing variables. The APK uses your existing HTTPS origin; no Gemini key goes in Android files.
 4. Copy the optional Gemini settings from `.env.example`. The default is `gemini-2.5-flash-lite`, with `gemini-2.5-flash` as an optional single fallback. Check the model's current Free-plan availability in AI Studio; model names and quotas can change. Disable AI or remove the key to use saved content.
 5. Run `npm run gemini:check` manually when ready. This is the **only local live-call command**: one tiny request, no retries, no key logging. Its response is saved under ignored `.cache/gemini/`. I have not run it. Development, hot reload, CI and `npm test` use fixtures even if a real key is set.
-6. Open **Us → AI Questions**. Check configuration, UTC request count, shared timezone and saved content runway. “Refill now” tops up only below seven days; repeatedly pressing it does not buy extra packs or bypass caps. The daily pack is prepared lazily on the first authenticated app open, with a shared lease; no cron is required.
+6. Open **Settings → AI Questions**. Check configuration, UTC request count, shared timezone and saved content runway. “Refill now” tops up only below seven days; repeatedly pressing it does not buy extra packs or bypass caps. The daily pack is prepared lazily on the first authenticated app open, with a shared lease; no cron is required.
 
 ## Behavior
 
