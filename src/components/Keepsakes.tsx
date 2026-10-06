@@ -40,6 +40,7 @@ import {
 } from "@/lib/keepsakes";
 import { manilaDay } from "@/lib/games";
 import { Slot } from "./ArtSlots";
+import { tactile } from "@/lib/music";
 import { Capacitor } from "@capacitor/core";
 import NativePhotoButton from "./NativePhotoButton";
 import {resetExtraPreviews} from '@/lib/extra-games';
@@ -221,7 +222,7 @@ export function KeepsakeProvider({
     try {
       await fn();
       await refresh();
-      navigator.vibrate?.(12);
+      void tactile(12);
       const queued = preview ? 0 : (await pendingWishes(user)).length;
       setPending(queued);
       setMessage(
@@ -854,7 +855,7 @@ export function Wishlists() {
                 setPicked(
                   options[Math.floor(Math.random() * options.length)].title,
                 );
-                navigator.vibrate?.(25);
+                void tactile(25);
               }}
             >
               Shake the wish jar <Shuffle size={18} />

@@ -14,6 +14,7 @@ import dynamic from "next/dynamic";
 import { Game, GameKind, registry, trivia, know } from "@/lib/games";
 import { triviaV2, knowV2 } from "@/lib/extra-games";
 import type { Stroke } from "./Doodle";
+import { useGameMusic } from "./MusicControls";
 const Doodle = dynamic(() => import("./Doodle"), {
   loading: () => <p>Opening the sketchbook…</p>,
 });
@@ -37,6 +38,7 @@ export default function GameSurface({
   busy,
   hideBack = false,
   report,
+  musicActive = true,
 }: {
   game: Game;
   slot: number;
@@ -50,6 +52,7 @@ export default function GameSurface({
   busy: boolean;
   hideBack?: boolean;
   report?: (position: number) => Promise<void>;
+  musicActive?: boolean;
 }) {
   const [guess, setGuess] = useState(""),
     [self, setSelf] = useState(""),
@@ -63,6 +66,7 @@ export default function GameSurface({
     definition = registry.find((g) => g.id === game.kind)!,
     finished = s.status !== "playing";
   const submitted = s.submitted?.includes(slot);
+  useGameMusic(game.kind, musicActive && !finished);
   const questions =
     game.kind === "know"
       ? s.pack === "general-v2"

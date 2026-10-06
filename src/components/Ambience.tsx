@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX, Moon, Sun, CloudRain } from "lucide-react";
 import { useAsset } from "./ArtSlots";
+import { gameTracks, readAudio } from "@/lib/music";
 export default function Ambience() {
   const ambient = useAsset("ambient");
   const [sound, setSound] = useState(false),
@@ -11,6 +12,32 @@ export default function Ambience() {
     [weather, setWeather] = useState(""),
     [weatherBusy, setWeatherBusy] = useState(false);
   const audio = useRef<HTMLAudioElement | null>(null);
+  const gameAudio = useRef<HTMLAudioElement | null>(null), backgroundWanted = useRef(false), currentGame = useRef<{kind: string; owner: string} | null>(null);
+  useEffect(() => {
+    const sync = () => {
+      const p = readAudio(), bg = audio.current, game = gameAudio.current;
+      if (!bg || !game) return;
+      bg.volume = p.background; game.volume = p.games;
+      const track = currentGame.current && gameTracks[currentGame.current.kind];
+      if (track && p.gameMusic) {
+        bg.pause();
+        if (game.getAttribute("src") !== track) game.src = track;
+        void game.play().catch(() => { setSoundError("Tap the music button to start the game track."); if (backgroundWanted.current) void bg.play().catch(() => {}); });
+      } else {
+        game.pause();
+        if (backgroundWanted.current) void bg.play().catch(() => {});
+      }
+    };
+    const changeGame = (event: Event) => {
+      const d = (event as CustomEvent).detail;
+      if (d.kind) currentGame.current = d;
+      else if (currentGame.current?.owner === d.owner) currentGame.current = null;
+      sync();
+    };
+    window.addEventListener("arcade-game-music", changeGame);
+    window.addEventListener("arcade-audio-change", sync);
+    return () => { gameAudio.current?.pause(); window.removeEventListener("arcade-game-music", changeGame); window.removeEventListener("arcade-audio-change", sync); };
+  }, []);
   useEffect(() => {
     const hour = new Date().getHours();
     const theme =
@@ -32,14 +59,20 @@ export default function Ambience() {
     if (!player || soundLoading) return;
     setSoundError("");
     if (sound) {
+      backgroundWanted.current = false;
       player.pause();
       setSound(false);
       return;
     }
     setSoundLoading(true);
     try {
-      player.volume = 0.3;
-      await player.play();
+      backgroundWanted.current = true;
+      player.volume = readAudio().background;
+      if (currentGame.current && readAudio().gameMusic) {
+        const track = gameTracks[currentGame.current.kind];
+        if (track && gameAudio.current) { gameAudio.current.src = track; gameAudio.current.volume = readAudio().games; await gameAudio.current.play(); }
+        else await player.play();
+      } else await player.play();
       setSound(true);
     } catch {
       setSound(false);
@@ -88,10 +121,9 @@ export default function Ambience() {
     <div className="ambience">
       <audio
         ref={audio}
-        src={ambient?.kind === "audio" ? ambient.src : "/audio/night-train.mp3"}
+        src={ambient?.kind === "audio" ? ambient.src : "/audio/music/web-app-background-music.mp3"}
         loop
         preload="none"
-        onPause={() => setSound(false)}
         onError={() => {
           setSound(false);
           setSoundError(
@@ -99,6 +131,7 @@ export default function Ambience() {
           );
         }}
       />
+      <audio ref={gameAudio} loop preload="none" onError={() => setSoundError("Game music could not load. Try again.")} />
       <button
         className="icon-button"
         aria-label={
@@ -107,7 +140,7 @@ export default function Ambience() {
         aria-pressed={sound}
         aria-busy={soundLoading}
         disabled={soundLoading}
-        title="Night Train · background music"
+        title="Background music"
         onClick={() => void toggleAudio()}
       >
         {sound ? <Volume2 size={19} /> : <VolumeX size={19} />}

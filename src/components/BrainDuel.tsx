@@ -187,6 +187,7 @@ export default function BrainDuel({
           </p>
           {finished && lobby?.game && (
             <GameSurface
+              musicActive={active}
               hideBack
               word={null}
               strokes={[]}
@@ -363,6 +364,7 @@ export default function BrainDuel({
                 Gemini
               </p>
               <GameSurface
+                musicActive={active}
                 hideBack
                 word={null}
                 strokes={[]}

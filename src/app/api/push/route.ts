@@ -39,6 +39,7 @@ export async function POST(req: Request) {
         "love_notes",
         "connection_taps",
         "games",
+        "notifications_log",
       ].includes(table) ||
       !id
     )
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
           ? "memories"
           : table === "love_notes"
             ? "notes"
-            : "taps";
+            : table === "notifications_log" ? "holdhands" : "taps";
       if (event.type !== "INSERT") return Response.json({ ignored: true });
     }
     const profiles = await db
@@ -109,7 +110,7 @@ export async function POST(req: Request) {
             row.message,
             profiles.data?.find((p) => p.id === author)?.nickname,
           )
-        : {
+        : table === "notifications_log" ? { title: "Hold hands", body: "Someone wants to hold your hand." } : {
             title: "Our Little Arcade",
             body: "Your person left a little something for you.",
           };
@@ -124,7 +125,7 @@ export async function POST(req: Request) {
     if (claimed.error?.code === "23505")
       return Response.json({ duplicate: true });
     if (claimed.error) throw claimed.error;
-    let sent = 0;
+    let sent = 0, failed = 0;
     for (const recipient of recipients) {
       const preference = await db
         .from("notification_preferences")
@@ -190,6 +191,7 @@ export async function POST(req: Request) {
           }
           sent++;
         } catch (e) {
+          failed++;
           const status = (e as { statusCode?: number }).statusCode,
             code = (e as { code?: string }).code;
           if (
@@ -203,7 +205,8 @@ export async function POST(req: Request) {
         }
       }
     }
-    return Response.json({ sent });
+    if (!sent && failed) await db.from("push_deliveries").delete().eq("event_key", eventKey);
+    return Response.json({ sent, failed });
   } catch {
     return Response.json(
       { error: "Notification delivery could not be processed." },

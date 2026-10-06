@@ -161,6 +161,21 @@ test("Stage 4 RLS hides secret lists, gift claims, sealed notes and unpaired pho
     await db.query("update memories set archived_at=null where id=$1",[memoryId]);
     await as(b);
     assert.equal((await db.query("select * from memories where id=$1",[memoryId])).rows.length,1);
+    await db.exec("reset role");
+    await db.exec(await readFile("supabase/migrations/014_memory_social.sql", "utf8"));
+    await db.exec(await readFile("supabase/migrations/014_memory_social.sql", "utf8"));
+    await db.exec("set role authenticated");
+    await as(b);
+    await db.query("insert into memory_comments(memory_id,body) values($1,'Love this moment')",[memoryId]);
+    await db.query("insert into memory_reactions(memory_id,kind) values($1,'heart')",[memoryId]);
+    await assert.rejects(db.query("insert into memory_comments(memory_id,author,body) values($1,$2,'Forged')",[memoryId,a]),/row-level security/);
+    await as(a);
+    assert.equal((await db.query("select * from memory_comments")).rows.length,1);
+    await db.query("delete from memory_reactions where memory_id=$1",[memoryId]);
+    assert.equal((await db.query("select * from memory_reactions")).rows.length,1);
+    await as(b);
+    await db.query("delete from memory_reactions where memory_id=$1",[memoryId]);
+    assert.equal((await db.query("select * from memory_reactions")).rows.length,0);
     await as(outsider);
     for (const table of [
       "wishlists",
@@ -169,6 +184,8 @@ test("Stage 4 RLS hides secret lists, gift claims, sealed notes and unpaired pho
       "memories",
       "love_notes",
       "note_contents",
+      "memory_comments",
+      "memory_reactions",
     ])
       assert.equal((await db.query(`select * from ${table}`)).rows.length, 0);
     await assert.rejects(

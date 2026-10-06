@@ -11,3 +11,4 @@
 - Design guidance: https://impeccable.style and https://github.com/pbakaus/impeccable. Applied the user-installed Impeccable plugin, ran its context loader and detector, and completed independent review/documentation. The npm installer failed to read its ZIP; the official repository was downloaded as fallback. Initial engine cache permissions were resolved by using a workspace cache. No comp-led fidelity certification is claimed.
 - PWA/Android icons and launch art: generated from the user-supplied kitty-couple.jpg; drop-in artwork overrides the default.
 - 36 questions: original conversation prompts authored for this app; not a reproduction of a published questionnaire.
+The additional background and game music files in `public/audio/music` were supplied by the owner. Their filenames determine the matching game tracks; the app does not claim authorship of these recordings.

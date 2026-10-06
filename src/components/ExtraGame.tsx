@@ -1,4 +1,5 @@
 "use client";
+import { readAudio, saveAudio, tactile } from "@/lib/music";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import {
@@ -20,6 +21,7 @@ import { recordPreview } from "@/lib/preview-progress";
 import { useGamePresence } from "@/lib/use-game-presence";
 import { gameRequest } from "@/lib/game-request";
 import GameSurface from "./GameSurface";
+import { useSoundPreference } from "./MusicControls";
 import BrainDuel from "./BrainDuel";
 import type { Stroke } from "./Doodle";
 import { topics, cleanTopic } from "@/lib/ai/topics";
@@ -57,6 +59,7 @@ function ExtraGameInternal({
     [count, setCount] = useState(5),
     [difficulty, setDifficulty] = useState("Easy-Medium"),
     [savedNote, setSavedNote] = useState("");
+  useSoundPreference(setSound);
   const attendance = useGamePresence(db, game?.id, kind, !preview && active);
   useEffect(() => {
     setTopic(localStorage.getItem("arcade-trivia-topic") || "Surprise Mix");
@@ -149,15 +152,15 @@ function ExtraGameInternal({
     [],
   );
   function feedback(win = false) {
-    navigator.vibrate?.(win ? [30, 40, 30] : 10);
-    if (!sound) return;
+    void tactile(win ? [30, 40, 30] : 10);
+    if (!sound || !readAudio().sounds) return;
     try {
       const ctx = (audio.current ??= new AudioContext());
       void ctx.resume();
       const o = ctx.createOscillator(),
         g = ctx.createGain();
       o.frequency.value = win ? 660 : 440;
-      g.gain.setValueAtTime(0.025, ctx.currentTime);
+      g.gain.setValueAtTime(0.025 * readAudio().games, ctx.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
       o.connect(g);
       g.connect(ctx.destination);
@@ -329,7 +332,7 @@ function ExtraGameInternal({
           className="icon-button"
           aria-label={sound ? "Turn game sound off" : "Turn game sound on"}
           aria-pressed={sound}
-          onClick={() => setSound((v) => !v)}
+          onClick={() => { setSound(!sound); saveAudio({ ...readAudio(), sounds: !sound }); }}
         >
           {sound ? <Volume2 size={20} /> : <VolumeX size={20} />}
         </button>
@@ -479,6 +482,7 @@ function ExtraGameInternal({
             </div>
           )}
           <GameSurface
+            musicActive={active}
             hideBack
             key={game.id}
             game={game}

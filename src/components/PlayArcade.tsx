@@ -1,5 +1,7 @@
 "use client";
+import { readAudio, saveAudio, tactile as haptic } from "@/lib/music";
 import GameCover from "./GameCover";
+import { useGameMusic, useSoundPreference } from "./MusicControls";
 import { useGamePresence } from "@/lib/use-game-presence";
 import { gameRequest } from "@/lib/game-request";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -66,6 +68,8 @@ export default function PlayArcade({
   const game = games.find((g) => g.id === selected),
     finished = game && game.state.status !== "playing";
   const [blockKey, setBlockKey] = useState(0);
+  useSoundPreference(setSound);
+  useGameMusic(game?.kind || "", !!game && !finished && active && !blockOpen && !extraOpen);
   useEffect(() => {
     const daily = () => {
       window.history.pushState({ arcadeGame: true }, "");
@@ -190,8 +194,8 @@ export default function PlayArcade({
     [],
   );
   function tactile(win = false) {
-    navigator.vibrate?.(win ? [35, 50, 35] : 12);
-    if (!sound) return;
+    void haptic(win ? [35, 50, 35] : 12);
+    if (!sound || !readAudio().sounds) return;
     try {
       const ctx = (audio.current ??= new AudioContext());
       void ctx.resume();
@@ -199,7 +203,7 @@ export default function PlayArcade({
         gain = ctx.createGain();
       oscillator.type = "sine";
       oscillator.frequency.setValueAtTime(win ? 660 : 440, ctx.currentTime);
-      gain.gain.setValueAtTime(0.035, ctx.currentTime);
+      gain.gain.setValueAtTime(0.035 * readAudio().games, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
       oscillator.connect(gain);
       gain.connect(ctx.destination);
@@ -440,7 +444,7 @@ export default function PlayArcade({
               className="icon-button"
               aria-label={sound ? "Turn game sound off" : "Turn game sound on"}
               aria-pressed={sound}
-              onClick={() => setSound(!sound)}
+              onClick={() => { setSound(!sound); saveAudio({ ...readAudio(), sounds: !sound }); }}
             >
               {sound ? <Volume2 size={20} /> : <VolumeX size={20} />}
             </button>

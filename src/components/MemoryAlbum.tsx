@@ -15,6 +15,7 @@ import { useKeepsakes, KeepsakeFeedback, Photo } from "./Keepsakes";
 import NativePhotoButton from "./NativePhotoButton";
 import type { Memory } from "@/lib/keepsakes";
 import { memoryDay, groupMemories } from "@/lib/memory-album";
+import MemorySocial from "./MemorySocial";
 
 export default function MemoryAlbum() {
   const c = useKeepsakes(),
@@ -443,6 +444,7 @@ export default function MemoryAlbum() {
             ) : (
               <p className="handwritten">{current.caption}</p>
             )}
+            <MemorySocial key={current.id} id={current.id}/>
             {c.error && <p role="alert">{c.error}</p>}
           </>
         )}

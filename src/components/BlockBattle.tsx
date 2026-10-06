@@ -1,9 +1,11 @@
 "use client";
+import { readAudio, saveAudio, tactile } from "@/lib/music";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { ArrowLeft, Heart, Volume2, VolumeX, Check, Eye } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Slot } from "./ArtSlots";
+import { useGameMusic, useSoundPreference } from "./MusicControls";
 import { gameRequest } from "@/lib/game-request";
 import { useGamePresence } from "@/lib/use-game-presence";
 import {
@@ -199,7 +201,7 @@ export default function BlockBattle({
       localStorage.removeItem("arcade-open-daily");
     }
     setBest(Number(localStorage.getItem("arcade-heart-best") || 0));
-    setSound(localStorage.getItem("arcade-heart-sound") === "true");
+    setSound(readAudio().sounds);
     const t = setInterval(() => setClock(Date.now()), 200);
     return () => clearInterval(t);
   }, []);
@@ -326,6 +328,8 @@ export default function BlockBattle({
       (opts.mode !== "timed" || remaining > 0) &&
       (!opts.coop || match.state.turn === actor) &&
       (opts.mode !== "endless" || match.state.ready[actor]);
+  useSoundPreference(setSound);
+  useGameMusic("block", pageActive && match?.status === "playing" && !terminal);
   const projected =
     playing && valid
       ? heartPlace(
@@ -400,7 +404,7 @@ export default function BlockBattle({
     return () => clearTimeout(t);
   }, [match?.state.pieces[seat], match?.id, seat]);
   async function feedback(lines: number, combo: number) {
-    if (Capacitor.isNativePlatform()) {
+    if (readAudio().haptics && Capacitor.isNativePlatform()) {
       const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
       await Haptics.impact({
         style:
@@ -410,8 +414,8 @@ export default function BlockBattle({
               ? ImpactStyle.Medium
               : ImpactStyle.Light,
       }).catch(() => {});
-    } else navigator.vibrate?.(combo > 1 ? [20, 30, 40] : lines ? 30 : 10);
-    if (!sound || !lines) return;
+    } else if (readAudio().haptics) navigator.vibrate?.(combo > 1 ? [20, 30, 40] : lines ? 30 : 10);
+    if (!sound || !readAudio().sounds || !lines) return;
     soundCtx.current ||= new AudioContext();
     void soundCtx.current.resume();
     [0, 1, 2].slice(0, Math.min(3, lines)).forEach((_, i) => {
@@ -419,7 +423,7 @@ export default function BlockBattle({
         gain = soundCtx.current!.createGain(),
         t = soundCtx.current!.currentTime + i * 0.08;
       osc.frequency.value = 440 + lines * 110 + i * 110;
-      gain.gain.setValueAtTime(0.045, t);
+      gain.gain.setValueAtTime(0.045 * readAudio().games, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
       osc.connect(gain).connect(soundCtx.current!.destination);
       osc.start(t);
@@ -626,7 +630,7 @@ export default function BlockBattle({
           className="icon-button"
           aria-label={sound ? "Mute game sounds" : "Enable game sounds"}
           onClick={() => {
-            setSound(!sound);
+            setSound(!sound); saveAudio({ ...readAudio(), sounds: !sound });
             localStorage.setItem("arcade-heart-sound", String(!sound));
           }}
         >

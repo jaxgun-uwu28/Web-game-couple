@@ -449,3 +449,14 @@
   }
 }
 .memory-camera{width:min(92vw,600px);padding:20px;border:0;border-radius:20px;background:var(--canvas);color:var(--ink)}.memory-camera::backdrop{background:#211926b8}.memory-camera h2{font-size:22px;margin:0}.memory-camera video{display:block;width:100%;max-height:60dvh;aspect-ratio:3/4;object-fit:cover;background:#211926;border-radius:12px}.memory-camera .memory-actions{margin-bottom:0}
+.memory-social { padding-block: 20px; }
+.memory-heart { position: relative; overflow: visible; }
+.memory-heart[aria-pressed=true] { color: var(--cherry); }
+.memory-heart-burst { position: absolute; inset: 0; pointer-events: none; }
+.memory-heart-burst svg { position: absolute; left: 45%; top: 25%; width: 18px; animation: memory-love .7s ease-out both; --angle: calc(var(--petal) * 72deg); }
+@keyframes memory-love { to { transform: rotate(var(--angle)) translateY(-65px) scale(.4); opacity: 0; } }
+.memory-comments { list-style: none; padding: 0; max-height: 240px; overflow: auto; }
+.memory-comments li { padding: 12px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.memory-comments p { margin: 4px 0; }
+.memory-social form { display: grid; gap: 12px; }
+@media(prefers-reduced-motion:reduce) { .memory-heart-burst { display: none; } .memory-heart-burst svg { animation: none; } }

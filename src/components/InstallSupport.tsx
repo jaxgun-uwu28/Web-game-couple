@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { Download, Bell, Smartphone, RefreshCw } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
+import { readAudio } from "@/lib/music";
 type InstallEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: string }>;
@@ -13,6 +14,7 @@ type Preferences = {
   memories: boolean;
   notes: boolean;
   taps: boolean;
+  holdhands: boolean;
   turns: boolean;
   quiet_start: number;
   quiet_end: number;
@@ -24,6 +26,7 @@ const defaults: Preferences = {
   memories: true,
   notes: true,
   taps: true,
+  holdhands: true,
   turns: true,
   quiet_start: 22,
   quiet_end: 8,
@@ -47,7 +50,7 @@ export function NativeBridge({ back }: { back: () => boolean }) {
       if (gone) await listener.remove();
       else cleanups.push(() => void listener.remove());
       const tactile = async (e: Event) => {
-        if ((e.target as HTMLElement).closest("button")) {
+        if (readAudio().haptics && (e.target as HTMLElement).closest("button")) {
           const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
           void Haptics.impact({ style: ImpactStyle.Light });
         }
@@ -435,7 +438,7 @@ export default function InstallSupport({
       >
         <fieldset disabled={busy || !preferencesReady}>
           {(
-            ["enabled", "wishes", "memories", "notes", "taps", "turns"] as const
+            ["enabled", "wishes", "memories", "notes", "taps", "holdhands", "turns"] as const
           ).map((k) => (
             <label className="check-row" key={k}>
               <input
@@ -452,6 +455,7 @@ export default function InstallSupport({
                   memories: "New memories",
                   notes: "New letters",
                   taps: "Thinking of you",
+                  holdhands: "Hold my hand",
                   turns: "Your game turn",
                 }[k]
               }

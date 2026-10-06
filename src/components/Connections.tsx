@@ -35,6 +35,7 @@ import {
 } from "@/lib/connections";
 import { manilaDay } from "@/lib/games";
 import { gameRequest } from "@/lib/game-request";
+import { tactile } from "@/lib/music";
 
 const previewIds = ["preview", "preview-two"];
 const moodIcons = {
@@ -201,7 +202,7 @@ export function ConnectionProvider({
       incoming &&
       lastIncoming.current !== incoming.id
     ) {
-      navigator.vibrate?.([35, 60, 35]);
+      void tactile([35, 60, 35]);
       setMessage("A little tap from your person. They’re thinking of you.");
     }
     lastIncoming.current = incoming?.id || "";
@@ -297,7 +298,7 @@ export function ConnectionProvider({
     setMessage("");
     try {
       await task();
-      navigator.vibrate?.(12);
+      void tactile(12);
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "This could not save. Try again.",
@@ -391,9 +392,10 @@ export function ConnectionProvider({
           ].slice(0, 20),
         }));
       else {
-        const { error } = await db!.rpc("send_thinking_of_you", { content });
-        if (error) throw new Error(error.message);
+        const result = await gameRequest(db, { content }, fetch, "/api/push/tap");
         await refresh();
+        setMessage(result.sent > 0 ? "Your little tap was sent." : result.delivery === "unavailable" ? "Your tap is saved. Notifications could not send; try again later." : "Your tap is saved. Your person can see it here; check their notification settings for background alerts.");
+        return;
       }
       setMessage("A little “thinking of you” is saved for your person.");
     });

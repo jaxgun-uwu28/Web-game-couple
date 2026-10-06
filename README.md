@@ -101,3 +101,6 @@ Migration 011: apply supabase/migrations/011_game_presence_and_taps.sql for the 
 Migration 012 adds the shared Activities wheel and expanded Block Hearts Duel. The owner confirmed applying it. See [Heartblast rules](docs/heartblast.md) for scoring, seeded fairness, modes and artwork slots. Timed and Race require both players; Endless and Daily support independent play. Explicit Exit cancels the shared match in every mode.
 
 Migration 013 adds author-only caption editing and recoverable photo archiving. The owner confirmed applying it. APK 1.0.2 (version code 3) uses the supplied kitty-couple artwork for the launcher and splash screen and loads the current hosted app.
+# Connection checkpoint
+
+Home now opens Hold Hands; Activities shows held moments. Memories photo viewers support hearts and comments. Settings has separate background/game volumes and master sounds/haptics; supplied game tracks pause background music while playing. Migrations 014/015 are owner-confirmed. Follow [the two-phone checklist](docs/CONNECTION_CHECKPOINT.md); remaining staged scope is in [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md). Compact current requirements and targeted file discovery live in PROJECT_SPEC.md and ARCHITECTURE.md.

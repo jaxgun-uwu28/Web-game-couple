@@ -38,6 +38,8 @@ import {
   KeepsakeBackup,
 } from "./Keepsakes";
 import Ambience from "./Ambience";
+import MusicControls from "./MusicControls";
+import HoldHands, { HoldStats } from "./HoldHands";
 import InstallSupport, { NativeBridge, OfflineShell } from "./InstallSupport";
 import TogetherActivities from "./TogetherActivities";
 import DailyHeartChallenge from "./DailyHeartChallenge";
@@ -590,6 +592,7 @@ export default function StageOne() {
                       preview={preview}
                       anniversary={anniversary}
                     />
+                    <MusicControls />
                     <ArtSettings />
                     <section className="nickname-setting">
                       <h2>Your account</h2>
@@ -638,6 +641,7 @@ export default function StageOne() {
                     </div>
                     <Wishlists />
                     <TogetherActivities />
+                    <HoldStats db={db} preview={preview}/>
                   </>
                 ) : tab === "memories" ? (
                   <Memories />
@@ -773,6 +777,7 @@ export default function StageOne() {
                       <DailyConnection />
                     </div>
                     <ConnectionMoments />
+                    <HoldHands db={db} session={session} couple={coupleId} preview={preview}/>
                     <DailyHeartChallenge
                       names={names}
                       go={() => setTab("play")}
