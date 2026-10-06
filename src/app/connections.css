@@ -352,3 +352,9 @@ html[data-time="night"] .choice-options button:first-child {
 .hold-merged-art { position:absolute; top:43%; left:50%; transform:translate(-50%,-50%); pointer-events:none; color:#f7b5cd; }
 .hold-merged-art svg,.hold-merged-art img { width:160px; height:160px; object-fit:contain; }
 .is-merged .hold-pad svg,.is-merged .hold-pad img { opacity:0; }
+.hold-room .slot-fallback {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+.is-merged .hold-pad > span:not(.art-slot) { opacity: 0; }

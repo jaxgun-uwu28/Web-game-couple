@@ -1345,3 +1345,11 @@ html[data-time="night"] .heart-duel {
 @media(max-width:1279px){.heart-duel.is-playing{--hb-board-size:min(calc(100vw - 32px),calc(100dvh - 350px - env(safe-area-inset-top) - env(safe-area-inset-bottom)),560px)}.heart-duel.is-playing:has(.demo-seats){--hb-board-size:min(calc(100vw - 32px),calc(100dvh - 390px - env(safe-area-inset-top) - env(safe-area-inset-bottom)),560px)}}
 .heart-duel.is-playing:has(.notice){--hb-board-size:min(calc(100vw - 32px),calc(100dvh - 410px - env(safe-area-inset-top) - env(safe-area-inset-bottom)),560px)}
 @media(prefers-reduced-motion:reduce){.heart-duel .block-grid>button.just-placed{animation:none}}
+@media (min-width: 1280px) {
+  .heart-duel.is-playing {
+    --hb-board-size: min(calc(100vw - 32px), calc(100dvh - 360px - env(safe-area-inset-top) - env(safe-area-inset-bottom)), 560px);
+  }
+  .heart-duel.is-playing:has(.demo-seats) {
+    --hb-board-size: min(calc(100vw - 32px), calc(100dvh - 400px - env(safe-area-inset-top) - env(safe-area-inset-bottom)), 560px);
+  }
+}
