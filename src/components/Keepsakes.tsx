@@ -26,6 +26,7 @@ import {
   Sparkles,
   Send,
   X,
+  Trash2,
 } from "lucide-react";
 import {
   type WishList,
@@ -43,8 +44,8 @@ import { Slot } from "./ArtSlots";
 import { tactile } from "@/lib/music";
 import { Capacitor } from "@capacitor/core";
 import NativePhotoButton from "./NativePhotoButton";
-import {resetExtraPreviews} from '@/lib/extra-games';
-import {resetPreviewProgress} from '@/lib/preview-progress';
+import { resetExtraPreviews } from "@/lib/extra-games";
+import { resetPreviewProgress } from "@/lib/preview-progress";
 import {
   enqueueWish,
   flushWishes,
@@ -116,7 +117,14 @@ export function KeepsakeProvider({
     bodies = useRef<Record<string, NoteBody>>({}),
     blobs = useRef<Record<string, string>>({});
   const user = preview ? `preview-${seat}` : session?.user.id || "";
-  useEffect(()=>()=>{delete document.documentElement.dataset.arcadeTheme;resetExtraPreviews();resetPreviewProgress();},[]);
+  useEffect(
+    () => () => {
+      delete document.documentElement.dataset.arcadeTheme;
+      resetExtraPreviews();
+      resetPreviewProgress();
+    },
+    [],
+  );
   const refresh = useCallback(async () => {
     if (preview || !db || !session || !couple) return;
     const tables = [
@@ -375,13 +383,22 @@ export function KeepsakeFeedback() {
     </>
   );
 }
-export function Photo({ path, alt, onOpen }: { path: string | null; alt: string; onOpen?:()=>void }) {
+export function Photo({
+  path,
+  alt,
+  onOpen,
+}: {
+  path: string | null;
+  alt: string;
+  onOpen?: () => void;
+}) {
   const c = useKeepsakes(),
     [url, setUrl] = useState(""),
     [failed, setFailed] = useState(false);
   useEffect(() => {
     let canceled = false;
-    setUrl("");setFailed(false);
+    setUrl("");
+    setFailed(false);
     if (path)
       c.signed(path)
         .then((u) => {
@@ -394,15 +411,17 @@ export function Photo({ path, alt, onOpen }: { path: string | null; alt: string;
       canceled = true;
     };
   }, [path, c.user]);
-  return url && onOpen ? <button type="button" className="memory-photo-button" onClick={onOpen}><img src={url} alt={alt} loading="lazy"/></button> : url ? (
+  return url && onOpen ? (
+    <button type="button" className="memory-photo-button" onClick={onOpen}>
+      <img src={url} alt={alt} loading="lazy" />
+    </button>
+  ) : url ? (
     <a href={url} target="_blank" rel="noreferrer" className="private-photo">
       <img src={url} alt={alt} loading="lazy" />
     </a>
   ) : path ? (
     <p>
-      {failed
-        ? "Photo could not load. Refresh to retry."
-        : "Opening photo…"}
+      {failed ? "Photo could not load. Refresh to retry." : "Opening photo…"}
     </p>
   ) : null;
 }
@@ -444,9 +463,7 @@ export function KeepsakeBackup() {
   return (
     <section className="nickname-setting">
       <h2>A copy of our little world.</h2>
-      <p>
-        Download your wishes, memories and opened letters.
-      </p>
+      <p>Download your wishes, memories and opened letters.</p>
       <button
         disabled={c.busy}
         onClick={() =>
@@ -782,6 +799,23 @@ export function Wishlists() {
       }
     });
   }
+  async function removeWish(w: Wish) {
+    if (!window.confirm(`Delete “${w.title}”? This also removes its comments.`))
+      return;
+    await c.run(async () => {
+      if (c.preview) {
+        c.local((s) => ({
+          ...s,
+          wishes: s.wishes.filter((i) => i.id !== w.id),
+          claims: s.claims.filter((i) => i.item_id !== w.id),
+          comments: s.comments.filter((i) => i.item_id !== w.id),
+        }));
+      } else {
+        const r = await c.db!.from("wishlist_items").delete().eq("id", w.id);
+        if (r.error) throw new Error(r.error.message);
+      }
+    });
+  }
   return (
     <section className="keepsake-page wishlist-page">
       <div className="page-heading">
@@ -924,18 +958,25 @@ export function Wishlists() {
                   </span>
                 </div>
                 <Photo path={w.image_path} alt={w.title} />
-                <p>{w.note}</p>
+                {w.note && <p>{w.note}</p>}
                 {w.url && (
                   <a href={safeLink(w.url)} target="_blank" rel="noreferrer">
                     Open wish link
                   </a>
                 )}
-                <p className="wish-meta">
-                  {w.price !== null &&
-                    `${w.currency} ${Number(w.price).toLocaleString()} · `}
-                  {w.category}
-                  {w.planned_date && ` · ${w.planned_date}`}
-                </p>
+                {(Number(w.price) > 0 || w.category || w.planned_date) && (
+                  <p className="wish-meta">
+                    {[
+                      Number(w.price) > 0
+                        ? `${w.currency} ${Number(w.price).toLocaleString()}`
+                        : "",
+                      w.category,
+                      w.planned_date,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                )}
                 {list.type === "personal" &&
                   list.owner_id === c.user &&
                   w.status === "done" && <ReceivedGift wish={w} />}
@@ -961,7 +1002,11 @@ export function Wishlists() {
                           <option value="done">Done / received</option>
                         </select>
                       </label>
-                      <button className="secondary" onClick={() => edit(w)}>
+                      <button
+                        className="secondary"
+                        disabled={c.busy}
+                        onClick={() => edit(w)}
+                      >
                         Edit
                       </button>
                       <button
@@ -975,6 +1020,14 @@ export function Wishlists() {
                         }
                       >
                         <ArrowUp size={18} />
+                      </button>
+                      <button
+                        className="secondary wish-delete"
+                        disabled={c.busy}
+                        onClick={() => void removeWish(w)}
+                        aria-label={`Delete ${w.title}`}
+                      >
+                        <Trash2 size={17} /> Delete
                       </button>
                     </>
                   )}
@@ -1246,12 +1299,87 @@ export function Notes() {
     [file, setFile] = useState<Blob | null>(null),
     [kind, setKind] = useState("photo"),
     [recording, setRecording] = useState(false),
-    [opened, setOpened] = useState<{ id: string; content: NoteBody } | null>(
-      null,
-    ),
+    [opened, setOpened] = useState<{
+      id: string;
+      content: NoteBody;
+      author: string;
+      title: string;
+      favorite: boolean;
+    } | null>(null),
     [voiceUrl, setVoiceUrl] = useState("");
   const recorder = useRef<MediaRecorder | null>(null),
-    stream = useRef<MediaStream | null>(null);
+    stream = useRef<MediaStream | null>(null),
+    letterDialog = useRef<HTMLElement | null>(null);
+  async function finishLetter(keep = false) {
+    if (!opened) return;
+    const ok = await c.run(async () => {
+      if (opened.author !== c.user) {
+        if (c.preview) {
+          c.local((s) => ({
+            ...s,
+            letters: s.letters.flatMap((n) =>
+              n.id !== opened.id
+                ? [n]
+                : keep || opened.favorite
+                  ? [{ ...n, recipient_favorite: true }]
+                  : [],
+            ),
+          }));
+          if (!keep && !opened.favorite) delete bodies[opened.id];
+        } else {
+          const r = await c.db!.rpc("finish_love_note", {
+            nid: opened.id,
+            keep,
+          });
+          if (r.error) throw new Error(r.error.message);
+        }
+      }
+    });
+    if (ok) {
+      if (keep) setOpened({ ...opened, favorite: true });
+      else setOpened(null);
+    }
+  }
+  const closeLetter = useRef(() => {});
+  closeLetter.current = () => {
+    if (!c.busy) void finishLetter();
+  };
+  useEffect(() => {
+    if (!opened) return;
+    const previous = document.activeElement as HTMLElement | null;
+    letterDialog.current?.focus();
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeLetter.current();
+      if (e.key === "Tab") {
+        const items = Array.from(
+          letterDialog.current?.querySelectorAll<HTMLElement>(
+            "button:not(:disabled),audio,[href]",
+          ) || [],
+        );
+        const first = items[0],
+          last = items.at(-1);
+        if (
+          e.shiftKey &&
+          (document.activeElement === first ||
+            document.activeElement === letterDialog.current)
+        ) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", key);
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", key);
+      document.body.style.overflow = oldOverflow;
+      previous?.focus();
+    };
+  }, [opened?.id]);
   useEffect(() => {
     setOpened(null);
     setBody("");
@@ -1474,7 +1602,13 @@ export function Notes() {
                   disabled={sealed || c.busy}
                   onClick={() =>
                     void c.run(async () =>
-                      setOpened({ id: n.id, content: await c.open(n.id) }),
+                      setOpened({
+                        id: n.id,
+                        content: await c.open(n.id),
+                        author: n.author,
+                        title: n.title,
+                        favorite: !!n.recipient_favorite,
+                      }),
                     )
                   }
                 >
@@ -1486,27 +1620,63 @@ export function Notes() {
           })}
       </ol>
       {opened && (
-        <article className="open-letter">
-          <button className="secondary" onClick={() => setOpened(null)}>
-            Close letter <X size={17} />
-          </button>
-          <p className="handwritten">{opened.content.body}</p>
-          {opened.content.media_kind === "photo" && (
-            <Photo
-              path={opened.content.media_path}
-              alt="Photo enclosed in your letter"
-            />
-          )}
-          {voiceUrl && <audio controls src={voiceUrl} />}
-        </article>
+        <div className="letter-reveal-backdrop">
+          <article
+            className="open-letter"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="open-letter-title"
+            tabIndex={-1}
+            ref={letterDialog}
+          >
+            <div className="letter-opening-envelope" aria-hidden="true">
+              <Mail size={48} />
+              <Heart size={22} />
+            </div>
+            <h2 id="open-letter-title">{opened.title}</h2>
+            <div className="letter-reader-actions">
+              <button
+                className="secondary"
+                disabled={c.busy}
+                onClick={() => void finishLetter()}
+              >
+                Close letter <X size={17} />
+              </button>
+              {opened.author !== c.user && (
+                <button
+                  disabled={c.busy || opened.favorite}
+                  onClick={() => void finishLetter(true)}
+                >
+                  <Heart
+                    size={17}
+                    fill={opened.favorite ? "currentColor" : "none"}
+                  />
+                  {opened.favorite ? "Favorited" : "Favorite to keep"}
+                </button>
+              )}
+            </div>
+            {opened.author !== c.user && !opened.favorite && (
+              <p className="letter-read-once">
+                This letter disappears when you close it. Favorite it to keep
+                it.
+              </p>
+            )}
+            <p className="handwritten">{opened.content.body}</p>
+            {opened.content.media_kind === "photo" && (
+              <Photo
+                path={opened.content.media_path}
+                alt="Photo enclosed in your letter"
+              />
+            )}
+            {voiceUrl && <audio controls src={voiceUrl} />}
+          </article>
+        </div>
       )}
       {!c.letters.length && (
         <div className="keepsake-empty">
           <Mail size={54} />
           <h2>A jar full of things to say.</h2>
-          <p>
-            Write your first letter above.
-          </p>
+          <p>Write your first letter above.</p>
         </div>
       )}
     </section>

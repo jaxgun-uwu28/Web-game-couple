@@ -334,3 +334,24 @@
   }
 }
 
+
+.cassette-library-tools { display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px; margin-top:20px; }
+.cassette-library-tools label { flex:1 1 200px; max-width:360px; }
+.cassette-library-tools > div, .cassette-pagination { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.cassette-pagination { justify-content:center; margin-bottom:20px; }
+.cassette-library { grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+.cassette-library .cassette-card { min-width:0; width:100%; max-width:none; }
+.cassette-library .cassette-label { font-size:clamp(16px,2vw,22px); overflow-wrap:anywhere; }
+.cassette-library .cassette-tape { padding:12px; }
+.cassette-library .cassette-reels { gap:10px; }
+.cassette-library .cassette-reels i { width:36px; height:36px; border-width:6px; }
+.cassette-library .cassette-reels span { width:32px; }
+.cassette-library .text-button { min-width:44px; min-height:44px; }
+@media(max-width:768px) {
+ .cassette-library { grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+ .cassette-library .cassette-tape { padding:8px; }
+ .cassette-library .cassette-label { padding:8px; font-size:16px; }
+ .cassette-library .cassette-reels { gap:6px; }
+ .cassette-library .cassette-reels i { width:26px; height:26px; border-width:5px; }
+ .cassette-library .cassette-reels span { width:24px; height:16px; }
+}

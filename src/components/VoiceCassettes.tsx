@@ -119,6 +119,9 @@ export default function VoiceCassettes({
     [busy, setBusy] = useState(false),
     [pending, setPending] = useState(0),
     [filter, setFilter] = useState(false),
+    [search, setSearch] = useState(""),
+    [collection, setCollection] = useState("all"),
+    [page, setPage] = useState(0),
     [maxSeconds, setMaxSeconds] = useState(60),
     [usage, setUsage] = useState({ used: 0, cap: 314572800 });
   const previewUrls = useRef(new Set<string>());
@@ -477,8 +480,12 @@ export default function VoiceCassettes({
       return true;
     }
     const r = await c.db?.rpc("voice_action", { i: row.id, a, v });
-    if (r?.error) {setError(r.error.message);return false;}
-    void refresh();return true;
+    if (r?.error) {
+      setError(r.error.message);
+      return false;
+    }
+    void refresh();
+    return true;
   }
   async function backup() {
     const JSZip = (await import("jszip")).default,
@@ -522,6 +529,20 @@ export default function VoiceCassettes({
         )}
       </section>
     ) : null;
+  const matching = rows.filter(
+    (x) =>
+      (!filter || x.favorite_by.includes(c.user)) &&
+      (collection === "all" ||
+        (collection === "sent"
+          ? x.sender_id === c.user
+          : x.sender_id !== c.user)) &&
+      (!search.trim() ||
+        (x.label || "A little voice, just for you")
+          .toLowerCase()
+          .includes(search.trim().toLowerCase())),
+  );
+  const pageCount = Math.max(1, Math.ceil(matching.length / 6));
+  const currentPage = Math.min(page, pageCount - 1);
   return (
     <section className="voice-shelf">
       <Slot name="voice-background" className="voice-backdrop" />
@@ -530,7 +551,10 @@ export default function VoiceCassettes({
         <button
           className="secondary"
           aria-pressed={filter}
-          onClick={() => setFilter(!filter)}
+          onClick={() => {
+            setFilter(!filter);
+            setPage(0);
+          }}
         >
           <Star size={18} /> Favorites
         </button>
@@ -679,75 +703,130 @@ export default function VoiceCassettes({
           </button>
         </div>
       )}
-      <div className="cassette-grid">
-        {rows
-          .filter((x) => !filter || x.favorite_by.includes(c.user))
-          .map((row, i) => (
-            <article
-              key={row.id}
-              className="cassette-card"
-              style={{ rotate: `${i % 2 ? 2 : -2}deg` }}
+      <div className="cassette-library-tools">
+        <label>
+          Find a cassette
+          <input
+            type="search"
+            value={search}
+            placeholder="Search labels"
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
+          />
+        </label>
+        <div role="group" aria-label="Cassette collection">
+          {[
+            ["all", "All"],
+            ["sent", "Sent"],
+            ["received", "Received"],
+          ].map(([value, text]) => (
+            <button
+              key={value}
+              className={collection === value ? "" : "secondary"}
+              aria-pressed={collection === value}
+              onClick={() => {
+                setCollection(value);
+                setPage(0);
+              }}
             >
-              <button
-                className="cassette-open"
-                onClick={() => setSelected(row)}
-                aria-label={`Play ${row.label || "cassette"}`}
-              >
-                <Tape row={row} />
-                {row.sender_id !== c.user && !row.listened_at && (
-                  <span className="cassette-new">New</span>
-                )}
-              </button>
-              <p>
-                {row.sender_id === c.user ? "You" : "Partner"} ·{" "}
-                {new Date(row.created_at).toLocaleDateString()}{" "}
-                {row.sender_id === c.user &&
-                  (row.listened_at ? (
-                    <span className="cassette-listened">
-                      <Heart size={16} fill="currentColor" /> Listened
-                    </span>
-                  ) : row.delivered_at ? (
-                    "Delivered"
-                  ) : (
-                    "Sent"
-                  ))}
-              </p>
+              {text}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="cassette-grid cassette-library">
+        {matching.slice(currentPage * 6, currentPage * 6 + 6).map((row, i) => (
+          <article
+            key={row.id}
+            className="cassette-card"
+            style={{ rotate: `${i % 2 ? 2 : -2}deg` }}
+          >
+            <button
+              className="cassette-open"
+              onClick={() => setSelected(row)}
+              aria-label={`Play ${row.label || "cassette"}`}
+            >
+              <Tape row={row} />
+              {row.sender_id !== c.user && !row.listened_at && (
+                <span className="cassette-new">New</span>
+              )}
+            </button>
+            <p>
+              {row.sender_id === c.user ? "You" : "Partner"} ·{" "}
+              {new Date(row.created_at).toLocaleDateString()}{" "}
+              {row.sender_id === c.user &&
+                (row.listened_at ? (
+                  <span className="cassette-listened">
+                    <Heart size={16} fill="currentColor" /> Listened
+                  </span>
+                ) : row.delivered_at ? (
+                  "Delivered"
+                ) : (
+                  "Sent"
+                ))}
+            </p>
+            <button
+              className="text-button"
+              aria-label="Favorite cassette"
+              aria-pressed={row.favorite_by.includes(c.user)}
+              onClick={() => void action(row, "favorite")}
+            >
+              <Star size={18} />
+            </button>
+            {row.sender_id === c.user && (
               <button
                 className="text-button"
-                aria-label="Favorite cassette"
-                aria-pressed={row.favorite_by.includes(c.user)}
-                onClick={() => void action(row, "favorite")}
+                aria-label="Delete cassette"
+                onClick={() => {
+                  if (!confirm("Delete this cassette permanently?")) return;
+                  void c.run(async () => {
+                    if (!c.preview) {
+                      const r = await c
+                        .db!.storage.from("voice-notes")
+                        .remove([row.storage_path]);
+                      if (r.error) throw r.error;
+                      const d = await c
+                        .db!.from("voice_messages")
+                        .delete()
+                        .eq("id", row.id);
+                      if (d.error) throw d.error;
+                    }
+                    setRows((x) => x.filter((y) => y.id !== row.id));
+                  });
+                }}
               >
-                <Star size={18} />
+                <Trash2 size={18} />
               </button>
-              {row.sender_id === c.user && (
-                <button
-                  className="text-button"
-                  aria-label="Delete cassette"
-                  onClick={() => {
-                    if (!confirm("Delete this cassette permanently?")) return;
-                    void c.run(async () => {
-                      if (!c.preview) {
-                        const r = await c
-                          .db!.storage.from("voice-notes")
-                          .remove([row.storage_path]);
-                        if (r.error) throw r.error;
-                        const d = await c
-                          .db!.from("voice_messages")
-                          .delete()
-                          .eq("id", row.id);
-                        if (d.error) throw d.error;
-                      }
-                      setRows((x) => x.filter((y) => y.id !== row.id));
-                    });
-                  }}
-                >
-                  <Trash2 size={18} />
-                </button>
-              )}
-            </article>
-          ))}
+            )}
+          </article>
+        ))}
       </div>
+      {matching.length > 0 && (
+        <nav className="cassette-pagination" aria-label="Cassette pages">
+          <button
+            className="secondary"
+            disabled={currentPage === 0}
+            onClick={() => setPage(currentPage - 1)}
+          >
+            Previous
+          </button>
+          <span role="status">
+            {currentPage + 1} / {pageCount} · {matching.length} cassettes
+          </span>
+          <button
+            className="secondary"
+            disabled={currentPage + 1 >= pageCount}
+            onClick={() => setPage(currentPage + 1)}
+          >
+            Next
+          </button>
+        </nav>
+      )}
+      {rows.length > 0 && matching.length === 0 && (
+        <p role="status">No cassettes match. Try another filter or label.</p>
+      )}
       {rows.length === 0 && <p>No cassettes yet. Record your first one.</p>}
       <button
         className="text-button"
@@ -886,7 +965,13 @@ function CassettePlayer({
   const markHeard = () => {
     if (!heard.current) {
       heard.current = true;
-      void action(row,"listened").then(ok=>{if(!ok)heard.current=false;}).catch(()=>{heard.current=false;});
+      void action(row, "listened")
+        .then((ok) => {
+          if (!ok) heard.current = false;
+        })
+        .catch(() => {
+          heard.current = false;
+        });
     }
   };
   useEffect(() => {

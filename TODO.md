@@ -9,4 +9,6 @@ Requirements: docs/EXPANSION_PLAN.md. Implementation and remaining detailed gaps
 - Verify APK installation, camera and opt-in background push on a physical device. Latest artifact: dist-apk/our-little-arcade-1.0.4.apk (version code 5).
 - Await explicit approval before converting Elaine's existing locked October 6 photo swap into an ordinary shared memory. Do not expose it as part of unrelated work.
 
+Wishlist deletion, read-once letter favorites/opening dialog and six-item cassette library are implemented. Migration 027 is owner-confirmed applied. Production build and recipient/favorite/delete database fixture passed; browser visual review remains policy-blocked.
+
 For the next change, define one bounded task and acceptance criteria; update this list by removing completed items, not by appending a work diary.

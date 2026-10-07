@@ -39,6 +39,7 @@ export type Letter = {
   unlock_at: string | null;
   open_when: string;
   opened_at: string | null;
+  recipient_favorite?: boolean;
   created_at: string;
 };
 export type NoteBody = {
