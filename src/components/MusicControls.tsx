@@ -22,7 +22,10 @@ export function useGameMusic(kind: string, active: boolean) {
 }
 export function useSoundPreference(setSound: (value: boolean) => void) {
   useEffect(() => {
-    const sync = () => setSound(readAudio().sounds);
+    const sync = () => {
+      const p = readAudio();
+      setSound(p.sounds || p.gameMusic);
+    };
     sync();
     window.addEventListener("arcade-audio-change", sync);
     return () => window.removeEventListener("arcade-audio-change", sync);

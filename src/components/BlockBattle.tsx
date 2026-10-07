@@ -708,7 +708,7 @@ export default function BlockBattle({
           aria-label={sound ? "Mute game sounds" : "Enable game sounds"}
           onClick={() => {
             setSound(!sound);
-            saveAudio({ ...readAudio(), sounds: !sound });
+            saveAudio({ ...readAudio(), sounds: !sound, gameMusic: !sound });
             localStorage.setItem("arcade-heart-sound", String(!sound));
           }}
         >
@@ -1042,7 +1042,7 @@ export default function BlockBattle({
                           ghost =
                             playing &&
                             !used[piece] &&
-                            (drag ? true : valid) &&
+                            valid &&
                             (!drag || drag.inside) &&
                             shape !== undefined &&
                             heartShapes[shape].some(
@@ -1287,7 +1287,7 @@ export default function BlockBattle({
             )}
         </>
       )}
-      {drag && shape !== undefined && (
+      {drag && shape !== undefined && (!drag.inside || valid) && (
         <div className="heart-drag" style={{ left: drag.x, top: drag.y }}>
           <Piece shape={shape} />
         </div>

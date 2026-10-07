@@ -520,7 +520,7 @@ export default function PlayArcade({
               aria-pressed={sound}
               onClick={() => {
                 setSound(!sound);
-                saveAudio({ ...readAudio(), sounds: !sound });
+                saveAudio({ ...readAudio(), sounds: !sound, gameMusic: !sound });
               }}
             >
               {sound ? <Volume2 size={20} /> : <VolumeX size={20} />}

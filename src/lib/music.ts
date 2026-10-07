@@ -42,6 +42,10 @@ export function saveAudio(p: AudioPreferences) {
   localStorage.setItem("arcade-audio", JSON.stringify(p));
   window.dispatchEvent(new Event("arcade-audio-change"));
 }
+export function audioPlayback(kind: string | null, p: AudioPreferences) {
+  if (kind && !p.gameMusic) return "muted";
+  return kind && gameTracks[kind] ? "game" : "background";
+}
 export async function tactile(pattern: number | number[] = 12) {
   if (!readAudio().haptics) return;
   const { Capacitor } = await import("@capacitor/core");

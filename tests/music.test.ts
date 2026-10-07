@@ -28,3 +28,13 @@ test("audio preferences default off, sanitize volume and recover from corrupt st
     else delete (globalThis as { localStorage?: unknown }).localStorage;
   }
 });
+
+test("muted games silence both tracks; leaving restores background and unmuting selects game music", async () => {
+  const { audioPlayback, defaultAudio } = await import('../src/lib/music');
+  const on = { ...defaultAudio, gameMusic:true, sounds:true };
+  assert.equal(audioPlayback('block',on),'game');
+  assert.equal(audioPlayback('block',{...on,gameMusic:false,sounds:false}),'muted');
+  assert.equal(audioPlayback(null,{...on,gameMusic:false,sounds:false}),'background');
+  assert.equal(audioPlayback('know',{...on,gameMusic:false}),'muted');
+  assert.equal(audioPlayback('know',on),'background');
+});

@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX, Moon, Sun, CloudRain } from "lucide-react";
 import { useAsset } from "./ArtSlots";
-import { gameTracks, readAudio } from "@/lib/music";
+import { gameTracks, readAudio, audioPlayback } from "@/lib/music";
 export default function Ambience() {
   const ambient = useAsset("ambient");
   const [sound, setSound] = useState(false),
@@ -21,10 +21,11 @@ export default function Ambience() {
       bg.volume = p.background; game.volume = p.games;
       if (audioFocus.current.size) { bg.pause(); game.pause(); return; }
       const track = currentGame.current && gameTracks[currentGame.current.kind];
+      if (audioPlayback(currentGame.current?.kind || null, p) === "muted") { bg.pause(); game.pause(); return; }
       if (track && p.gameMusic) {
         bg.pause();
         if (game.getAttribute("src") !== track) game.src = track;
-        void game.play().catch(() => { setSoundError("Tap the music button to start the game track."); if (backgroundWanted.current) void bg.play().catch(() => {}); });
+        void game.play().catch(() => { setSoundError("Tap the music button to start the game track."); if (backgroundWanted.current && audioPlayback(currentGame.current?.kind || null, readAudio()) === "background") void bg.play().catch(() => {}); });
       } else {
         game.pause();
         if (backgroundWanted.current) void bg.play().catch(() => {});
@@ -71,7 +72,7 @@ export default function Ambience() {
     setSoundLoading(true);
     try {
       backgroundWanted.current = true;
-      if (audioFocus.current.size) { setSound(true); return; }
+      if (audioFocus.current.size || audioPlayback(currentGame.current?.kind || null, readAudio()) === "muted") { setSound(true); return; }
       player.volume = readAudio().background;
       if (currentGame.current && readAudio().gameMusic) {
         const track = gameTracks[currentGame.current.kind];
