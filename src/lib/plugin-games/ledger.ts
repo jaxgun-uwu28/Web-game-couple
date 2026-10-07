@@ -6,6 +6,7 @@ export type LedgerState = {
   initial: number;
   pot: number;
   stakes: number[];
+  roundBet?: number;
   notes: string[][];
   locked: boolean[];
   round: number;
@@ -52,6 +53,7 @@ export function ledgerMove(input: LedgerState, move: Move, player: Seat) {
     s.status = "betting";
     s.locked = [false, false];
     s.stakes = [0, 0];
+    delete s.roundBet;
     s.notes = [[], []];
     s.values = null;
     s.revealed = [[], []];
@@ -87,13 +89,22 @@ export function ledgerMove(input: LedgerState, move: Move, player: Seat) {
     throw new Error("Your bet is already sealed.");
   if (move.type !== "lock") throw new Error("Choose a bet to seal.");
   const amount = Number(move.coins),
-    minimum = Math.min(s.wallets[player], fee * 2 ** s.ties);
+    cap = s.locked[o]
+      ? (s.roundBet ?? s.stakes[o])
+      : Math.min(...s.wallets, Math.max(10, fee * 2 ** s.ties)),
+    minimum = Math.min(cap, fee * 2 ** s.ties);
   if (
     !Number.isInteger(amount) ||
     amount < minimum ||
-    amount > Math.min(s.wallets[player], Math.max(10, fee * 2 ** s.ties))
+    amount > Math.min(s.wallets[player], cap) ||
+    (s.locked[o] && amount !== (s.roundBet ?? s.stakes[o]))
   )
-    throw new Error("Choose a stake within your wallet and the cap.");
+    throw new Error(
+      s.locked[o]
+        ? "Match Partner’s bet exactly."
+        : "Choose a bet both wallets can match.",
+    );
+  s.roundBet = amount;
   const note = String(move.note || "").trim();
   if (note.length > 140)
     throw new Error("Keep your promise under 140 characters.");
@@ -128,6 +139,8 @@ export function resolveLedger(s: LedgerState) {
     s.ties++;
     s.status = "betting";
     s.locked = [false, false];
+    s.stakes = [0, 0];
+    delete s.roundBet;
     if (s.wallets.every((x) => x === 0)) {
       // No coins remain: resolve with a fresh secure draw without another ante.
       throw new Error("A tied empty wallet needs a fresh server draw.");
@@ -145,9 +158,10 @@ export function resolveLedger(s: LedgerState) {
   s.pot = 0;
   const rounds = Number(s.config.rounds) || 1,
     over =
-      s.config.rounds === "broke"
+      s.wallets.some((x) => x === 0) ||
+      (s.config.rounds === "broke"
         ? s.wallets.some((x) => x === 0)
-        : s.wins[winner] >= Math.ceil(rounds / 2);
+        : s.wins[winner] >= Math.ceil(rounds / 2));
   s.status = over ? "done" : "reveal";
   return s;
 }

@@ -59,8 +59,14 @@ export default function GameDie({
           onRoll?.();
         }}
       >
-        {value === null && <span className="die-hidden" aria-hidden="true">?</span>}
-        <Slot name={`ledger-dice-d${sides}`} className="die-art" />
+        {value === null && (
+          <span className="die-hidden" aria-hidden="true">
+            ?
+          </span>
+        )}
+        <Slot name={`ledger-dice-d${sides}`} className="die-art">
+          <span />
+        </Slot>
         <span
           className={`game-die ${sides === 6 ? "cube" : "d20"} ${rolling ? "rolling" : ""}`}
           style={{ transform: `rotateX(${x}deg) rotateY(${y}deg)` }}

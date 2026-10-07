@@ -13,3 +13,5 @@ Updated 2026-10-07. Keep only actionable current facts; detailed evidence lives 
 Do not store API keys, passwords, service-account data, raw private media or unnecessary account identifiers in these notes.
 
 - Wishlist list deletion is implemented and local permission/cascade tests plus build passed; migration 029 awaits owner confirmation. Browser verification remains unavailable under the existing URL-policy block.
+
+- Ledger matched-bet and Draw & Guess round/timer update passed 14 local fixtures and production build. Migration 030 awaits owner confirmation before release; live visual/two-phone acceptance is unverified.

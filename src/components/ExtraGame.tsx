@@ -58,6 +58,8 @@ function ExtraGameInternal({
   const [topic, setTopic] = useState("Surprise Mix"),
     [custom, setCustom] = useState(""),
     [count, setCount] = useState(5),
+    [roundSeconds, setRoundSeconds] = useState(60),
+    [clock, setClock] = useState(Date.now()),
     [difficulty, setDifficulty] = useState("Easy-Medium"),
     [savedNote, setSavedNote] = useState("");
   useSoundPreference(setSound);
@@ -74,6 +76,7 @@ function ExtraGameInternal({
     audio = useRef<AudioContext | null>(null),
     requestVersion = useRef(0);
   const wakeShuffle = useRef<() => void>(() => {});
+  const lastTimerRequest = useRef(0);
   useEffect(() => {
     if (preview || kind !== "trivia" || !db || !coupleId) return;
     const live = db
@@ -97,6 +100,41 @@ function ExtraGameInternal({
   const player = preview ? seat : slot,
     definition = registry.find((g) => g.id === kind)!,
     Icon = kind === "draw" ? Pencil : kind === "know" ? Heart : Brain;
+  useEffect(() => {
+    if (
+      kind !== "draw" ||
+      !game?.state.round_seconds ||
+      game.state.status !== "playing"
+    )
+      return;
+    const tick = setInterval(() => setClock(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, [kind, game?.id, game?.state.status]);
+  useEffect(() => {
+    if (
+      kind !== "draw" ||
+      !game?.state.round_seconds ||
+      game.state.status !== "playing" ||
+      game.state.phase !== "drawing" ||
+      busy ||
+      (!preview && !attendance.paired)
+    )
+      return;
+    if (Date.now() - lastTimerRequest.current < 2000) return;
+    lastTimerRequest.current = Date.now();
+    if (!game.state.round_ends_at) void move({ type: "ready" }).catch(() => {});
+    else if (clock >= Date.parse(game.state.round_ends_at))
+      void move({ type: "timeout" }).catch(() => {});
+  }, [
+    clock,
+    game?.state.round_ends_at,
+    game?.state.phase,
+    game?.id,
+    busy,
+    attendance.paired,
+    preview,
+    kind,
+  ]);
   const refresh = useCallback(async () => {
     const active = current.current;
     if (!active || !db || preview || lock.current) return;
@@ -181,7 +219,7 @@ function ExtraGameInternal({
     await work(async () => {
       let next: Game;
       if (preview) {
-        const local = startExtraPreview(kind);
+        const local = startExtraPreview(kind, count, roundSeconds);
         next = local.game;
         secret.current = local.secret;
         answers.current = local.answers;
@@ -243,7 +281,10 @@ function ExtraGameInternal({
             : "",
         );
       } else {
-        const result = await gameRequest(db, { kind });
+        const result = await gameRequest(db, {
+          kind,
+          config: { rounds: count, seconds: roundSeconds },
+        });
         if (result.pending)
           throw new Error(
             "Your next batch is being prepared. Tap again shortly.",
@@ -267,6 +308,12 @@ function ExtraGameInternal({
             secret.current,
           )
         : ((await gameRequest(db, { id: current.current.id, action })) as Game);
+      if (preview && kind === "draw" && action.type === "next") {
+        const local = startExtraPreview(kind, count, roundSeconds);
+        secret.current = local.words?.[next.state.round] || local.secret;
+        updateExtraPreview(kind, { secret: secret.current, strokes: [] });
+        setStrokes([]);
+      }
       setGame(next);
       if (next.state.status !== "playing") feedback(true);
       if (preview) {
@@ -382,6 +429,42 @@ function ExtraGameInternal({
                   ? "Five sample questions. Two curious minds. Scores stay on this device."
                   : "Pick a topic. Answers reveal together, and the server keeps score."}
           </p>
+          {kind === "draw" && (
+            <div className="brain-setup">
+              <fieldset disabled={busy}>
+                <legend>Rounds</legend>
+                <div className="topic-chips">
+                  {[5, 10, 15].map((n) => (
+                    <button
+                      type="button"
+                      key={n}
+                      className={count === n ? "" : "secondary"}
+                      aria-pressed={count === n}
+                      onClick={() => setCount(n)}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <fieldset disabled={busy}>
+                <legend>Time per round</legend>
+                <div className="topic-chips">
+                  {[60, 120, 180].map((n) => (
+                    <button
+                      type="button"
+                      key={n}
+                      className={roundSeconds === n ? "" : "secondary"}
+                      aria-pressed={roundSeconds === n}
+                      onClick={() => setRoundSeconds(n)}
+                    >
+                      {n / 60} min
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+            </div>
+          )}
           {kind === "trivia" && (
             <div className="brain-setup">
               <fieldset disabled={busy}>

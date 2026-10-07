@@ -169,6 +169,31 @@ export default function GameSurface({
       )}
       {game.kind === "draw" && (
         <>
+          {s.round_seconds && (
+            <p className="scoreline" role="timer">
+              Round {s.round + 1} / {s.count} ·{" "}
+              {s.round_ends_at
+                ? `${Math.max(0, Math.ceil((Date.parse(s.round_ends_at) - Date.now()) / 1000))}s`
+                : "Waiting to start"}
+              <span>
+                {" "}
+                You {s.scores[slot]} · Partner {s.scores[1 - slot]}
+              </span>
+            </p>
+          )}
+          {s.phase === "round_done" && !finished && (
+            <div className="last-round">
+              <p>The word was {s.last_word}.</p>
+              <button
+                disabled={busy}
+                onClick={() =>
+                  void responsiveMove({ type: "next" }).catch(() => {})
+                }
+              >
+                Next round
+              </button>
+            </div>
+          )}
           <p className="handwriting">
             {s.status === "cancelled"
               ? "The drawing session was cancelled."
@@ -181,13 +206,15 @@ export default function GameSurface({
           <Doodle
             strokes={strokes}
             onStroke={onStroke}
-            disabled={busy || finished || slot !== s.artist}
+            disabled={
+              busy || finished || s.phase === "round_done" || slot !== s.artist
+            }
             busy={busy}
             mode={
               finished ? "finished" : slot === s.artist ? "drawing" : "viewing"
             }
           />
-          {!finished && slot !== s.artist && (
+          {!finished && s.phase !== "round_done" && slot !== s.artist && (
             <form
               className="inline-form"
               onSubmit={(e) => {

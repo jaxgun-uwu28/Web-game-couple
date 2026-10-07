@@ -91,7 +91,9 @@ function LedgerReveal({ state: s, seat }: { state: LedgerState; seat: Seat }) {
           <Slot name="ledger-wax-seal" className="ledger-reveal-seal">
             <Heart />
           </Slot>
-          <Slot name="ledger-note-paper" className="ledger-note-art" />
+          <Slot name="ledger-note-paper" className="ledger-note-art">
+            <span />
+          </Slot>
           <h2>{last?.winner === seat ? "You won!" : "Partner won!"}</h2>
           <p>{last?.winner === seat ? "Partner’s promise" : "Your promise"}</p>
           {last?.notes.map((note, i) => (
@@ -225,7 +227,7 @@ export default function PluginGame({
     [now, setNow] = useState(Date.now()),
     [words, setWords] = useState(""),
     [note, setNote] = useState(""),
-    [coins, setCoins] = useState(1),
+    [coins, setCoins] = useState<string>("1"),
     [hidingChoice, setHidingChoice] = useState<number | null>(null),
     [probeCell, setProbeCell] = useState(1),
     [ideas, setIdeas] = useState([
@@ -277,9 +279,14 @@ export default function PluginGame({
         }
       })
       .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Room could not load. Try again.");
+        if (!cancelled)
+          setError(
+            e instanceof Error ? e.message : "Room could not load. Try again.",
+          );
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [db, id, preview, couple, user]);
   useEffect(() => {
     if (!snapshot || preview || !db || !active || !couple) return;
@@ -428,9 +435,14 @@ export default function PluginGame({
     if (snapshot?.state && id === "ledger") {
       const s = snapshot.state as LedgerState;
       setCoins(
-        Math.min(
-          s.wallets[preview ? previewSeat : snapshot.seat],
-          Math.max(1, Number(s.config.entry) || 1) * 2 ** s.ties,
+        String(
+          s.locked[1 - (preview ? previewSeat : snapshot.seat)]
+            ? (s.roundBet ??
+                s.stakes[1 - (preview ? previewSeat : snapshot.seat)])
+            : Math.min(
+                s.wallets[preview ? previewSeat : snapshot.seat],
+                Math.max(1, Number(s.config.entry) || 1) * 2 ** s.ties,
+              ),
         ),
       );
     }
@@ -438,6 +450,7 @@ export default function PluginGame({
     previewSeat,
     (snapshot?.state as LedgerState)?.ties,
     (snapshot?.state as LedgerState)?.round,
+    (snapshot?.state as LedgerState)?.roundBet,
     id,
     preview,
   ]);
@@ -622,7 +635,9 @@ export default function PluginGame({
             <p>Ready</p>
           </div>
         )}
-      <Slot name={`${id}-background`} className="plugin-background" />
+      <Slot name={`${id}-background`} className="plugin-background">
+        <span />
+      </Slot>
       <header>
         <button
           className="text-button"
@@ -769,7 +784,9 @@ export default function PluginGame({
               const s = publicState as LedgerState;
               return (
                 <div className="ledger-table">
-                  <Slot name="ledger-felt-table" className="ledger-felt-art" />
+                  <Slot name="ledger-felt-table" className="ledger-felt-art">
+                    <span />
+                  </Slot>
                   <div className="ledger-deck" aria-hidden="true" />
                   <LedgerReveal state={s} seat={seat} />
                   <div className="plugin-hud">
@@ -871,7 +888,10 @@ export default function PluginGame({
                       <div className="ledger-sealed">
                         <Lock size={44} />
                         <h2>Note sealed</h2>
-                        <p>Waiting for Partner…</p>
+                        <p>
+                          Waiting for Partner to match{" "}
+                          {s.roundBet ?? s.stakes[seat]} coins.
+                        </p>
                       </div>
                     ) : (
                       <form
@@ -880,8 +900,15 @@ export default function PluginGame({
                           void act("move", { type: "lock", coins, note });
                         }}
                       >
+                        <p>
+                          {s.locked[1 - seat]
+                            ? `Partner bet ${s.roundBet ?? s.stakes[1 - seat]} coins. Match it to play.`
+                            : "Set a bet Partner can match. Both players put in the same coins."}
+                        </p>
                         <label>
-                          Coins
+                          {s.locked[1 - seat]
+                            ? "Match Partner’s bet"
+                            : "Bet per player"}
                           <input
                             type="number"
                             min={Math.min(
@@ -889,9 +916,23 @@ export default function PluginGame({
                               Math.max(1, Number(s.config.entry) || 1) *
                                 2 ** s.ties,
                             )}
-                            max={s.wallets[seat]}
+                            max={
+                              s.locked[1 - seat]
+                                ? (s.roundBet ?? s.stakes[1 - seat])
+                                : Math.min(
+                                    ...s.wallets,
+                                    Math.max(
+                                      10,
+                                      Number(s.config.entry || 1) * 2 ** s.ties,
+                                    ),
+                                  )
+                            }
+                            readOnly={s.locked[1 - seat]}
                             value={coins}
-                            onChange={(e) => setCoins(Number(e.target.value))}
+                            onFocus={(e) => e.currentTarget.select()}
+                            onChange={(e) =>
+                              setCoins(e.target.value.replace(/^0+(?=\d)/, ""))
+                            }
                           />
                         </label>
                         <label>
@@ -919,31 +960,38 @@ export default function PluginGame({
                         >
                           Stake ideas
                         </button>
-                        <label>
-                          Add a stake idea
-                          <input
-                            value={idea}
-                            maxLength={140}
-                            onChange={(e) => setIdea(e.target.value)}
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          className="text-button"
-                          disabled={!idea.trim()}
-                          onClick={() => {
-                            const next = [...ideas, idea.trim()].slice(-40);
-                            setIdeas(next);
-                            localStorage.setItem(
-                              "ledger-stake-ideas",
-                              JSON.stringify(next),
-                            );
-                            setIdea("");
-                          }}
-                        >
-                          Save idea
+                        <details>
+                          <summary>Edit stake ideas</summary>
+                          <label>
+                            Add a stake idea
+                            <input
+                              value={idea}
+                              maxLength={140}
+                              onChange={(e) => setIdea(e.target.value)}
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            className="text-button"
+                            disabled={!idea.trim()}
+                            onClick={() => {
+                              const next = [...ideas, idea.trim()].slice(-40);
+                              setIdeas(next);
+                              localStorage.setItem(
+                                "ledger-stake-ideas",
+                                JSON.stringify(next),
+                              );
+                              setIdea("");
+                            }}
+                          >
+                            Save idea
+                          </button>
+                        </details>
+                        <button disabled={busy || coins === ""}>
+                          {s.locked[1 - seat]
+                            ? "Match and seal"
+                            : "Set bet and seal"}
                         </button>
-                        <button disabled={busy}>Lock Bet</button>
                       </form>
                     )
                   ) : s.status === "flipping" ||

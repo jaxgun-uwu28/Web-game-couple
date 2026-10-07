@@ -47,6 +47,10 @@ export type Game = {
     pack?: string;
     topic?: string;
     count?: number;
+    round_seconds?: number;
+    round_ends_at?: string | null;
+    phase?: "drawing" | "round_done";
+    last_word?: string;
     difficulty?: string;
     source?: string;
     questions?: { q: string; options: string[]; id: string }[];

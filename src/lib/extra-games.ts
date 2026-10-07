@@ -94,6 +94,56 @@ export function extraMove(
     s = g.state;
   if (s.status !== "playing") throw new Error("This game is finished.");
   if (g.kind === "draw") {
+    if (s.round_seconds) {
+      if (action.type === "next") {
+        if (s.phase !== "round_done")
+          throw new Error("Finish this round first.");
+        s.round++;
+        s.artist = 1 - s.artist!;
+        s.phase = "drawing";
+        s.guesses = [];
+        s.round_ends_at = new Date(
+          Date.now() + s.round_seconds * 1000,
+        ).toISOString();
+        delete s.last_word;
+        return g;
+      }
+      if (action.type === "ready" && !s.round_ends_at) {
+        s.round_ends_at = new Date(
+          Date.now() + s.round_seconds * 1000,
+        ).toISOString();
+        return g;
+      }
+      if (s.phase !== "drawing") throw new Error("Start the next round.");
+      const expired =
+        !!s.round_ends_at && Date.now() >= Date.parse(s.round_ends_at);
+      if (action.type === "timeout" && !expired)
+        throw new Error("This round has not expired.");
+      if (!expired && slot === s.artist)
+        throw new Error("The artist cannot guess.");
+      const guess = String(action.guess || "").trim();
+      if (!expired && (!guess || guess.length > 60))
+        throw new Error("Write a short guess.");
+      if (!expired) s.guesses = [...(s.guesses || []), guess];
+      if (expired || guess.toLowerCase() === secret || s.guesses!.length >= 5) {
+        const winner =
+          !expired && guess.toLowerCase() === secret ? slot : s.artist!;
+        s.scores[winner]++;
+        s.phase = "round_done";
+        s.last_word = secret;
+        if (s.round + 1 >= (s.count || 5)) {
+          s.status = s.scores[0] === s.scores[1] ? "draw" : "won";
+          s.winner =
+            s.scores[0] === s.scores[1]
+              ? null
+              : s.scores[0] > s.scores[1]
+                ? 0
+                : 1;
+          s.word = secret;
+        }
+      }
+      return g;
+    }
     if (slot === s.artist) throw new Error("The artist cannot guess.");
     const guess = String(action.guess || "").trim();
     if (!guess || guess.length > 60) throw new Error("Write a short guess.");
@@ -139,22 +189,33 @@ export function extraMove(
 
 type ExtraPreview = {
   game: Game;
+  words?: string[];
   secret: string;
   answers: Record<number, Record<string, string>>;
   strokes: import("../components/Doodle").Stroke[];
 };
 const previews = new Map<GameKind, ExtraPreview>();
-export function startExtraPreview(kind: GameKind) {
+export function startExtraPreview(kind: GameKind, rounds = 5, seconds = 60) {
   const old = previews.get(kind);
   if (old?.game.state.status === "playing") return old;
   const next = {
     game: extraGame(kind, old?.game.state.artist === 0 ? 1 : 0),
+    words: drawFixture.items.slice(0, rounds).map((x) => x.word),
     secret:
       drawFixture.items[Math.floor(Math.random() * drawFixture.items.length)]
         .word,
     answers: {},
     strokes: [],
   };
+  if (kind === "draw") {
+    next.secret = next.words[0];
+    Object.assign(next.game.state, {
+      count: rounds,
+      round_seconds: seconds,
+      phase: "drawing",
+      round_ends_at: null,
+    });
+  }
   if (kind === "know")
     next.game.state.questions = knowFixture.items
       .slice(0, 5)

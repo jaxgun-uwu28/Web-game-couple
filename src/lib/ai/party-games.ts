@@ -45,6 +45,7 @@ export async function startPartyGame(
   c: string,
   kind: "know" | "draw",
   generate: typeof generateBatch = generateBatch,
+  drawConfig: { rounds: number; seconds: number } = { rounds: 5, seconds: 60 },
 ) {
   const call = async (name: string, args: Record<string, unknown>) => {
     const r = await db.rpc(name, args);
@@ -66,7 +67,7 @@ export async function startPartyGame(
   if (!lease) return { pending: true };
   try {
     const context = await call("party_game_context", { c, k: kind }),
-      need = kind === "know" ? 5 : 1;
+      need = kind === "know" ? 5 : drawConfig.rounds;
     if (context.available < need) {
       const isKnow = kind === "know";
       const itemSchema = isKnow
@@ -94,7 +95,9 @@ export async function startPartyGame(
             ? "Create personal preference questions for a couple to choose their own answer and predict their partner. No factual correct answer. Four distinct appealing answers per question."
             : "Create simple drawable everyday objects, animals, foods and actions. One or two English words each. No names or abstract ideas.",
           count: isKnow ? 40 : 100,
-          doNotRepeat: context.history.map((x: {q?:string;word?:string}) => x.q || x.word),
+          doNotRepeat: context.history.map(
+            (x: { q?: string; word?: string }) => x.q || x.word,
+          ),
         }),
         {
           type: "OBJECT",
@@ -127,7 +130,16 @@ export async function startPartyGame(
       if ((await call("party_game_context", { c, k: kind })).available < need)
         throw new Error("Gemini content is unavailable. Please retry shortly.");
     }
-    return { game: await call("start_party_game", { c, k: kind }) };
+    return {
+      game:
+        kind === "draw"
+          ? await call("start_draw_game", {
+              c,
+              rounds: drawConfig.rounds,
+              seconds: drawConfig.seconds,
+            })
+          : await call("start_party_game", { c, k: kind }),
+    };
   } finally {
     await call("ai_finish", { c, k: kind, t: "party", lease });
   }

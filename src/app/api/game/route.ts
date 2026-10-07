@@ -66,7 +66,21 @@ export async function POST(req: Request) {
     if ((kind === "know" || kind === "draw") && !id) {
       try {
         const { admin, coupleId } = await aiAuth(req);
-        return NextResponse.json(await startPartyGame(admin, coupleId, kind));
+        const drawConfig = {
+          rounds: Number(config?.rounds ?? 5),
+          seconds: Number(config?.seconds ?? 60),
+        };
+        if (
+          kind === "draw" &&
+          (![5, 10, 15].includes(drawConfig.rounds) ||
+            ![60, 120, 180].includes(drawConfig.seconds))
+        )
+          throw new Error(
+            "Choose 5, 10 or 15 rounds and a 1, 2 or 3 minute timer.",
+          );
+        return NextResponse.json(
+          await startPartyGame(admin, coupleId, kind, undefined, drawConfig),
+        );
       } catch (e) {
         return NextResponse.json(
           {
