@@ -37,9 +37,16 @@ export async function POST(req: Request) {
         config: Config = {};
       for (const [key, choices] of Object.entries(m.setup)) {
         const value = b.config?.[key] ?? choices[0];
+        if (b.game === "blackjack" && key === "startingChips") {
+          if (!Number.isInteger(value) || value < 10 || value > 10000)
+            throw new Error("Choose 10 to 10000 starting chips.");
+          config[key] = value;
+          continue;
+        }
         if (!choices.includes(value)) throw new Error(`Choose a valid ${key}.`);
         config[key] = value;
       }
+      if (b.game === "blackjack") config.sessionChips = true;
       if (b.game === "lostfound" && Array.isArray(b.config?.words))
         config.words = b.config.words
           .slice(0, 64)
@@ -340,7 +347,7 @@ export async function POST(req: Request) {
       if (updated.data) Object.assign(r, updated.data);
     }
     let wallet: number | undefined;
-    if (r.game_id === "blackjack") {
+    if (r.game_id === "blackjack" && !r.config.sessionChips) {
       const balance = await db
         .from("ledger_wallets")
         .select("balance")
@@ -351,7 +358,10 @@ export async function POST(req: Request) {
           "Your wallet could not load. Refresh the room and try again.",
         );
       wallet = balance.data.balance;
-      if (b.action === 'topup' && wallet < 10) throw new Error('Your daily top-up has already been used. End this room, then reset the wallets in the Promise Ledger.');
+      if (b.action === "topup" && wallet < 10)
+        throw new Error(
+          "Your daily top-up has already been used. End this room, then reset the wallets in the Promise Ledger.",
+        );
     }
     return Response.json({
       wallet,

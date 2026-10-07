@@ -52,10 +52,17 @@ export type BlackjackState = {
   reason: string;
 };
 export function createBlackjack(config: Config): BlackjackState {
+  const amount = config.sessionChips ? Number(config.startingChips ?? 100) : 0;
+  if (
+    !Number.isInteger(amount) ||
+    amount < 0 ||
+    (config.sessionChips && (amount < 10 || amount > 10000))
+  )
+    throw new Error("Choose 10 to 10000 starting chips.");
   return {
     config,
-    chips: [0, 0],
-    buyIns: [0, 0],
+    chips: [amount, amount],
+    buyIns: [amount, amount],
     notesUsed: [0, 0],
     attempts: [0, 0],
     round: 1,
@@ -78,7 +85,7 @@ export function createBlackjack(config: Config): BlackjackState {
     roundWinner: null,
     pushes: 0,
     history: [],
-    initial: 0,
+    initial: amount * 2,
     reason: "",
   };
 }
@@ -425,6 +432,7 @@ export const blackjack: Module<BlackjackState, unknown> = {
   description: "Two hands. A few chips. A little promise.",
   coverSlot: "blackjack-cover",
   setup: {
+    startingChips: [100, 50, 25, 10],
     ante: [1, 2, 5],
     end: ["out", "rounds", "time"],
     rounds: [5, 10, 20],

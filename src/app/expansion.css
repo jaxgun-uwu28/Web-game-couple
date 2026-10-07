@@ -355,3 +355,45 @@
  .cassette-library .cassette-reels i { width:26px; height:26px; border-width:5px; }
  .cassette-library .cassette-reels span { width:24px; height:16px; }
 }
+.plugin-lobby {
+  width: min(100%, 520px);
+  box-sizing: border-box;
+  margin: 24px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  background: var(--sheet);
+  border-radius: 24px;
+  padding: clamp(24px, 4vw, 36px);
+}
+.plugin-lobby h2,
+.plugin-lobby h3,
+.plugin-lobby p {
+  margin: 0;
+}
+.plugin-lobby > button {
+  width: 100%;
+  margin: 0;
+}
+.blackjack-shared-chips {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+.blackjack-shared-chips .list-tabs {
+  justify-content: center;
+  gap: 10px;
+}
+.blackjack-shared-chips label {
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+.blackjack-shared-chips input {
+  width: 100%;
+  box-sizing: border-box;
+}

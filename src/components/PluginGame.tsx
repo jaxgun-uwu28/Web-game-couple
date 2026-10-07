@@ -467,8 +467,10 @@ export default function PluginGame({
     try {
       if (preview) {
         if (!snapshot) {
+          const matchConfig =
+            id === "blackjack" ? { ...config, sessionChips: true } : config;
           const state = module.createMatch(
-            { ...config, words: words.split("\n").filter(Boolean) },
+            { ...matchConfig, words: words.split("\n").filter(Boolean) },
             Math.floor(Math.random() * 2147483647),
           );
           setSnapshot({
@@ -479,7 +481,7 @@ export default function PluginGame({
               status: "waiting",
               revision: 0,
               ready: [],
-              config,
+              config: matchConfig,
             },
             state,
             seat: previewSeat,
@@ -670,16 +672,60 @@ export default function PluginGame({
           {id === "syncsteps" && (
             <p>Talk on a call or in person for the full effect.</p>
           )}
-          {Object.entries(module.setup).map(([key, values]) => (
-            <StickerPicker
-              key={key}
-              label={labels[key] || key}
-              value={config[key] as string | number | boolean}
-              options={values}
-              format={optionLabel}
-              onChange={(value) => setConfig((x) => ({ ...x, [key]: value }))}
-            />
-          ))}
+          {id === "blackjack" && (
+            <div className="blackjack-shared-chips">
+              <h3>Starting chips for each player</h3>
+              <p>You and Partner start with the same amount.</p>
+              <div className="list-tabs">
+                {[25, 50, 100].map((n) => (
+                  <button
+                    key={n}
+                    className={config.startingChips === n ? "" : "secondary"}
+                    aria-pressed={config.startingChips === n}
+                    onClick={() =>
+                      setConfig((c) => ({
+                        ...c,
+                        startingChips: n,
+                        sessionChips: true,
+                      }))
+                    }
+                  >
+                    {n} chips
+                  </button>
+                ))}
+              </div>
+              <label>
+                Custom chips
+                <input
+                  type="number"
+                  min={10}
+                  max={10000}
+                  step={1}
+                  value={(config.startingChips ?? 100) as string | number}
+                  onChange={(e) =>
+                    setConfig((c) => ({
+                      ...c,
+                      startingChips:
+                        e.target.value === "" ? "" : Number(e.target.value),
+                      sessionChips: true,
+                    }))
+                  }
+                />
+              </label>
+            </div>
+          )}
+          {Object.entries(module.setup)
+            .filter(([key]) => key !== "startingChips")
+            .map(([key, values]) => (
+              <StickerPicker
+                key={key}
+                label={labels[key] || key}
+                value={config[key] as string | number | boolean}
+                options={values}
+                format={optionLabel}
+                onChange={(value) => setConfig((x) => ({ ...x, [key]: value }))}
+              />
+            ))}
           {id === "lostfound" && (
             <label>
               Word mode · one entry per line
@@ -698,7 +744,13 @@ export default function PluginGame({
         <div className="plugin-lobby">
           <h2>Meet in the lobby</h2>
           <p>Both players must be here and ready.</p>
-          {id === "blackjack" && (
+          {id === "blackjack" && snapshot.match.config.sessionChips && (
+            <div className="blackjack-shared-chips">
+              <h3>{Number(snapshot.match.config.startingChips)} chips each</h3>
+              <p>You and Partner have the same starting chips.</p>
+            </div>
+          )}
+          {id === "blackjack" && !snapshot.match.config.sessionChips && (
             <BlackjackBuyIn
               state={snapshot.state as BlackjackState}
               seat={seat}
