@@ -1629,10 +1629,6 @@ export function Notes() {
             tabIndex={-1}
             ref={letterDialog}
           >
-            <div className="letter-opening-envelope" aria-hidden="true">
-              <Mail size={48} />
-              <Heart size={22} />
-            </div>
             <h2 id="open-letter-title">{opened.title}</h2>
             <div className="letter-reader-actions">
               <button

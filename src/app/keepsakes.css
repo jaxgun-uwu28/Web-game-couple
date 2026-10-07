@@ -577,18 +577,6 @@
   box-shadow: 0 18px 60px #261c2b55;
   animation: letter-unfold 700ms ease-out both;
 }
-.letter-opening-envelope {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  padding: 20px;
-  background: var(--peach);
-  border-radius: 16px;
-  color: var(--cherry);
-  transform-origin: top center;
-  animation: envelope-open 700ms ease-out both;
-}
 .letter-reader-actions {
   display: flex;
   flex-wrap: wrap;
@@ -608,19 +596,8 @@
     transform: translateY(0) scale(1);
   }
 }
-@keyframes envelope-open {
-  from {
-    transform: perspective(600px) rotateX(-75deg);
-    opacity: 0.4;
-  }
-  to {
-    transform: perspective(600px) rotateX(0);
-    opacity: 1;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
-  .letter-reveal-backdrop .open-letter,
-  .letter-opening-envelope {
+  .letter-reveal-backdrop .open-letter {
     animation: none;
   }
 }
