@@ -1,4 +1,5 @@
 "use client";
+import { getHeartDrag } from "@/lib/heart-drag";
 import { playGameSound } from "@/lib/game-feel";
 import { readAudio, saveAudio, tactile } from "@/lib/music";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -47,8 +48,8 @@ function Piece({ shape }: { shape: number }) {
       style={{
         gridTemplateColumns: `repeat(${w}, 1fr)`,
         aspectRatio: `${w}/${h}`,
-        width: `calc(${w} * var(--hb-piece-cell, 10px) + ${w - 1} * 2px)`,
-        height: `calc(${h} * var(--hb-piece-cell, 10px) + ${h - 1} * 2px)`,
+        width: `calc(${w} * var(--hb-piece-cell, 10px) + ${w - 1} * var(--hb-drag-gap, 2px))`,
+        height: `calc(${h} * var(--hb-piece-cell, 10px) + ${h - 1} * var(--hb-drag-gap, 2px))`,
       }}
     >
       {Array.from({ length: w * h }, (_, i) => {
@@ -122,11 +123,15 @@ export default function BlockBattle({
     [cleared, setCleared] = useState<number[]>([]),
     [placedCells, setPlacedCells] = useState<number[]>([]),
     [opponentOpen, setOpponentOpen] = useState(false),
-    [drag, setDrag] = useState<{
-      x: number;
-      y: number;
-      inside: boolean;
-    } | null>(null);
+    [snapNearest, setSnapNearest] = useState(true),
+    [tapConfirm, setTapConfirm] = useState<number[] | null>(null),
+    [drag, setDrag] = useState<
+      | (ReturnType<typeof getHeartDrag> & {
+          settling?: boolean;
+          returning?: boolean;
+        })
+      | null
+    >(null);
   const grid = useRef<HTMLDivElement>(null),
     held = useRef<{
       piece: number;
@@ -134,6 +139,7 @@ export default function BlockBattle({
       y: number;
       moved: boolean;
       anchor: number[] | null;
+      origin: DOMRect;
     } | null>(null),
     lock = useRef(false),
     current = useRef(match),
@@ -146,7 +152,9 @@ export default function BlockBattle({
       { piece: number; row: number; col: number; move_id: string }[]
     >([]),
     syncingMoves = useRef(false);
-  const dailyRequested = useRef(false);
+  const dailyRequested = useRef(false),
+    lastPointer = useRef({ x: 0, y: 0 }),
+    suppressTrayClick = useRef(false);
   current.current = match;
   const opts = match?.state.options || options,
     asyncMode = opts.mode === "endless" || opts.mode === "daily",
@@ -216,6 +224,7 @@ export default function BlockBattle({
       setOptions({ ...defaultHeartOptions, mode: "daily" });
       localStorage.removeItem("arcade-open-daily");
     }
+    setSnapNearest(localStorage.getItem("arcade-heart-snap") !== "off");
     setBest(Number(localStorage.getItem("arcade-heart-best") || 0));
     setSound(readAudio().sounds);
     const t = setInterval(() => setClock(Date.now()), 200);
@@ -626,54 +635,82 @@ export default function BlockBattle({
       Math.max(0, Math.min(8 - w, c)),
     ]);
   }
+  function updateDrag(x: number, y: number) {
+    const h = held.current;
+    if (!h || !grid.current || !current.current) return;
+    lastPointer.current = { x, y };
+    const first = grid.current.children[0].getBoundingClientRect();
+    const second = grid.current.children[1].getBoundingClientRect();
+    const shape = current.current.state.hands[seat][h.piece];
+    const position = getHeartDrag(
+      { x, y },
+      {
+        left: first.left,
+        top: first.top,
+        cell: first.width,
+        gap: second.left - first.right,
+      },
+      shape,
+      current.current.state.boards[seat],
+      snapNearest,
+    );
+    setDrag(position);
+    h.anchor = position.inside ? [position.row, position.col] : null;
+    if (h.anchor) setAnchor(h.anchor);
+    return position;
+  }
+  const resizeDrag = useRef(() => {});
+  resizeDrag.current = () => {
+    if (held.current?.moved)
+      updateDrag(lastPointer.current.x, lastPointer.current.y);
+  };
+  useEffect(() => {
+    const resize = () => resizeDrag.current();
+    window.addEventListener("resize", resize);
+    window.addEventListener("orientationchange", resize);
+    return () => {
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("orientationchange", resize);
+    };
+  }, []);
   function moveDrag(e: React.PointerEvent) {
     const h = held.current;
-    if (!h || !grid.current) return;
+    if (!h) return;
     if (!h.moved && Math.hypot(e.clientX - h.x, e.clientY - h.y) < 6) return;
     h.moved = true;
-    const first = grid.current.children[0].getBoundingClientRect(),
-      last = grid.current.children[63].getBoundingClientRect(),
-      y = e.clientY - 60,
-      inside =
-        e.clientX >= first.left &&
-        e.clientX <= last.right &&
-        y >= first.top &&
-        y <= last.bottom;
-    setDrag({ x: e.clientX, y, inside });
-    if (!inside) {
-      h.anchor = null;
+    updateDrag(e.clientX, e.clientY);
+  }
+  function endDrag(e: React.PointerEvent) {
+    const h = held.current;
+    if (!h) return;
+    const position = h.moved ? updateDrag(e.clientX, e.clientY) : null;
+    held.current = null;
+    if (!position) {
+      setDrag(null);
       return;
     }
-    const s = match!.state.hands[seat][h.piece],
-      cells = heartShapes[s],
-      w = Math.max(...cells.map((o) => o % 8)) + 1,
-      hh = Math.max(...cells.map((o) => Math.floor(o / 8))) + 1;
-    h.anchor = [
-      Math.max(
-        0,
-        Math.min(
-          8 - hh,
-          Math.floor((y - first.top) / ((last.bottom - first.top) / 8)) -
-            Math.floor(hh / 2),
-        ),
-      ),
-      Math.max(
-        0,
-        Math.min(
-          8 - w,
-          Math.floor(
-            (e.clientX - first.left) / ((last.right - first.left) / 8),
-          ) - Math.floor(w / 2),
-        ),
-      ),
-    ];
-    setAnchor(h.anchor);
-  }
-  function endDrag() {
-    const h = held.current;
-    held.current = null;
-    setDrag(null);
-    if (h?.moved && h.anchor) void place(h.piece, h.anchor);
+    suppressTrayClick.current = true;
+    if (position.valid) {
+      setDrag({
+        ...position,
+        x: position.snapX,
+        y: position.snapY,
+        settling: true,
+      });
+      setTimeout(() => {
+        setDrag(null);
+        void place(h.piece, [position.row, position.col]);
+      }, 80);
+    } else {
+      setDrag({
+        ...position,
+        returning: true,
+        settling: true,
+        x: h.origin.left + h.origin.width / 2 - position.width / 2,
+        y: h.origin.top + h.origin.height / 2 - position.height / 2,
+      });
+      setTimeout(() => setDrag(null), 180);
+    }
   }
   const clockLabel = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`;
   return (
@@ -1042,7 +1079,7 @@ export default function BlockBattle({
                           ghost =
                             playing &&
                             !used[piece] &&
-                            valid &&
+                            (drag || tapConfirm ? true : valid) &&
                             (!drag || drag.inside) &&
                             shape !== undefined &&
                             heartShapes[shape].some(
@@ -1062,7 +1099,18 @@ export default function BlockBattle({
                             tabIndex={-1}
                             aria-label={`Row ${r + 1}, column ${c + 1}, ${v === -1 ? "sleepy cloud" : v ? "filled" : "empty"}`}
                             className={`${v ? `filled hb-tile hb-style-${v > 0 ? v : 6}` : ""} ${(Math.floor(r / 2) + Math.floor(c / 2)) % 2 ? "empty-alt" : ""} ${ghost ? `ghost hb-style-${((shape ?? 0) % 5) + 1}` : ""} ${line ? "will-clear" : ""} ${cleared.includes(i) ? "burst" : ""} ${placedCells.includes(i) ? "just-placed" : ""}`}
-                            onClick={() => void place(piece, [r, c])}
+                            onClick={() => {
+                              if (
+                                tapConfirm?.[0] === r &&
+                                tapConfirm?.[1] === c
+                              ) {
+                                setTapConfirm(null);
+                                void place(piece, [r, c]);
+                              } else {
+                                setAnchor([r, c]);
+                                setTapConfirm([r, c]);
+                              }
+                            }}
                             disabled={!playing || busy}
                           >
                             {ghost && <span className="hb-ghost-tile" />}
@@ -1103,10 +1151,17 @@ export default function BlockBattle({
                           <button
                             key={`${match.state.rounds[seat]}-${i}`}
                             className={`block-piece ${piece === i ? "selected" : ""} ${!fitsAnywhere(board, s) ? "no-room" : ""}`}
-                            disabled={!playing || busy || used[i]}
+                            disabled={
+                              !playing || busy || used[i] || drag?.settling
+                            }
                             aria-pressed={piece === i}
                             aria-label={`Piece ${i + 1}: ${heartShapes[s].length} blocks`}
                             onClick={() => {
+                              if (suppressTrayClick.current) {
+                                suppressTrayClick.current = false;
+                                return;
+                              }
+                              setTapConfirm(null);
                               setPiece(i);
                               const open = firstHeartPlacement(board, s);
                               if (open) setAnchor(open);
@@ -1120,6 +1175,7 @@ export default function BlockBattle({
                                 y: e.clientY,
                                 moved: false,
                                 anchor: null,
+                                origin: e.currentTarget.getBoundingClientRect(),
                               };
                             }}
                             onPointerMove={moveDrag}
@@ -1136,6 +1192,20 @@ export default function BlockBattle({
                           </button>
                         ))}
                       </div>
+                      <label className="hb-snap-setting">
+                        <input
+                          type="checkbox"
+                          checked={snapNearest}
+                          onChange={(e) => {
+                            setSnapNearest(e.target.checked);
+                            localStorage.setItem(
+                              "arcade-heart-snap",
+                              e.target.checked ? "on" : "off",
+                            );
+                          }}
+                        />{" "}
+                        Snap to nearest valid cell
+                      </label>
                       <div className="block-controls">
                         <button
                           disabled={!playing || busy || !valid}
@@ -1287,8 +1357,20 @@ export default function BlockBattle({
             )}
         </>
       )}
-      {drag && shape !== undefined && (!drag.inside || valid) && (
-        <div className="heart-drag" style={{ left: drag.x, top: drag.y }}>
+      {drag && shape !== undefined && (
+        <div
+          className={`heart-drag ${drag.settling ? "settling" : ""} ${drag.returning ? "returning" : ""}`}
+          style={
+            {
+              left: drag.x,
+              top: drag.y,
+              width: drag.width,
+              height: drag.height,
+              "--hb-piece-cell": `${drag.cell}px`,
+              "--hb-drag-gap": `${drag.gap}px`,
+            } as React.CSSProperties
+          }
+        >
           <Piece shape={shape} />
         </div>
       )}

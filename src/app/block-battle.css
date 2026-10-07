@@ -1353,3 +1353,12 @@ html[data-time="night"] .heart-duel {
     --hb-board-size: min(calc(100vw - 32px), calc(100dvh - 400px - env(safe-area-inset-top) - env(safe-area-inset-bottom)), 560px);
   }
 }
+
+.heart-duel .heart-drag { transform:none; scale:1; }
+.heart-duel .heart-drag .heart-piece { width:100%; height:100%; max-width:none; max-height:none; gap:var(--hb-drag-gap); }
+.heart-duel .heart-drag .heart-piece > span { width:var(--hb-piece-cell); height:var(--hb-piece-cell); }
+.heart-duel .heart-drag.settling { transition:left 80ms ease-out,top 80ms ease-out; }
+.heart-duel .heart-drag.returning { transition:left 180ms ease-out,top 180ms ease-out,scale 180ms ease-out,opacity 180ms ease-out; scale:.3; opacity:.5; }
+.hb-snap-setting { display:flex; gap:8px; align-items:center; justify-content:center; font-size:.8rem; min-height:44px; }
+.hb-snap-setting input { width:20px; height:20px; accent-color:var(--cherry); }
+@media(prefers-reduced-motion:reduce) { .heart-duel .heart-drag.settling,.heart-duel .heart-drag.returning { transition:none; } }
