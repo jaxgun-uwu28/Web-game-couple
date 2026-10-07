@@ -40,9 +40,16 @@ import {
 import Ambience from "./Ambience";
 import MusicControls from "./MusicControls";
 import HoldHands, { HoldStats } from "./HoldHands";
+import VoiceCassettes from "./VoiceCassettes";
+import Postcards from "./Postcards";
+import PromiseLedger from "./PromiseLedger";
+import GameInvites from "./GameInvites";
+import MediaStorage from './MediaStorage';
+import type {GameId} from '@/lib/plugin-games/types';
 import InstallSupport, { NativeBridge, OfflineShell } from "./InstallSupport";
 import TogetherActivities from "./TogetherActivities";
 import DailyHeartChallenge from "./DailyHeartChallenge";
+import DailySyncPuzzle from "./DailySyncPuzzle";
 import AIQuestions from "./AIQuestions";
 import dynamic from "next/dynamic";
 const PlayArcade = dynamic(() => import("./PlayArcade"), {
@@ -64,6 +71,8 @@ export default function StageOne() {
     [anniversary, setAnniversary] = useState<string | null>(null),
     [loaded, setLoaded] = useState(false),
     [tab, setTab] = useState("home"),
+    [invitedGame,setInvitedGame]=useState<GameId|null>(null),
+    [invitedConfig,setInvitedConfig]=useState<Record<string,string|number|boolean>>({}),
     [editing, setEditing] = useState(false),
     [date, setDate] = useState(""),
     [busy, setBusy] = useState(false),
@@ -76,6 +85,8 @@ export default function StageOne() {
       { id: string; slot: number; nickname: string }[]
     >([]),
     [nickname, setNickname] = useState("");
+  useEffect(()=>{const open=(e:Event)=>{const detail=(e as CustomEvent<GameId|{id:GameId;config:Record<string,string|number|boolean>}>).detail;setInvitedGame(typeof detail==='string'?detail:detail.id);setInvitedConfig(typeof detail==='string'?{}:detail.config);setTab('play');};window.addEventListener('arcade-open-plugin',open);return()=>window.removeEventListener('arcade-open-plugin',open);},[]);
+  useEffect(()=>{const open=()=>setTab('notes');window.addEventListener('arcade-open-notes',open);return()=>window.removeEventListener('arcade-open-notes',open);},[]);
   useEffect(() => {
     setNow(new Date());
     const timer = setInterval(() => setNow(new Date()), 10000);
@@ -586,6 +597,7 @@ export default function StageOne() {
                     </section>
                     <AIQuestions db={db} preview={preview} />
                     <KeepsakeBackup />
+                    <MediaStorage />
                     <InstallSupport
                       db={db}
                       session={session}
@@ -641,12 +653,13 @@ export default function StageOne() {
                     </div>
                     <Wishlists />
                     <TogetherActivities />
+                    <PromiseLedger />
                     <HoldStats db={db} preview={preview}/>
                   </>
                 ) : tab === "memories" ? (
                   <Memories />
                 ) : tab === "notes" ? (
-                  <Notes />
+                  <><VoiceCassettes /><Postcards shortcut /><Notes /></>
                 ) : tab === "play" ? null : (
                   <>
                     <div className="page-heading">
@@ -778,6 +791,11 @@ export default function StageOne() {
                     </div>
                     <ConnectionMoments />
                     <HoldHands db={db} session={session} couple={coupleId} preview={preview}/>
+                    <VoiceCassettes latest />
+                    <Postcards shortcut />
+                    <PromiseLedger pendingOnly />
+                    <GameInvites />
+                    <DailySyncPuzzle />
                     <DailyHeartChallenge
                       names={names}
                       go={() => setTab("play")}
@@ -864,6 +882,8 @@ export default function StageOne() {
                   (preview || coupleId) && (
                     <div hidden={tab !== "play"}>
                       <PlayArcade
+                        invitedGame={invitedGame}
+                        invitedConfig={invitedConfig}
                         active={tab === "play"}
                         db={db}
                         session={session}

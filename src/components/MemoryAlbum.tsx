@@ -16,6 +16,7 @@ import NativePhotoButton from "./NativePhotoButton";
 import type { Memory } from "@/lib/keepsakes";
 import { memoryDay, groupMemories } from "@/lib/memory-album";
 import MemorySocial from "./MemorySocial";
+import Postcards from "./Postcards";
 
 export default function MemoryAlbum() {
   const c = useKeepsakes(),
@@ -163,6 +164,7 @@ export default function MemoryAlbum() {
     });
   return (
     <section className="keepsake-page memory-album">
+      <Postcards />
       <div className="page-heading">
         <div>
           <h1>Our little moments.</h1>

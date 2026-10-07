@@ -206,6 +206,7 @@ export function useAsset(name: string): Asset | null {
   )[name];
   return remote[name] || (local ? { ...local, source: "local" } : null);
 }
+export function useArtworkLibrary(){const {remote}=useContext(Context);return {...manifest.assets,...remote} as Record<string,Asset&{original?:string}>;}
 export function Slot({
   name,
   alt = "",

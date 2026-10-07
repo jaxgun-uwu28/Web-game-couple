@@ -30,6 +30,8 @@ const ExtraGame = dynamic(() => import("./ExtraGame"), {
   loading: () => <p>Opening our game…</p>,
 });
 import type { ExtraKind } from "./ExtraGame";
+import PluginGame, { PluginCards } from "./PluginGame";
+import type { GameId } from "@/lib/plugin-games/types";
 import { previewBoard, previewMove, type BoardKind } from "@/lib/board-preview";
 import { recordPreview, previewProgress } from "@/lib/preview-progress";
 import { Slot } from "./ArtSlots";
@@ -42,6 +44,8 @@ export default function PlayArcade({
   names,
   preview,
   active = true,
+  invitedGame=null,
+  invitedConfig,
 }: {
   db: SupabaseClient | null;
   session: Session | null;
@@ -50,6 +54,8 @@ export default function PlayArcade({
   names: string[];
   preview: boolean;
   active?: boolean;
+  invitedGame?:GameId|null;
+  invitedConfig?:Record<string,string|number|boolean>;
 }) {
   const [games, setGames] = useState<Game[]>([]),
     [selected, setSelected] = useState<string | null>(null),
@@ -68,14 +74,18 @@ export default function PlayArcade({
   const game = games.find((g) => g.id === selected),
     finished = game && game.state.status !== "playing";
   const [blockKey, setBlockKey] = useState(0);
+  const [pluginOpen, setPluginOpen] = useState<GameId | null>(null);
+  useEffect(()=>{if(invitedGame)setPluginOpen(invitedGame);},[invitedGame]);
   useSoundPreference(setSound);
-  useGameMusic(game?.kind || "", !!game && !finished && active && !blockOpen && !extraOpen);
+  useGameMusic(game?.kind || "", !!game && !finished && active && !blockOpen && !extraOpen && !pluginOpen);
   useEffect(() => {
     const daily = () => {
       window.history.pushState({ arcadeGame: true }, "");
       setBlockOpen(true);
       setBlockKey((k) => k + 1);
       setExtraOpen(null);
+      setPluginOpen(null);
+      setPluginOpen(null);
       setSelected(null);
       setStart(null);
     };
@@ -125,6 +135,11 @@ export default function PlayArcade({
       window.dispatchEvent(new Event("arcade:couple-update"));
     };
     live
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "arcade_matches", filter: `couple_id=eq.${coupleId}` },
+        sharedUpdate,
+      )
       .on(
         "postgres_changes",
         {
@@ -182,6 +197,7 @@ export default function PlayArcade({
       setStart(null);
       setBlockOpen(false);
       setExtraOpen(null);
+      setPluginOpen(null);
       if (preview) setScore([previewProgress(0).wins, previewProgress(1).wins]);
     };
     window.addEventListener("popstate", back);
@@ -301,6 +317,7 @@ export default function PlayArcade({
       </p>
     </section>
   );
+  if (pluginOpen) return <PluginGame startConfig={pluginOpen===invitedGame?invitedConfig:undefined} active={active} id={pluginOpen} db={db} user={session?.user.id||'preview-0'} couple={coupleId} preview={preview} close={()=>setPluginOpen(null)}/>;
   if (extraOpen)
     return (
       <ExtraGame
@@ -363,6 +380,7 @@ export default function PlayArcade({
       {!game && !start ? (
         <>
           <div className="cartridge-shelf">
+            <PluginCards open={setPluginOpen}/>
             {arcadeRegistry.map((g) => (
               <button
                 key={g.id}
@@ -672,3 +690,5 @@ export default function PlayArcade({
     </div>
   );
 }
+
+

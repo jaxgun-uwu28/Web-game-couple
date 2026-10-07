@@ -1,6 +1,6 @@
 # Our Little Arcade — current specification
 
-Updated 2026-10-06. This is the compact current reference. Source and migrations define exact behavior; this file summarizes it. Later explicit user instructions override it. Older PRODUCT.md/DESIGN.md checkpoints are historical where they conflict with this summary.
+Updated 2026-10-07. This is the compact current reference. Source and migrations define exact behavior; this file summarizes it. Later explicit user instructions override it. Older PRODUCT.md/DESIGN.md checkpoints are historical where they conflict with this summary.
 
 ## Product and architecture
 
@@ -17,7 +17,7 @@ The entry page renders StageOne; the authenticated client shell coordinates dest
 - Activities: wishlists, dates, sketchbook, conversations, countdowns, stakes, recap and shared spin wheel. Wheel result Close preserves entry; Remove deletes only the selected entry. Revision checks protect shared edits.
 - Memories: shared dated albums, compact gallery, viewer, batch uploads (max 12), camera Snap & send, author caption editing and recoverable Archive/Restore. New photos are ordinary shared posts; existing sealed photo swaps retain their rules.
 - Notes: sealed text/voice/photo keepsakes. Connections: daily prompts, choices, mood and Thinking of you with optional custom notification text. Preserve paired reveals, secret wishes/claims, quiet hours and recipient opt-in.
-- Current expansion adds photo hearts/comments, named game tracks/separate music volumes and a private Hold Hands room/stats. Owner confirmed migrations 014/015. Stop for two-phone testing after Hold Hands; further games, voice cassettes and Postcards are tracked in docs/EXPANSION_PLAN.md.
+- Current expansion adds photo hearts/comments, named game tracks/separate music volumes and a private Hold Hands room/stats. Owner confirmed migrations 014/015. The user authorized continuing the full expansion. Voice cassettes, Postcards, Ledger Duel, Lost & Found and Sync Steps now have implementations; remaining acceptance details are tracked in docs/EXPANSION_CHECKPOINT.md.
 
 ## Identity and UI constraints
 
@@ -31,7 +31,7 @@ Visible copy is personal and useful: no stage labels, metadata/compression/priva
 
 Supabase project: ohjeloskpjsynhbddgch. Allowed sign-in emails: Lance `lancerobertmacorol8@gmail.com`, Elaine `elainemaeescosio49@gmail.com`. Preserve existing account UUIDs/membership when changing emails; verified Elaine is slot 0 and Lance slot 1 (earlier chat IDs were reversed).
 
-Schema domains: couples/profiles; games/answers/secrets/presence; block_matches/match_moves; entries/together_activities/activity_wheels; daily questions/choices/answers/moods/taps; wishlists/items/claims/comments/reactions; memories/notes/social; hold sessions; artwork slots; notification settings/devices/deliveries; AI bank/history/lobbies/jobs/usage/health. Exact columns, policies and RPC signatures live in numbered `supabase/migrations/001…015`; inspect only relevant migrations and later overrides. Add new numbered migrations rather than changing already-applied history. Owner confirmed migrations 010, 012, 013, 014 and 015; do not infer other hosted state from local tests.
+Schema domains: couples/profiles; games/answers/secrets/presence; block_matches/match_moves; entries/together_activities/activity_wheels; daily questions/choices/answers/moods/taps; wishlists/items/claims/comments/reactions; memories/notes/social; hold sessions; artwork slots; notification settings/devices/deliveries; AI bank/history/lobbies/jobs/usage/health. Exact columns, policies and RPC signatures live in numbered `supabase/migrations/001…020`; inspect only relevant migrations and later overrides. Add new numbered migrations rather than changing already-applied history. Owner confirmed migrations 010, 012, 013, 014, 015 and 016–020; do not infer other hosted state from local tests.
 
 Only NEXT_PUBLIC Supabase URL/publishable key belong in browser configuration. Gemini API key, Supabase service-role key, Firebase service account and webhook secrets remain server-only. Never expose `.env.local`, private media or sealed answers. Gemini default is gemini-3.5-flash-lite, with existing quotas/lease/circuit breaker. Tests/dev use fixtures. Prior three-live-request allowance is exhausted: no more live Gemini checks without new explicit authorization.
 

@@ -1,6 +1,8 @@
 Drop-in artwork: mascot
 
 holdhands-mascot.webp — 600 × 600 px recommended
+voice-mascot.webp — 600 × 600 px recommended
+postcard-mascot.webp — 600 × 600 px recommended
 empty-mascot.webp — 600 × 600 px recommended
 wishlist-empty-mascot.webp — 600 × 600 px recommended
 wish-jar.webp — 600 × 600 px recommended

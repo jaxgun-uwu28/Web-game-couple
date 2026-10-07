@@ -15,6 +15,8 @@ type Preferences = {
   notes: boolean;
   taps: boolean;
   holdhands: boolean;
+  voice: boolean;
+  postcards: boolean;
   turns: boolean;
   quiet_start: number;
   quiet_end: number;
@@ -27,6 +29,8 @@ const defaults: Preferences = {
   notes: true,
   taps: true,
   holdhands: true,
+  voice: true,
+  postcards: true,
   turns: true,
   quiet_start: 22,
   quiet_end: 8,
@@ -438,7 +442,7 @@ export default function InstallSupport({
       >
         <fieldset disabled={busy || !preferencesReady}>
           {(
-            ["enabled", "wishes", "memories", "notes", "taps", "holdhands", "turns"] as const
+            ["enabled", "wishes", "memories", "notes", "taps", "holdhands", "voice", "postcards", "turns"] as const
           ).map((k) => (
             <label className="check-row" key={k}>
               <input
@@ -456,6 +460,8 @@ export default function InstallSupport({
                   notes: "New letters",
                   taps: "Thinking of you",
                   holdhands: "Hold my hand",
+                  voice: "Voice cassettes",
+                  postcards: "Postcards",
                   turns: "Your game turn",
                 }[k]
               }

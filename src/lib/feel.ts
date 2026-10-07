@@ -1,0 +1,3 @@
+import {readAudio} from './music';
+let audio:AudioContext|null=null;
+export function softSound(kind:'tap'|'win'|'paper'|'tape'='tap'){if(!readAudio().sounds)return;try{audio??=new AudioContext();void audio.resume();const start=audio.currentTime;for(const [index,f] of (kind==='win'?[523,659,784]:kind==='tape'?[180,240]:kind==='paper'?[380,300]:[440]).entries()){const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.value=f;gain.gain.setValueAtTime(0,start+index*.09);gain.gain.linearRampToValueAtTime(.035,start+index*.09+.01);gain.gain.exponentialRampToValueAtTime(.001,start+index*.09+.15);osc.connect(gain);gain.connect(audio.destination);osc.start(start+index*.09);osc.stop(start+index*.09+.16);}}catch{}}

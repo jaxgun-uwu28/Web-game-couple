@@ -1,5 +1,14 @@
 Drop-in artwork: stickers
 
+postcard-stamp-1.webp — 256 × 256 px recommended
+postcard-stamp-2.webp — 256 × 256 px recommended
+postcard-stamp-3.webp — 256 × 256 px recommended
+postcard-stamp-4.webp — 256 × 256 px recommended
+postcard-frame-1.webp — 1000 × 700 px recommended
+postcard-frame-2.webp — 1000 × 700 px recommended
+postcard-frame-3.webp — 1000 × 700 px recommended
+postcard-frame-4.webp — 1000 × 700 px recommended
+postcard-frame-5.webp — 1000 × 700 px recommended
 wishlist-cover-1.webp — 800 × 600 px recommended
 wishlist-cover-2.webp — 800 × 600 px recommended
 

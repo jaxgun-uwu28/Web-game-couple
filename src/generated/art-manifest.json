@@ -73,6 +73,252 @@
       "height": 600
     },
     {
+      "folder": "backgrounds",
+      "name": "voice-background",
+      "width": 1600,
+      "height": 1000
+    },
+    {
+      "folder": "couple",
+      "name": "voice-cassette-body",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "folder": "couple",
+      "name": "voice-cassette-label",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "folder": "couple",
+      "name": "voice-reel",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "folder": "couple",
+      "name": "voice-record-button",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "folder": "game-art",
+      "name": "ledger-cover",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "ledger-background",
+      "width": 1600,
+      "height": 1000
+    },
+    {
+      "folder": "game-art",
+      "name": "lostfound-cover",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "lostfound-background",
+      "width": 1600,
+      "height": 1000
+    },
+    {
+      "folder": "game-art",
+      "name": "syncsteps-cover",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "syncsteps-background",
+      "width": 1600,
+      "height": 1000
+    },
+    {
+      "folder": "game-art",
+      "name": "ledger-coin",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "ledger-card-back",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "ledger-dice",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "ledger-wax-seal",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "ledger-note-paper",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "lostfound-treasure",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "lostfound-tile-back",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "lostfound-mascot",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "syncsteps-avatar-1",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "syncsteps-avatar-2",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "syncsteps-flag",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "syncsteps-tile-wall",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "game-art",
+      "name": "syncsteps-tile-floor",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "mascot",
+      "name": "voice-mascot",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "backgrounds",
+      "name": "postcard-background",
+      "width": 1600,
+      "height": 1000
+    },
+    {
+      "folder": "couple",
+      "name": "postcard-paper-texture",
+      "width": 1000,
+      "height": 700
+    },
+    {
+      "folder": "couple",
+      "name": "postcard-envelope",
+      "width": 1000,
+      "height": 700
+    },
+    {
+      "folder": "couple",
+      "name": "postcard-wax-seal",
+      "width": 1000,
+      "height": 700
+    },
+    {
+      "folder": "couple",
+      "name": "postcard-postmark",
+      "width": 1000,
+      "height": 700
+    },
+    {
+      "folder": "couple",
+      "name": "postcard-box",
+      "width": 1000,
+      "height": 700
+    },
+    {
+      "folder": "stickers",
+      "name": "postcard-stamp-1",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "folder": "stickers",
+      "name": "postcard-stamp-2",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "folder": "stickers",
+      "name": "postcard-stamp-3",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "folder": "stickers",
+      "name": "postcard-stamp-4",
+      "width": 256,
+      "height": 256
+    },
+    {
+      "folder": "stickers",
+      "name": "postcard-frame-1",
+      "width": 1000,
+      "height": 700
+    },
+    {
+      "folder": "stickers",
+      "name": "postcard-frame-2",
+      "width": 1000,
+      "height": 700
+    },
+    {
+      "folder": "stickers",
+      "name": "postcard-frame-3",
+      "width": 1000,
+      "height": 700
+    },
+    {
+      "folder": "stickers",
+      "name": "postcard-frame-4",
+      "width": 1000,
+      "height": 700
+    },
+    {
+      "folder": "stickers",
+      "name": "postcard-frame-5",
+      "width": 1000,
+      "height": 700
+    },
+    {
+      "folder": "mascot",
+      "name": "postcard-mascot",
+      "width": 600,
+      "height": 600
+    },
+    {
       "folder": "couple",
       "name": "couple-photo-main",
       "width": 1000,

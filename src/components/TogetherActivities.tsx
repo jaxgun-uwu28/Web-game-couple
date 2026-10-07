@@ -1,4 +1,5 @@
 "use client";
+import ExpansionStats from "./ExpansionStats";
 import SpinWheel from "./SpinWheel";
 import { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
@@ -690,6 +691,7 @@ export default function TogetherActivities() {
         )}
         {view === "Our year" && (
           <>
+            <ExpansionStats />
             <div className="recap-intro">
               <Trophy size={36} />
               <h3>Our little collection of days.</h3>
@@ -847,3 +849,4 @@ export default function TogetherActivities() {
     </section>
   );
 }
+

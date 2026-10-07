@@ -6,6 +6,7 @@ import "./connections.css";
 import "./keepsakes.css";
 import "./install.css";
 import "./together.css";
+import "./expansion.css";
 export const metadata: Metadata = {
   title: "Our Little Arcade",
   description: "A little place to play, make things, and be together.",

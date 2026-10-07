@@ -19,6 +19,10 @@ Read the row relevant to the task, then follow actual imports. Paths are relativ
 | Music | src/components/Ambience.tsx | public audio assets, existing preference controls |
 | Music settings / coordination | src/components/MusicControls.tsx | src/lib/music.ts, game music hooks and Ambience |
 | Hold Hands | src/components/HoldHands.tsx | src/lib/hold-hands.ts, migration 015, src/app/api/push/hold, tests/hold-hands*.test.ts |
+| Voice cassettes | src/components/VoiceCassettes.tsx | src/lib/voice.ts, src/lib/media-outbox.ts, migration 016, tests/voice*.test.ts |
+| Postcards | src/components/Postcards.tsx | src/lib/postcard.ts, migration 017, src/app/expansion.css, tests/expansion-db.test.ts |
+| New plugin games | src/components/PluginGame.tsx | src/lib/plugin-games, src/app/api/game/plugin/route.ts, migrations 018–020, tests/plugin-games.test.ts |
+| Invites, daily maze, promises, expansion rewards | src/components/GameInvites.tsx | DailySyncPuzzle.tsx, PromiseLedger.tsx, ExpansionStats.tsx, MediaStorage.tsx, migration 019 |
 | Photo hearts/comments | src/components/MemorySocial.tsx | migration 014, tests/keepsakes.test.ts |
 | Push / PWA | src/components/InstallSupport.tsx | src/lib/push.ts, src/app/api/push, src/app/manifest.ts, scripts/prepare-sw.mjs, migration 007 |
 | Android / icons | capacitor.config.ts | android/app/build.gradle, scripts/build-android.mjs, scripts/generate-app-icons.mjs, scripts/generate-android-art.mjs, public/icons |

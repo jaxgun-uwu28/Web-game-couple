@@ -13,11 +13,13 @@ export default function Ambience() {
     [weatherBusy, setWeatherBusy] = useState(false);
   const audio = useRef<HTMLAudioElement | null>(null);
   const gameAudio = useRef<HTMLAudioElement | null>(null), backgroundWanted = useRef(false), currentGame = useRef<{kind: string; owner: string} | null>(null);
+  const audioFocus = useRef(new Set<string>());
   useEffect(() => {
     const sync = () => {
       const p = readAudio(), bg = audio.current, game = gameAudio.current;
       if (!bg || !game) return;
       bg.volume = p.background; game.volume = p.games;
+      if (audioFocus.current.size) { bg.pause(); game.pause(); return; }
       const track = currentGame.current && gameTracks[currentGame.current.kind];
       if (track && p.gameMusic) {
         bg.pause();
@@ -35,8 +37,10 @@ export default function Ambience() {
       sync();
     };
     window.addEventListener("arcade-game-music", changeGame);
+    const focus = (event: Event) => { const d = (event as CustomEvent<{owner:string;active:boolean}>).detail; if (d.active) audioFocus.current.add(d.owner); else audioFocus.current.delete(d.owner); sync(); };
+    window.addEventListener("arcade-audio-focus", focus);
     window.addEventListener("arcade-audio-change", sync);
-    return () => { gameAudio.current?.pause(); window.removeEventListener("arcade-game-music", changeGame); window.removeEventListener("arcade-audio-change", sync); };
+    return () => { gameAudio.current?.pause(); window.removeEventListener("arcade-game-music", changeGame); window.removeEventListener("arcade-audio-change", sync); window.removeEventListener("arcade-audio-focus", focus); };
   }, []);
   useEffect(() => {
     const hour = new Date().getHours();
@@ -67,6 +71,7 @@ export default function Ambience() {
     setSoundLoading(true);
     try {
       backgroundWanted.current = true;
+      if (audioFocus.current.size) { setSound(true); return; }
       player.volume = readAudio().background;
       if (currentGame.current && readAudio().gameMusic) {
         const track = gameTracks[currentGame.current.kind];

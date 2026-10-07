@@ -1,6 +1,6 @@
 # Approved expansion — 2026-10-06
 
-Work in small steps and commit. Preserve the current romantic design, privacy and existing Heartblast mechanics. **Stop after Hold Hands for two-phone testing**, per the completed connection brief. The following items are approved scope for later checkpoints, not claims of implementation.
+Work in small steps and commit. Preserve the current romantic design, privacy and existing Heartblast mechanics. **Continue the full expansion**, as subsequently requested by the user. Current implementation and outstanding acceptance details: EXPANSION_CHECKPOINT.md. This file remains the approved requirements reference.
 
 ## Current checkpoint
 
@@ -15,7 +15,7 @@ Question emphasis, tap delivery diagnosis/recovery, photo hearts/comments, named
 
 Shared contract: id/title/description/cover/setup; createMatch(config,seed), pure applyMove(state,move,playerId), viewer-filtered getPublicState, isOver/getResult. Client/server share logic; server owns outcomes and secret filtering. Metadata/player-private-state/ordered move-log RLS. Existing match_moves is already used by Heartblast: adapt or name new tables distinctly, never replace applied history. Private Broadcast/Presence and authoritative database updates, refresh recovery, challenge flow, reconnect choices. Deterministic puzzle PRNG; secure server randomness for dice/cards. No personal names/gender baked in; You/Partner or nicknames. All games need rewards/scoreboard and cover/background/specific art slots, incumbent fallbacks, sound toggle/haptics, reduced motion and360/768/1280 checks.
 
-## Connections, after Hold Hands test
+## Connections
 
 Build Voice cassettes, then Postcards, then achievements/art/README/manual acceptance. Use master haptics/sounds and user-gesture audio permission, private buckets/signed URLs, recipient opt-in/quiet hours and per-type push. New feature notifications never include message/voice/photo content. Existing customized Thinking of you keeps its intended custom body.
 

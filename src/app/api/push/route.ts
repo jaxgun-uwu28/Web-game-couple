@@ -40,6 +40,9 @@ export async function POST(req: Request) {
         "connection_taps",
         "games",
         "notifications_log",
+        "voice_messages",
+        "postcards",
+        "arcade_matches",
       ].includes(table) ||
       !id
     )
@@ -88,14 +91,15 @@ export async function POST(req: Request) {
         return Response.json({ ignored: true });
     } else {
       couple = row.couple_id;
-      author = row.author || row.sender;
+      author = row.author || row.sender || row.sender_id || row.host;
       type =
         table === "memories"
           ? "memories"
           : table === "love_notes"
             ? "notes"
-            : table === "notifications_log" ? "holdhands" : "taps";
+            : table === "arcade_matches" ? "turns" : table === "notifications_log" ? "holdhands" : table === "voice_messages" ? "voice" : table === "postcards" ? "postcards" : "taps";
       if (event.type !== "INSERT") return Response.json({ ignored: true });
+      if(table==='arcade_matches'&&row.status!=='invited') return Response.json({ignored:true});
     }
     const profiles = await db
       .from("profiles")
@@ -110,7 +114,7 @@ export async function POST(req: Request) {
             row.message,
             profiles.data?.find((p) => p.id === author)?.nickname,
           )
-        : table === "notifications_log" ? { title: "Hold hands", body: "Someone wants to hold your hand." } : {
+        : table === "arcade_matches" ? {title:"A little challenge",body:`Partner challenged you to ${({ledger:'The Ledger Duel',lostfound:'Lost & Found',syncsteps:'Sync Steps'} as Record<string,string>)[row.game_id]||'a game'}.`} : table === "notifications_log" ? { title: "Hold hands", body: "Someone wants to hold your hand." } : table === "voice_messages" ? {title:"A little cassette",body:"You have a new voice message."} : table === "postcards" ? {title:"A little postcard",body:"You have a postcard."} : {
             title: "Our Little Arcade",
             body: "Your person left a little something for you.",
           };

@@ -1,0 +1,22 @@
+# Expansion checkpoint — 2026-10-07
+
+Use PROJECT_SPEC.md + the relevant ARCHITECTURE.md row first. Read only the source needed for a change. User authorized continuing beyond Hold Hands; do not follow the old stop instruction. Migrations 016–020 are confirmed applied by the owner.
+
+## Implemented
+
+- Registry modules: canonical Heartblast adapter; Ledger Duel, Lost & Found, Sync Steps. Server-authenticated route validates moves with shared pure rules, stores ordered idempotent moves, uses revision CAS and filters secrets. Metadata-only Realtime, private pair Presence/Broadcast, invite/accept/decline/play-later, both-ready gate, refresh recovery, explicit shared cancellation, 60-second reconnect choices.
+- Ledger: persistent wallets, reset/top-up, server-secure distinct-card ranks or dice, sealed notes, tie/ante stacking, transactional payout, loser note popup, Promise Ledger winner-confirmed Done/nudge/bilateral Waive. Art, haptics and optional sound. Existing zero-wallet tie chains redraw on server to avoid permanent lock; document this deliberate edge-case choice.
+- Lost: seeded themed/word grids, immutable treasure selection + Hide it, private server hints, trails/final reveal, modes, guess cap, turn clock with server offset, once-only sonar/magnifier/skip. Power-ups cost 5 game-reward coins atomically; retries do not charge twice.
+- Sync: independent hidden maps, complete joint transitions/BFS, thirty difficulty configurations, Infinite and server-secret Daily maze/Home result shortcut, shared/alternate/driver modes, Undo restores keys/blocks/falls/turn, reset, move/hearts limits, shared stars, pings/chat. Thirty configurations and 100 Infinite seeds pass joint solvability tests; these are generated configurations, not thirty human-authored maps.
+- Cassettes: microphone explainer, pointer/keyboard hold/lock/cancel, 32kbps supported MIME recording, 64 peaks, preview/label/color/sticker, player reels/waveform seek/speed/loop, receipts/reactions/favorites/reply, private storage, stable-ID offline sends, shared cap/backup/old-own deletion, generic push. Music pauses during recording/playback; device interruption saves a preview.
+- Postcards: photo/camera/memory/plain patterned paper, correct landscape/portrait crop coordinates, filters, pressure pens/eraser, stickers/transforms, editable text, frames/stamps/back message, flip, envelope color/seal/send/open animation, JSON layer reveal with flattened fallback, box/favorites/reply/reactions/download/save to Memories, future-date server lock, private WebP images, autosave and offline queue, old-draft cleanup. Heart seal is absolutely centered; date sits in the lower corner.
+- Settings art families/storage cap/notification toggles; expansion achievements and recap; existing game scoreboard includes new wins and refreshes on new match changes. No more live Gemini requests permitted under prior exhausted allowance.
+
+## Remaining acceptance and detailed gaps
+
+- Finish full 360/768/1280 day/night capture matrix. Ledger/Lost initial captures exist; latest postcard/cassette/maze review is in progress. Browser preview tests never establish physical mic/camera/push success.
+- Real two-phone games and Hold Hands; Android microphone/WebView/heartbeat; iPhone media format; measure actual 60s audio size; push registrations/preferences/server secrets/quiet hours on recipient. Do not claim these pass from fixture tests.
+- Larger requested polish/integration still needs work: custom art wiring on every tile/avatar, authored level curation, expanded loss/streak/comeback stats, Heartblast challenge/reconnect integration, Promise expiry/reminders/photo proof, cosmetic unlocks, postcard smart reply/full box illustration/extra fonts/drop-in paper choice, voice peaks decode fallback and full preview blob cleanup. Preserve incumbent Heartblast design and mechanics.
+- Hosted behavior is user-confirmed migration application, not verified hosted RLS tests. Run fixture tests and build before a commit; fixture ENOMEM needs sandbox escalation, no hosted calls.
+
+Latest focused checks: typecheck passed; seven plugin tests passed including 100 maze seeds; two expansion database tests passed, migration 020 applied twice in fixtures. Full fixture suite: 65/65 passed. Production build passed after the latest integration edits. These checks do not establish real-device acceptance.
