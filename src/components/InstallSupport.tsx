@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
-import { Download, Bell, Smartphone, RefreshCw } from "lucide-react";
+import { Download, Bell, Smartphone, RefreshCw, Moon } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { readAudio } from "@/lib/music";
 type InstallEvent = Event & {
@@ -479,9 +479,12 @@ export default function InstallSupport({
               }
             </label>
           ))}
-          <label>
+          <label
+            className={`quiet-hours-toggle-btn ${prefs.quiet_start !== prefs.quiet_end ? "is-active" : ""}`}
+          >
             <input
               type="checkbox"
+              className="quiet-hours-checkbox"
               checked={prefs.quiet_start !== prefs.quiet_end}
               onChange={(e) => {
                 const enable = e.target.checked;
@@ -513,8 +516,14 @@ export default function InstallSupport({
                   }));
                 }
               }}
-            />{" "}
-            Quiet hours
+            />
+            <span className="quiet-hours-switch-track" aria-hidden="true">
+              <span className="quiet-hours-switch-knob" />
+            </span>
+            <span className="quiet-hours-btn-content">
+              <Moon size={18} />
+              <span>Quiet hours</span>
+            </span>
           </label>
           {prefs.quiet_start !== prefs.quiet_end ? (
             <div className="form-pair">

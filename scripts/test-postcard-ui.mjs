@@ -56,9 +56,8 @@ async function runReview() {
     fullPage: false,
   });
 
-  // Advance to Step 1 (Front Decor)
-  const nextBtn = pageM.locator('.postcard-footer-nav button').getByText(/Next/i);
-  await nextBtn.click();
+  // Switch to Section 1 (Front Decor)
+  await pageM.locator('.postcard-step-pill').filter({ hasText: /Front Decor/i }).click();
   await pageM.waitForTimeout(400);
 
   // Screenshot Step 1
@@ -94,16 +93,16 @@ async function runReview() {
   // Switch back to Select & Move
   await pageM.getByRole('button', { name: /Select & Move/i }).click();
 
-  // Advance to Step 2 (Note & Stamp)
-  await pageM.locator('.postcard-footer-nav button').getByText(/Next/i).click();
+  // Switch to Section 2 (Note & Stamp)
+  await pageM.locator('.postcard-step-pill').filter({ hasText: /Note & Stamp/i }).click();
   await pageM.waitForTimeout(400);
   await pageM.screenshot({
     path: '.impeccable/review/postcards/postcard-studio-step2-phone-360.png',
     fullPage: false,
   });
 
-  // Advance to Step 3 (Preview & Send)
-  await pageM.locator('.postcard-footer-nav button').getByText(/Next/i).click();
+  // Switch to Section 3 (Preview & Send)
+  await pageM.locator('.postcard-step-pill').filter({ hasText: /Preview & Send/i }).click();
   await pageM.waitForTimeout(400);
   await pageM.screenshot({
     path: '.impeccable/review/postcards/postcard-studio-step3-phone-360.png',
@@ -148,6 +147,23 @@ async function runReview() {
     fullPage: false,
   });
 
+  // Cancel delete modal and close viewer
+  await pageM.locator('.postcard-confirm-dialog button').getByText(/Cancel/i).click();
+  await pageM.waitForTimeout(300);
+  await pageM.locator('.postcard-viewer .icon-button').click();
+  await pageM.waitForTimeout(400);
+
+  // Navigate to Settings on mobile
+  await pageM.getByRole('button', { name: 'Settings' }).click();
+  await pageM.waitForTimeout(600);
+  const quietHoursBtnM = pageM.locator('.quiet-hours-toggle-btn');
+  await quietHoursBtnM.scrollIntoViewIfNeeded();
+  await pageM.waitForTimeout(300);
+  await pageM.screenshot({
+    path: '.impeccable/review/postcards/quiet-hours-toggle-phone.png',
+    fullPage: false,
+  });
+
   await mobileContext.close();
 
   // --- 2. DESKTOP / WEB (1280x900) ---
@@ -176,8 +192,8 @@ async function runReview() {
     fullPage: false,
   });
 
-  // Step 1 on desktop
-  await pageD.locator('.postcard-footer-nav button').getByText(/Next/i).click();
+  // Section 1 on desktop
+  await pageD.locator('.postcard-step-pill').filter({ hasText: /Front Decor/i }).click();
   await pageD.waitForTimeout(400);
   await pageD.locator('.postcard-sticker-btn[aria-label="Add Rose sticker"]').click();
   await pageD.waitForTimeout(400);
@@ -186,16 +202,16 @@ async function runReview() {
     fullPage: false,
   });
 
-  // Step 2 on desktop
-  await pageD.locator('.postcard-footer-nav button').getByText(/Next/i).click();
+  // Section 2 on desktop
+  await pageD.locator('.postcard-step-pill').filter({ hasText: /Note & Stamp/i }).click();
   await pageD.waitForTimeout(400);
   await pageD.screenshot({
     path: '.impeccable/review/postcards/postcard-studio-step2-desktop-1280.png',
     fullPage: false,
   });
 
-  // Step 3 on desktop
-  await pageD.locator('.postcard-footer-nav button').getByText(/Next/i).click();
+  // Section 3 on desktop
+  await pageD.locator('.postcard-step-pill').filter({ hasText: /Preview & Send/i }).click();
   await pageD.waitForTimeout(400);
   await pageD.screenshot({
     path: '.impeccable/review/postcards/postcard-studio-step3-desktop-1280.png',
@@ -212,6 +228,21 @@ async function runReview() {
   await pageD.waitForTimeout(2200);
   await pageD.screenshot({
     path: '.impeccable/review/postcards/postcard-viewer-desktop-1280.png',
+    fullPage: false,
+  });
+
+  // Close viewer
+  await pageD.locator('.postcard-viewer .icon-button').click();
+  await pageD.waitForTimeout(400);
+
+  // Navigate to Settings to screenshot new Quiet hours toggle design
+  await pageD.getByRole('button', { name: 'Settings' }).click();
+  await pageD.waitForTimeout(600);
+  const quietHoursBtn = pageD.locator('.quiet-hours-toggle-btn');
+  await quietHoursBtn.scrollIntoViewIfNeeded();
+  await pageD.waitForTimeout(300);
+  await pageD.screenshot({
+    path: '.impeccable/review/postcards/quiet-hours-toggle-desktop.png',
     fullPage: false,
   });
 

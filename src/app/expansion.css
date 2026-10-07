@@ -181,14 +181,6 @@
   flex: 1;
   min-height: 44px;
 }
-button.danger, .danger-btn {
-  background: #e11d48 !important;
-  color: #fff !important;
-  border-color: #be123c !important;
-}
-button.danger:hover, .danger-btn:hover {
-  background: #be123c !important;
-}
 .postcard-stepper {
   display: flex;
   gap: 8px;
@@ -304,52 +296,14 @@ button.danger:hover, .danger-btn:hover {
   max-width: 1000px;
   margin: auto;
   width: 100%;
-  padding-bottom: 96px;
-}
-.postcard-footer-nav {
-  position: sticky;
-  bottom: 0;
-  background: rgba(255, 248, 243, 0.96);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 10px 16px max(12px, env(safe-area-inset-bottom));
-  margin-top: 20px;
-  border-top: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  max-width: 1000px;
-  width: 100%;
-  margin-inline: auto;
-  z-index: 20;
-  box-shadow: 0 -4px 16px rgba(131, 58, 83, 0.08);
-}
-.postcard-footer-nav button {
-  min-height: 44px;
-  padding: 10px 20px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: transform 0.15s ease, background 0.15s ease;
-}
-.postcard-footer-nav button:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-.postcard-nav-counter {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--cherry);
-  white-space: nowrap;
+  padding-bottom: 24px;
 }
 .postcard-hero-send {
   background: var(--cherry) !important;
   color: var(--paper) !important;
   font-weight: 700 !important;
   font-size: 15px !important;
-  padding: 10px 20px !important;
+  padding: 12px 24px !important;
   border-radius: 999px !important;
   box-shadow: 0 4px 14px rgba(157, 48, 79, 0.35) !important;
 }
@@ -372,18 +326,11 @@ button.danger:hover, .danger-btn:hover {
     min-height: 40px !important;
     width: 100% !important;
   }
-  .postcard-footer-nav {
-    padding: 8px 12px max(10px, env(safe-area-inset-bottom));
-    gap: 8px;
-  }
-  .postcard-footer-nav button {
-    min-height: 42px;
-    padding: 8px 14px;
-    font-size: 13px;
-  }
   .postcard-hero-send {
-    padding: 8px 16px !important;
-    font-size: 13px !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    width: 100%;
+    justify-content: center;
   }
 }
 

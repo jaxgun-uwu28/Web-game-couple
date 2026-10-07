@@ -875,7 +875,6 @@ function PostcardEditor({
               </button>
               <button
                 type="button"
-                className="danger"
                 onClick={async () => {
                   const { removeMedia } = await import("@/lib/media-outbox");
                   await removeMedia(draftKey);
@@ -897,9 +896,6 @@ function PostcardEditor({
       <header className="postcard-studio-header">
         <div>
           <h1>A little postcard</h1>
-          <p className="postcard-studio-step-hint">
-            Step {step + 1} of 4: {["Photo & Paper", "Decorate Front", "Note & Stamp", "Seal & Send"][step]}
-          </p>
         </div>
         <div className="postcard-studio-header-actions">
           <button
@@ -1320,7 +1316,6 @@ function PostcardEditor({
                   </button>
                   <button
                     type="button"
-                    className="danger-btn"
                     title="Delete sticker"
                     onClick={() => {
                       change({
@@ -1615,40 +1610,19 @@ function PostcardEditor({
                   />
                 </label>
               </div>
+
+              <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  className="postcard-hero-send"
+                  disabled={busy}
+                  onClick={() => void seal()}
+                >
+                  <Send size={18} /> {busy ? "Sealing with love…" : "Seal & Send with Love"}
+                </button>
+              </div>
             </div>
           </div>
-        )}
-      </div>
-
-      <div className="postcard-footer-nav">
-        <button
-          type="button"
-          className="secondary postcard-nav-prev"
-          disabled={step === 0}
-          onClick={() => setStep((s) => Math.max(0, s - 1))}
-        >
-          <ChevronLeft size={18} /> Previous
-        </button>
-        <span className="postcard-nav-counter">
-          Step {step + 1} of 4
-        </span>
-        {step < 3 ? (
-          <button
-            type="button"
-            className="postcard-nav-next"
-            onClick={() => setStep((s) => Math.min(3, s + 1))}
-          >
-            Next <ChevronRight size={18} />
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="postcard-hero-send"
-            disabled={busy}
-            onClick={() => void seal()}
-          >
-            <Send size={18} /> {busy ? "Sealing with love…" : "Seal & Send with Love"}
-          </button>
         )}
       </div>
     </dialog>
@@ -1872,7 +1846,7 @@ function PostcardViewer({
           <Download size={18} /> Download
         </button>
         <button
-          className="secondary danger-btn"
+          className="secondary"
           onClick={() => setDeleting(true)}
         >
           <Trash2 size={18} /> Delete
@@ -1900,7 +1874,6 @@ function PostcardViewer({
               </button>
               <button
                 type="button"
-                className="danger"
                 onClick={async () => {
                   if (c.preview) {
                     onDelete?.(row.id);
