@@ -1,6 +1,6 @@
 # Our Little Arcade — current specification
 
-Updated 2026-10-07. This is the compact current reference. Source and migrations define exact behavior; this file summarizes it. Later explicit user instructions override it. Older PRODUCT.md/DESIGN.md checkpoints are historical where they conflict with this summary.
+Updated 2026-10-08. This is the compact current reference. Source and migrations define exact behavior; this file summarizes it. Later explicit user instructions override it. Older PRODUCT.md/DESIGN.md checkpoints are historical where they conflict with this summary.
 
 ## Product and architecture
 
@@ -30,7 +30,7 @@ Visible copy is personal and useful: no stage labels, metadata/compression/priva
 
 Opened letters use cream stationery in both themes, a fine pink frame, heart seal and handwritten body; close/favorite controls follow the message and attachments. Read-once behavior and envelope opening remain unchanged. Personal wishlist labels distinguish My wishes from Partner’s wishes.
 Home's wish shortcut uses a responsive jar/title/action grid; wish cards use a full-width status picker and aligned action rows.
-Plugin rooms restore only active matches for that game and reject stale background responses from older revisions or another room; visible rooms refresh every five seconds and on focus with server-seen presence fallback. New Blackjack rooms use equal match-only starting chips (100 default, presets 25/50/100, custom 10–10000) without wallet buy-ins. Migration 033 is locally tested and awaiting owner application before publishing; it refunds old waiting-room buy-ins once and preserves playing legacy rooms. Promise Ledger wallet resets offer 10/20/50/100 chips per player (migration 032), blocked during active wallet games.
+Plugin rooms restore only active matches for that game and reject stale background responses from older revisions or another room; visible rooms refresh every five seconds and on focus with server-seen presence fallback. New Blackjack rooms use equal match-only starting chips (100 default, presets 25/50/100, custom 10–10000) without wallet buy-ins. Migration 033 is owner-confirmed applied; it refunds old waiting-room buy-ins once and preserves playing legacy rooms. Promise Ledger wallet resets offer 10/20/50/100 chips per player (migration 032), blocked during active wallet games.
 
 ## Data and security
 
