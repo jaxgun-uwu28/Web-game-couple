@@ -1,4 +1,7 @@
 "use client";
+import WishJar from "./WishJar";
+import { armGameSounds } from "@/lib/game-feel";
+import { jarWishes } from "@/lib/wish-jar";
 import {
   createContext,
   useContext,
@@ -13,7 +16,6 @@ import {
   Heart,
   Plus,
   Gift,
-  Shuffle,
   Check,
   Lock,
   ImagePlus,
@@ -451,11 +453,19 @@ export function WishlistShortcut({ go }: { go: () => void }) {
       })
       .sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
   return (
-    <button className="wish-shortcut secondary" onClick={go}>
-      <Gift />
+    <div className="wish-shortcut secondary">
+      <WishJar
+        wishes={c.wishes}
+        lists={c.lists.filter((l) => l.type !== "secret")}
+        user={c.user}
+        scope="home"
+        mini
+      />
       <span>{latest ? latest.title : "Make room for a little wish."}</span>
-      <span>Open wishlists</span>
-    </button>
+      <button className="text-button" onClick={go}>
+        Open wishlists
+      </button>
+    </div>
   );
 }
 export function KeepsakeBackup() {
@@ -560,8 +570,86 @@ export function KeepsakeBackup() {
     </section>
   );
 }
+function WishJarReveal({
+  wish,
+  editable,
+  close,
+  edit,
+  complete,
+}: {
+  wish: Wish;
+  editable: boolean;
+  close: () => void;
+  edit: () => void;
+  complete: () => Promise<void>;
+}) {
+  const c = useKeepsakes();
+  const dialog = useRef<HTMLDialogElement>(null),
+    [busy, setBusy] = useState(false);
+  useEffect(() => {
+    dialog.current?.showModal();
+  }, []);
+  return (
+    <dialog
+      ref={dialog}
+      className="wish-reveal"
+      onCancel={(e) => {
+        e.preventDefault();
+        close();
+      }}
+      aria-labelledby="wish-reveal-title"
+    >
+      <div className="wish-reveal-seal" aria-hidden="true">
+        <Heart size={26} />
+      </div>
+      <div className="wish-reveal-heading">
+        <h2 id="wish-reveal-title">{wish.title}</h2>
+        <button className="text-button" aria-label="Close wish" onClick={close}>
+          <X size={20} />
+        </button>
+      </div>
+      <Photo path={wish.image_path} alt={wish.title} />
+      {c.error && (
+        <p role="alert" className="notice error">
+          {c.error}
+        </p>
+      )}
+      {wish.note && <p className="handwriting">{wish.note}</p>}
+      {wish.url && (
+        <a href={safeLink(wish.url)} target="_blank" rel="noreferrer">
+          Open wish link
+        </a>
+      )}
+      <div className="wish-reveal-actions">
+        {editable && (
+          <>
+            <button
+              disabled={busy}
+              onClick={() => {
+                setBusy(true);
+                void complete().finally(() => setBusy(false));
+              }}
+            >
+              Came true <Heart size={18} />
+            </button>
+            <button disabled={busy} className="secondary" onClick={edit}>
+              Edit wish
+            </button>
+          </>
+        )}
+        <button className="text-button" onClick={close}>
+          Back to the jar
+        </button>
+      </div>
+    </dialog>
+  );
+}
 export function Wishlists() {
   const c = useKeepsakes();
+  const [jarOpen, setJarOpen] = useState(false),
+    [jarLists, setJarLists] = useState<string[] | null>(null),
+    [jarWish, setJarWish] = useState<Wish | null>(null),
+    [optimistic, setOptimistic] = useState<Wish | null>(null);
   const [selected, setSelected] = useState(""),
     [adding, setAdding] = useState(false),
     [listTitle, setListTitle] = useState(""),
@@ -578,7 +666,6 @@ export function Wishlists() {
     [file, setFile] = useState<File | null>(null),
     [filter, setFilter] = useState("all"),
     [level, setLevel] = useState("all"),
-    [picked, setPicked] = useState(""),
     [comment, setComment] = useState(""),
     [commentFor, setCommentFor] = useState("");
   const lists = c.lists.filter(
@@ -604,7 +691,10 @@ export function Wishlists() {
   const sheet = useRef<HTMLElement | null>(null),
     swipe = useRef<{ id: string; x: number; y: number } | null>(null);
   useEffect(() => {
-    setPicked("");
+    if (optimistic && c.wishes.some((w) => w.id === optimistic.id))
+      setOptimistic(null);
+  }, [c.wishes, optimistic]);
+  useEffect(() => {
     setComment("");
     setCommentFor("");
     setAdding(false);
@@ -617,7 +707,10 @@ export function Wishlists() {
     setEditing(null);
     setComment("");
     setListTitle("");
-    setPicked("");
+    setJarWish(null);
+    setOptimistic(null);
+    setJarLists(null);
+    setJarOpen(false);
   }, [c.user]);
   useEffect(() => {
     if (!adding) return;
@@ -702,9 +795,11 @@ export function Wishlists() {
   }
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    armGameSounds();
     const ok = await c.run(async () => {
       if (!list) throw new Error("Create a list first.");
       if (url && !safeLink(url)) throw new Error("Use an http or https link.");
+      if (!title.trim()) throw new Error("Give your wish a title.");
       if (!c.preview && !navigator.onLine) {
         if (editing)
           throw new Error(
@@ -742,6 +837,20 @@ export function Wishlists() {
         planned_date: planned || null,
         image_path: file ? await c.upload(file) : editing?.image_path || null,
       };
+      const id = editing?.id || crypto.randomUUID();
+      if (!editing && !c.preview) {
+        setOptimistic({
+          id,
+          list_id: list.id,
+          created_by: c.user,
+          status: "wished",
+          done_at: null,
+          position: 0,
+          created_at: new Date().toISOString(),
+          ...data,
+        });
+        setAdding(false);
+      }
       if (c.preview)
         c.local((s) => ({
           ...s,
@@ -749,7 +858,7 @@ export function Wishlists() {
             ? s.wishes.map((w) => (w.id === editing.id ? { ...w, ...data } : w))
             : [
                 {
-                  id: crypto.randomUUID(),
+                  id,
                   list_id: list.id,
                   created_by: c.user,
                   status: "wished",
@@ -766,14 +875,18 @@ export function Wishlists() {
           ? await c.db!.from("wishlist_items").update(data).eq("id", editing.id)
           : await c
               .db!.from("wishlist_items")
-              .insert({ ...data, list_id: list.id });
+              .insert({ id, ...data, list_id: list.id });
         if (r.error) throw new Error(r.error.message);
       }
     });
     if (ok) setAdding(false);
+    else {
+      setOptimistic(null);
+      setAdding(true);
+    }
   }
   async function change(w: Wish, fields: Partial<Wish>) {
-    await c.run(async () => {
+    return await c.run(async () => {
       if (c.preview)
         c.local((s) => ({
           ...s,
@@ -825,21 +938,33 @@ export function Wishlists() {
       }
     });
     if (saved) {
-      setPicked("");
-      if (commentFor === w.id) { setCommentFor(""); setComment(""); }
+      if (commentFor === w.id) {
+        setCommentFor("");
+        setComment("");
+      }
     }
   }
   async function removeList() {
-    if (!list || !editable || !window.confirm(`Delete “${list.title}” and all its wishes?`)) return;
+    if (
+      !list ||
+      !editable ||
+      !window.confirm(`Delete “${list.title}” and all its wishes?`)
+    )
+      return;
     const removing = list.id;
     const saved = await c.run(async () => {
       if (c.preview) {
         c.local((s) => {
-          const ids = new Set(s.wishes.filter((w) => w.list_id === removing).map((w) => w.id));
-          return { ...s, lists: s.lists.filter((l) => l.id !== removing),
+          const ids = new Set(
+            s.wishes.filter((w) => w.list_id === removing).map((w) => w.id),
+          );
+          return {
+            ...s,
+            lists: s.lists.filter((l) => l.id !== removing),
             wishes: s.wishes.filter((w) => !ids.has(w.id)),
             claims: s.claims.filter((i) => !ids.has(i.item_id)),
-            comments: s.comments.filter((i) => !ids.has(i.item_id)) };
+            comments: s.comments.filter((i) => !ids.has(i.item_id)),
+          };
         });
       } else {
         const r = await c.db!.rpc("delete_wishlist", { lid: removing });
@@ -848,14 +973,134 @@ export function Wishlists() {
     });
     if (saved) setSelected("");
   }
+  const jarData = optimistic
+    ? [...c.wishes.filter((w) => w.id !== optimistic.id), optimistic]
+    : c.wishes;
+  const reveal = jarWish && (
+    <WishJarReveal
+      wish={jarWish}
+      editable={
+        !!lists.find(
+          (l) =>
+            l.id === jarWish.list_id &&
+            (l.type === "shared" ||
+              l.type === "custom" ||
+              l.owner_id === c.user),
+        )
+      }
+      close={() => setJarWish(null)}
+      edit={() => {
+        setJarWish(null);
+        setJarOpen(false);
+        edit(jarWish);
+      }}
+      complete={async () => {
+        if (
+          await change(jarWish, {
+            status: "done",
+            done_at: new Date().toISOString(),
+          })
+        )
+          setJarWish(null);
+      }}
+    />
+  );
+  if (jarOpen)
+    return (
+      <section className="keepsake-page wish-jar-room">
+        <KeepsakeFeedback />
+        <div className="page-heading">
+          <div>
+            <h2>Our wish jar</h2>
+            <p>A little pile of someday.</p>
+          </div>
+          <button className="text-button" onClick={() => setJarOpen(false)}>
+            Back to lists <X size={18} />
+          </button>
+        </div>
+        <div className="list-tabs" aria-label="Choose lists for the jar">
+          {lists.map((l) => (
+            <button
+              key={l.id}
+              aria-pressed={(jarLists || lists.map((x) => x.id)).includes(l.id)}
+              className={
+                (jarLists || lists.map((x) => x.id)).includes(l.id)
+                  ? ""
+                  : "secondary"
+              }
+              onClick={() =>
+                setJarLists((old) => {
+                  const ids = old || lists.map((x) => x.id);
+                  return ids.includes(l.id)
+                    ? ids.filter((id) => id !== l.id)
+                    : [...ids, l.id];
+                })
+              }
+            >
+              {l.title}
+            </button>
+          ))}
+        </div>
+        <WishJar
+          wishes={jarWishes(jarData, lists, c.user, jarLists || undefined)}
+          lists={lists}
+          user={c.user}
+          scope={`full:${[...(jarLists || lists.map((l) => l.id))].sort().join(":")}`}
+          onPick={setJarWish}
+        />
+        <details className="jar-plain-list">
+          <summary>See wishes as a list</summary>
+          <ul>
+            {jarWishes(jarData, lists, c.user, jarLists || undefined).map(
+              (w) => (
+                <li key={w.id}>
+                  <button className="text-button" onClick={() => setJarWish(w)}>
+                    {w.title}
+                  </button>
+                </li>
+              ),
+            )}
+          </ul>
+        </details>
+        {reveal}
+      </section>
+    );
   return (
     <section className="keepsake-page wishlist-page">
-      <div className="page-heading">
-        <div>
-          <h2>Small wishes. Shared dreams.</h2>
-          <p>A someday, a surprise, a little plan.</p>
+      <div className="wish-hero">
+        <div className="wish-hero-copy">
+          <h2>
+            Small wishes.
+            <br />A jar of someday.
+          </h2>
+          <p>
+            {list
+              ? `Little dreams in ${list.title}.`
+              : "Make a list, then tuck your first wish inside."}
+          </p>
+          <div className="wish-hero-actions">
+            {editable && (
+              <button disabled={c.busy} onClick={() => edit(null)}>
+                Make a wish <Plus size={18} />
+              </button>
+            )}
+            <button className="secondary" onClick={() => setJarOpen(true)}>
+              Open our jar <Heart size={18} />
+            </button>
+          </div>
         </div>
-        <Gift size={32} />
+        <WishJar
+          wishes={jarWishes(
+            jarData,
+            lists,
+            c.user,
+            list ? [list.id] : undefined,
+          )}
+          lists={lists}
+          user={c.user}
+          scope={list?.id || "all"}
+          onPick={setJarWish}
+        />
       </div>
       <KeepsakeFeedback />
       <nav className="list-tabs" aria-label="Wishlists">
@@ -909,32 +1154,15 @@ export function Wishlists() {
               {list.type === "secret" ? " · visible only to you" : ""}
             </p>
             {editable && (
-              <button onClick={() => edit(null)}>
-                Make a wish <Plus size={18} />
+              <button
+                className="secondary"
+                disabled={c.busy}
+                onClick={() => void removeList()}
+              >
+                Delete list <Trash2 size={18} />
               </button>
             )}
-            {editable && <button className="secondary" disabled={c.busy} onClick={() => void removeList()}>
-              Delete list <Trash2 size={18} />
-            </button>}
-            <button
-              className="secondary"
-              disabled={!all.some((w) => w.status !== "done")}
-              onClick={() => {
-                const options = all.filter((w) => w.status !== "done");
-                setPicked(
-                  options[Math.floor(Math.random() * options.length)].title,
-                );
-                void tactile(25);
-              }}
-            >
-              Shake the wish jar <Shuffle size={18} />
-            </button>
           </div>
-          {picked && (
-            <p className="jar-pick" role="status">
-              How about… {picked}?
-            </p>
-          )}
           <div className="wish-filters">
             <label>
               Status
@@ -1200,6 +1428,7 @@ export function Wishlists() {
           <p>Create your first list above.</p>
         </div>
       )}
+      {reveal}
       {adding && (
         <div className="sheet-backdrop">
           <section

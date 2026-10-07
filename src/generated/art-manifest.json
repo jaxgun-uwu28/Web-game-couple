@@ -469,6 +469,54 @@
       "height": 600
     },
     {
+      "folder": "mascot",
+      "name": "wish-jar-lid",
+      "width": 600,
+      "height": 180
+    },
+    {
+      "folder": "mascot",
+      "name": "wish-jar-mascot",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "folder": "stickers",
+      "name": "wish-note-1",
+      "width": 160,
+      "height": 100
+    },
+    {
+      "folder": "stickers",
+      "name": "wish-note-2",
+      "width": 160,
+      "height": 100
+    },
+    {
+      "folder": "stickers",
+      "name": "wish-note-3",
+      "width": 160,
+      "height": 100
+    },
+    {
+      "folder": "stickers",
+      "name": "wish-note-4",
+      "width": 160,
+      "height": 100
+    },
+    {
+      "folder": "stickers",
+      "name": "wish-note-5",
+      "width": 160,
+      "height": 100
+    },
+    {
+      "folder": "stickers",
+      "name": "wish-note-6",
+      "width": 160,
+      "height": 100
+    },
+    {
       "folder": "app-icon",
       "name": "icon-foreground",
       "width": 1024,
