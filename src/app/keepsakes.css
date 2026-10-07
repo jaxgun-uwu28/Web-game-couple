@@ -343,13 +343,13 @@
 .wish-shortcut > button { margin: 0; white-space: nowrap; }
 .wish-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
   gap: 10px;
 }
 .wish-actions label { grid-column: 1 / -1; min-width: 0; max-width: none; margin: 0; }
 .wish-actions label select { width: 100%; box-sizing: border-box; margin-top: 8px; }
-.wish-actions > button { width: 100%; padding: 12px; box-sizing: border-box; }
+.wish-actions > button { width: 100%; padding: 10px 6px; box-sizing: border-box; font-size: .9rem; gap: 5px; border-radius: 14px; background: var(--lavender); }
 .wish-actions > button:last-child { grid-column: 1 / -1; }
 .wish-pages > li > details { border-top: 1px solid var(--line); padding-top: 18px; }
 @media (max-width: 760px) {
