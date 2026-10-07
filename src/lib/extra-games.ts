@@ -1,3 +1,5 @@
+import knowFixture from "../../fixtures/gemini/know.json";
+import drawFixture from "../../fixtures/gemini/draw.json";
 import { type Game, type GameKind } from "./games";
 export const triviaV2 = [
   {
@@ -135,8 +137,38 @@ export function extraMove(
   return g;
 }
 
-type ExtraPreview={game:Game;secret:string;answers:Record<number,Record<string,string>>;strokes:import('../components/Doodle').Stroke[]};
-const previews=new Map<GameKind,ExtraPreview>();
-export function startExtraPreview(kind:GameKind){const old=previews.get(kind);if(old?.game.state.status==='playing')return old;const next={game:extraGame(kind,old?.game.state.artist===0?1:0),secret:drawingWords[Math.floor(Math.random()*drawingWords.length)],answers:{},strokes:[]};previews.set(kind,next);return next;}
-export function updateExtraPreview(kind:GameKind,change:Partial<ExtraPreview>){const current=previews.get(kind);if(current)Object.assign(current,change);}
-export function resetExtraPreviews(){previews.clear();}
+type ExtraPreview = {
+  game: Game;
+  secret: string;
+  answers: Record<number, Record<string, string>>;
+  strokes: import("../components/Doodle").Stroke[];
+};
+const previews = new Map<GameKind, ExtraPreview>();
+export function startExtraPreview(kind: GameKind) {
+  const old = previews.get(kind);
+  if (old?.game.state.status === "playing") return old;
+  const next = {
+    game: extraGame(kind, old?.game.state.artist === 0 ? 1 : 0),
+    secret:
+      drawFixture.items[Math.floor(Math.random() * drawFixture.items.length)]
+        .word,
+    answers: {},
+    strokes: [],
+  };
+  if (kind === "know")
+    next.game.state.questions = knowFixture.items
+      .slice(0, 5)
+      .map((q, i) => ({ ...q, id: String(i) }));
+  previews.set(kind, next);
+  return next;
+}
+export function updateExtraPreview(
+  kind: GameKind,
+  change: Partial<ExtraPreview>,
+) {
+  const current = previews.get(kind);
+  if (current) Object.assign(current, change);
+}
+export function resetExtraPreviews() {
+  previews.clear();
+}

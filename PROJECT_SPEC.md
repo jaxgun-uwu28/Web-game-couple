@@ -12,6 +12,7 @@ The entry page renders StageOne; the authenticated client shell coordinates dest
 
 - Navigation: Home, Play, Memories, Notes, Activities. Top-right gear opens Settings (anniversary, nickname, AI, artwork, notifications, installation, backup, sign-out).
 - Play: Tic-tac-toe, Connect Four, Draw & guess, Know me by heart, Brain Duel and Block Hearts Duel. Explicit Exit cancels the shared session. Synchronous games require both players present; presence expires after 20 seconds. Endless/Daily ordinary navigation preserves runs.
+- Draw & guess / Know me by heart: online starts consume private Gemini batches (100 drawable words / 40 preference questions), refill only when the saved pool cannot supply the next game, reject used/duplicate content, and keep secret words artist-only. Drawing supports brush size, opacity, seven spectrum colors plus white/black, eraser, bucket, undo/redo and undoable clear through the existing shared stroke stream. Local previews remain fixture-only.
 - Brain Duel: host chooses topic, Easy/Medium/Hard and 3/5/10 questions; guest joins; both ready before start. Online trivia is AI-only with no hardcoded fallback. Daily/Would You Rather use shared generated batches with saved-content recovery when unavailable.
 - Heartblast: fixed-orientation 8×8 pieces, three-piece trays, server-replayed placements/scores. Timed (30–1800s), Endless, Race, Daily and optional Co-op/Junk/opponent preview. Duel trays depend only on seed + tray index and contain one small piece; no board-specific guarantee. Only single-board Co-op/Daily guarantee a fitting tray. Canonical scoring/rules stay in existing shared rules and generator; tie-break is fewer pieces, then draw.
 - Activities: wishlists, dates, sketchbook, conversations, countdowns, stakes, recap and shared spin wheel. Wheel result Close preserves entry; Remove deletes only the selected entry. Revision checks protect shared edits.
@@ -31,7 +32,7 @@ Visible copy is personal and useful: no stage labels, metadata/compression/priva
 
 Supabase project: ohjeloskpjsynhbddgch. Allowed sign-in emails: Lance `lancerobertmacorol8@gmail.com`, Elaine `elainemaeescosio49@gmail.com`. Preserve existing account UUIDs/membership when changing emails; verified Elaine is slot 0 and Lance slot 1 (earlier chat IDs were reversed).
 
-Schema domains: couples/profiles; games/answers/secrets/presence; block_matches/match_moves; entries/together_activities/activity_wheels; daily questions/choices/answers/moods/taps; wishlists/items/claims/comments/reactions; memories/notes/social; hold sessions; artwork slots; notification settings/devices/deliveries; AI bank/history/lobbies/jobs/usage/health. Exact columns, policies and RPC signatures live in numbered `supabase/migrations/001…020`; inspect only relevant migrations and later overrides. Add new numbered migrations rather than changing already-applied history. Owner confirmed migrations 010, 012, 013, 014, 015 and 016–020; do not infer other hosted state from local tests.
+Schema domains: couples/profiles; games/answers/secrets/presence; block_matches/match_moves; entries/together_activities/activity_wheels; daily questions/choices/answers/moods/taps; wishlists/items/claims/comments/reactions; memories/notes/social; hold sessions; artwork slots; notification settings/devices/deliveries; AI bank/history/lobbies/jobs/usage/health. Exact columns, policies and RPC signatures live in numbered `supabase/migrations/001…026`; inspect only relevant migrations and later overrides. Add new numbered migrations rather than changing already-applied history. Owner confirmed migrations through 025; migration 026 is prepared and awaiting confirmation; do not infer other hosted state from local tests.
 
 Only NEXT_PUBLIC Supabase URL/publishable key belong in browser configuration. Gemini API key, Supabase service-role key, Firebase service account and webhook secrets remain server-only. Never expose `.env.local`, private media or sealed answers. Gemini default is gemini-3.5-flash-lite, with existing quotas/lease/circuit breaker. Tests/dev use fixtures. Prior three-live-request allowance is exhausted: no more live Gemini checks without new explicit authorization.
 
@@ -42,7 +43,7 @@ Follow AGENTS.md; use ARCHITECTURE.md for targeted file discovery and TODO.md/KN
 Verification is evidence-specific: fixture/build success does not establish two-account, browser, physical camera or push acceptance. Current pending boundaries are in KNOWN_ISSUES.md.
 
 
-## Game-feel release — 2026-10-07
+## Current game integration
 
 Migrations 021–025 are owner-confirmed applied. Heartblast has challenge acceptance and durable 60-second reconnect handling. Rivalry includes losses, current/best streaks and replay-derived Heartblast comeback deficits, ordered by completion time for new results. Postcards add collection filters and smart replies; cassettes clean up preview URLs and decode missing waveform peaks; Settings offers reward-coin cosmetic unlocks.
 

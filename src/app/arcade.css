@@ -632,3 +632,15 @@ html .cartridge .cartridge-art { width:calc(100% - 40px); align-self:center; fle
 .brand img { display:block; width:100%; height:100%; object-fit:contain; }
 @media(max-width:850px) { html .cartridge .cartridge-art { height:160px; } }
 @media(max-width:600px) { html .cartridge .cartridge-art { width:calc(100% - 32px); margin:16px 16px 0; height:160px; } }
+
+.drawing-controls { display:grid; gap:12px; margin-bottom:12px; }
+.drawing-actions { display:flex; flex-wrap:wrap; gap:6px; }
+.drawing-actions button { min-width:44px; min-height:44px; padding:8px 12px; gap:6px; }
+.drawing-actions button[aria-pressed=true] { outline:2px solid var(--cherry); outline-offset:2px; }
+.drawing-sliders { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.drawing-sliders label { display:grid; gap:6px; font-size:14px; }
+.drawing-sliders output { font-variant-numeric:tabular-nums; }
+.drawing .ink-pots { flex-wrap:wrap; justify-content:flex-start; gap:4px; }
+.drawing .ink-pots button { min-width:44px; min-height:44px; padding:8px; }
+.drawing .ink-pots i { border:1px solid #50313f66; }
+.drawing canvas { background:#ffffff; touch-action:none; }

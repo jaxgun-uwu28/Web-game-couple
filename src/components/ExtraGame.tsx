@@ -242,7 +242,14 @@ function ExtraGameInternal({
             ? "Using our saved questions today."
             : "",
         );
-      } else next = await gameRequest(db, { kind });
+      } else {
+        const result = await gameRequest(db, { kind });
+        if (result.pending)
+          throw new Error(
+            "Your next batch is being prepared. Tap again shortly.",
+          );
+        next = result.game || result;
+      }
       ++requestVersion.current;
       setWord(null);
       setGame(next);

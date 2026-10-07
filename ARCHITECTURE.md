@@ -7,7 +7,7 @@ Read the row relevant to the task, then follow actual imports. Paths are relativ
 | Entry, sign-in, shell, Home, Settings | src/components/StageOne.tsx | src/lib/private-auth.ts, src/lib/supabase.ts, src/app/page.tsx, src/app/globals.css |
 | Existing arcade coordination | src/components/Arcade.tsx | src/components/PlayArcade.tsx, src/components/GameCover.tsx |
 | Board games and shared surfaces | src/components/GameSurface.tsx | src/lib/games.ts, src/lib/game-request.ts, src/lib/use-game-presence.ts, src/app/api/game, src/app/arcade.css |
-| Drawing / partner games | src/components/ExtraGame.tsx | src/components/Doodle.tsx, src/lib/extra-games.ts |
+| Drawing / partner games | src/components/ExtraGame.tsx | src/components/Doodle.tsx, src/lib/drawing.ts, src/lib/extra-games.ts, src/lib/ai/party-games.ts, api/game/route.ts, migration 026, tests/party-games.test.ts |
 | Brain lobby / Gemini | src/components/BrainDuel.tsx | src/components/AIQuestions.tsx, src/lib/ai, src/app/api/brain, src/app/api/ai, migrations 009–010 |
 | Heartblast | src/components/BlockBattle.tsx | src/lib/heartblast.ts, src/lib/heartblast-rules.json, src/lib/block-battle.ts, src/app/block-battle.css, scripts/generate-heartblast-rules.mjs, migrations 004/012, tests/heartblast*.test.ts |
 | Daily Heartblast / Home comparison | src/components/DailyHeartChallenge.tsx | Heartblast files above |

@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { isPrivateEmail } from "@/lib/private-auth";
+import { aiAuth } from "@/lib/ai/auth";
+import { startPartyGame } from "@/lib/ai/party-games";
 export const maxDuration = 20;
 export async function POST(req: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -61,6 +63,20 @@ export async function POST(req: Request) {
       difficulty,
       savedOnly,
     } = JSON.parse(body);
+    if ((kind === "know" || kind === "draw") && !id) {
+      try {
+        const { admin, coupleId } = await aiAuth(req);
+        return NextResponse.json(await startPartyGame(admin, coupleId, kind));
+      } catch (e) {
+        return NextResponse.json(
+          {
+            error:
+              e instanceof Error ? e.message : "Game content could not load.",
+          },
+          { status: 503 },
+        );
+      }
+    }
     if (kind === "trivia" && !id) {
       return NextResponse.json(
         { error: "Join the Brain Duel lobby first." },

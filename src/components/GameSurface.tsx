@@ -77,9 +77,7 @@ export default function GameSurface({
   useGameMusic(game.kind, musicActive && !finished);
   const questions =
     game.kind === "know"
-      ? s.pack === "general-v2"
-        ? knowV2
-        : know
+      ? s.questions || (s.pack === "general-v2" ? knowV2 : know)
       : s.pack === "gemini-v1"
         ? s.questions || []
         : s.pack === "general-v2"
