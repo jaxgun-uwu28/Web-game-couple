@@ -86,6 +86,15 @@ export async function POST(req: Request) {
       players = playersResult.data || [],
       p = players.find((x) => x.user_id === user.id);
     if (!p) throw new Error("403:This is not your match.");
+    // Existing invitations become ordinary rooms on the first authorized visit.
+    if (r.status === "invited") {
+      const opened = await db.from("arcade_matches")
+        .update({ status: "waiting" }).eq("id", id).eq("status", "invited");
+      if (opened.error) throw opened.error;
+      const fresh = await db.from("arcade_matches").select("*").eq("id", id).single();
+      if (fresh.error) throw fresh.error;
+      Object.assign(r, fresh.data);
+    }
     await db
       .from("arcade_match_players")
       .update({ seen_at: new Date().toISOString() })
@@ -123,20 +132,7 @@ export async function POST(req: Request) {
         if (changed.error) throw changed.error;
         r.status = b.action === "cancel" ? "cancelled" : "declined";
       }
-    } else if (
-      b.action === "accept" &&
-      r.status === "invited" &&
-      user.id !== r.host
-    ) {
-      await db
-        .from("arcade_matches")
-        .update({ status: "waiting" })
-        .eq("id", id)
-        .eq("status", "invited");
-      r.status = "waiting";
     } else if (b.action === "ready") {
-      if (r.status === "invited")
-        throw new Error("Partner must accept the challenge first.");
       if (r.status !== "waiting") throw new Error("This lobby is closed.");
       if (r.game_id === "blackjack") {
         const funded = await db
@@ -230,7 +226,7 @@ export async function POST(req: Request) {
       : null;
     if (b.action === "move" && !duplicate?.data) {
       if (r.status !== "playing")
-        throw new Error("Both players must accept and be ready.");
+        throw new Error("Both players must be here and ready.");
       if (
         !timedOut &&
         !ledgerTimeout &&

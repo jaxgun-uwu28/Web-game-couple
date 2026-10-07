@@ -604,6 +604,15 @@ export function Wishlists() {
   const sheet = useRef<HTMLElement | null>(null),
     swipe = useRef<{ id: string; x: number; y: number } | null>(null);
   useEffect(() => {
+    setPicked("");
+    setComment("");
+    setCommentFor("");
+    setAdding(false);
+    setEditing(null);
+    setFilter("all");
+    setLevel("all");
+  }, [list?.id]);
+  useEffect(() => {
     setAdding(false);
     setEditing(null);
     setComment("");
@@ -802,7 +811,7 @@ export function Wishlists() {
   async function removeWish(w: Wish) {
     if (!window.confirm(`Delete “${w.title}”? This also removes its comments.`))
       return;
-    await c.run(async () => {
+    const saved = await c.run(async () => {
       if (c.preview) {
         c.local((s) => ({
           ...s,
@@ -815,6 +824,29 @@ export function Wishlists() {
         if (r.error) throw new Error(r.error.message);
       }
     });
+    if (saved) {
+      setPicked("");
+      if (commentFor === w.id) { setCommentFor(""); setComment(""); }
+    }
+  }
+  async function removeList() {
+    if (!list || !editable || !window.confirm(`Delete “${list.title}” and all its wishes?`)) return;
+    const removing = list.id;
+    const saved = await c.run(async () => {
+      if (c.preview) {
+        c.local((s) => {
+          const ids = new Set(s.wishes.filter((w) => w.list_id === removing).map((w) => w.id));
+          return { ...s, lists: s.lists.filter((l) => l.id !== removing),
+            wishes: s.wishes.filter((w) => !ids.has(w.id)),
+            claims: s.claims.filter((i) => !ids.has(i.item_id)),
+            comments: s.comments.filter((i) => !ids.has(i.item_id)) };
+        });
+      } else {
+        const r = await c.db!.rpc("delete_wishlist", { lid: removing });
+        if (r.error) throw new Error(r.error.message);
+      }
+    });
+    if (saved) setSelected("");
   }
   return (
     <section className="keepsake-page wishlist-page">
@@ -881,6 +913,9 @@ export function Wishlists() {
                 Make a wish <Plus size={18} />
               </button>
             )}
+            {editable && <button className="secondary" disabled={c.busy} onClick={() => void removeList()}>
+              Delete list <Trash2 size={18} />
+            </button>}
             <button
               className="secondary"
               disabled={!all.some((w) => w.status !== "done")}

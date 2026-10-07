@@ -11,3 +11,5 @@ Updated 2026-10-07. Keep only actionable current facts; detailed evidence lives 
 - **Receiving alerts needs device setup:** read-only check found Elaine has no notification preferences/device registration. Local environment lacks Firebase/VAPID/webhook configuration; Vercel settings were not inspected. New direct tap dispatch is implemented, but actual alerts remain unverified. See docs/CONNECTION_CHECKPOINT.md.
 
 Do not store API keys, passwords, service-account data, raw private media or unnecessary account identifiers in these notes.
+
+- Wishlist list deletion is implemented and local permission/cascade tests plus build passed; migration 029 awaits owner confirmation. Browser verification remains unavailable under the existing URL-policy block.

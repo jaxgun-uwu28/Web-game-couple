@@ -558,11 +558,6 @@ export default function PluginGame({
               payload: { matchId: next.match.id },
             });
         }
-        if (action === "create" && next)
-          void gameRequest(db, "/api/push/media", {
-            kind: "challenge",
-            id: next.match.id,
-          }).catch(() => {});
         if (action === "cancel" || action === "decline") close();
       }
     } catch (e) {
@@ -680,38 +675,10 @@ export default function PluginGame({
             </label>
           )}
           <button disabled={busy} onClick={() => void act("create")}>
-            Challenge
+            Create or join room
           </button>
         </div>
-      ) : snapshot.match.status === "invited" ? (
-        <div className="plugin-lobby">
-          <h2>
-            {snapshot.match.host === user
-              ? "Waiting for Partner"
-              : "A little challenge for you"}
-          </h2>
-          <p>The host chose these settings.</p>
-          <p>
-            {Object.entries(snapshot.match.config)
-              .filter(([k]) => k !== "words")
-              .map(([k, v]) => `${k}: ${v}`)
-              .join(" · ")}
-          </p>
-          {snapshot.match.host !== user && (
-            <>
-              <button disabled={busy} onClick={() => void act("accept")}>
-                Accept
-              </button>
-              <button className="secondary" onClick={() => void act("decline")}>
-                Decline
-              </button>
-              <button className="text-button" onClick={close}>
-                Play later
-              </button>
-            </>
-          )}
-        </div>
-      ) : snapshot.match.status === "waiting" ? (
+      ) : ["invited", "waiting"].includes(snapshot.match.status) ? (
         <div className="plugin-lobby">
           <h2>Meet in the lobby</h2>
           <p>Both players must be here and ready.</p>
