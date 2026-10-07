@@ -220,7 +220,7 @@ export default function Postcards({
     if (c.preview) {
       const row: Card = {
         id: p.id,
-        sender_id: c.user,
+        sender_id: "preview-partner",
         envelope_color: p.envelope,
         stamp_id: p.doc.stamp,
         unlock_at: p.unlock || null,
@@ -1623,21 +1623,22 @@ function PostcardEditor({
       <div className="postcard-footer-nav">
         <button
           type="button"
-          className="secondary"
+          className="secondary postcard-nav-prev"
           disabled={step === 0}
           onClick={() => setStep((s) => Math.max(0, s - 1))}
         >
           <ChevronLeft size={18} /> Previous
         </button>
-        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--cherry)" }}>
+        <span className="postcard-nav-counter">
           Step {step + 1} of 4
         </span>
         {step < 3 ? (
           <button
             type="button"
+            className="postcard-nav-next"
             onClick={() => setStep((s) => Math.min(3, s + 1))}
           >
-            Next: {["Front Decor", "Note & Stamp", "Preview & Send"][step]} <ChevronRight size={18} />
+            Next <ChevronRight size={18} />
           </button>
         ) : (
           <button
