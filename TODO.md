@@ -1,8 +1,8 @@
 # Pending work
 
-Updated 2026-10-06. No new feature stage is automatically authorized by this list.
+Updated 2026-10-07. The user explicitly authorized continuing the expansion.
 
-Current approved staged expansion is in docs/EXPANSION_PLAN.md. First checkpoint adds Hold Hands; owner requested a two-phone test pause before Voice/Postcards. Follow docs/CONNECTION_CHECKPOINT.md. Migrations 014/015 are confirmed applied.
+Requirements: docs/EXPANSION_PLAN.md. Implementation and remaining detailed gaps: docs/EXPANSION_CHECKPOINT.md. Owner confirmed migrations 014–020. Checkpoint 4156787 is committed and pushed; 65 fixture tests and production build passed. Continue remaining integration from the checkpoint rather than restarting or stopping at Hold Hands.
 
 - Complete requested Heartblast visual acceptance: light/night at 360, 768 and 1280+, ghost and line-clear feedback. Browser access is restored; desktop Place piece clipping and Hold Hands fallback rectangles are fixed and locally verified.
 - Verify hosted two-account games/lobbies, shared albums and wheel with real sessions when access is available. Do not send synthetic partner photos or push notifications without authorization.

@@ -14,7 +14,7 @@ Use PROJECT_SPEC.md + the relevant ARCHITECTURE.md row first. Read only the sour
 
 ## Remaining acceptance and detailed gaps
 
-- Finish full 360/768/1280 day/night capture matrix. Ledger/Lost initial captures exist; latest postcard/cassette/maze review is in progress. Browser preview tests never establish physical mic/camera/push success.
+- Finish full 360/768/1280 day/night capture matrix for games/cassettes/studio. Envelope seal alignment was measured at zero center offset at all three widths and screenshots reviewed in both palettes; local send/open completed. Ledger/Lost initial captures exist. Browser preview tests never establish physical mic/camera/push success.
 - Real two-phone games and Hold Hands; Android microphone/WebView/heartbeat; iPhone media format; measure actual 60s audio size; push registrations/preferences/server secrets/quiet hours on recipient. Do not claim these pass from fixture tests.
 - Larger requested polish/integration still needs work: custom art wiring on every tile/avatar, authored level curation, expanded loss/streak/comeback stats, Heartblast challenge/reconnect integration, Promise expiry/reminders/photo proof, cosmetic unlocks, postcard smart reply/full box illustration/extra fonts/drop-in paper choice, voice peaks decode fallback and full preview blob cleanup. Preserve incumbent Heartblast design and mechanics.
 - Hosted behavior is user-confirmed migration application, not verified hosted RLS tests. Run fixture tests and build before a commit; fixture ENOMEM needs sandbox escalation, no hosted calls.
