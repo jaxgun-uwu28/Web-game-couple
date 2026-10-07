@@ -1,6 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { WishList } from "./keepsakes";
 
+export function wishListLabel(list: WishList, user: string) {
+  if (list.type === "personal" && list.owner_id !== user) {
+    return list.title === "My wishes" || list.title === "My wishlist"
+      ? "Partner’s wishes"
+      : `${list.title} · Partner`;
+  }
+  return list.title;
+}
+
 export function writableLists(lists: WishList[], user: string) {
   return lists.filter(
     (l) => l.type === "shared" || l.type === "custom" || l.owner_id === user,

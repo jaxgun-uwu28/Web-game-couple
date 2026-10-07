@@ -4,6 +4,7 @@ import { armGameSounds } from "@/lib/game-feel";
 import { jarWishes } from "@/lib/wish-jar";
 import {
   ensureWishlists,
+  wishListLabel,
   resolveWishList,
   temporaryDefaults,
   writableLists,
@@ -1261,7 +1262,7 @@ export function Wishlists() {
                 })
               }
             >
-              {l.title}
+              {wishListLabel(l, c.user)}
             </button>
           ))}
         </div>
@@ -1298,7 +1299,7 @@ export function Wishlists() {
             <br />A jar of someday.
           </h2>
           <p>
-            {list ? `Little dreams in ${list.title}.` : "Make your first wish."}
+            {list ? `Little dreams in ${wishListLabel(list, c.user)}.` : "Make your first wish."}
           </p>
           <div className="wish-hero-actions">
             <button onClick={() => edit(null)}>
@@ -1330,7 +1331,7 @@ export function Wishlists() {
             key={l.id}
             onClick={() => setSelected(l.id)}
           >
-            {l.type === "secret" && <Lock size={16} />} {l.title}
+            {l.type === "secret" && <Lock size={16} />} {wishListLabel(l, c.user)}
           </button>
         ))}
       </nav>
@@ -1693,7 +1694,7 @@ export function Wishlists() {
                     className={moveTo === l.id ? "" : "secondary"}
                     onClick={() => setMoveTo(l.id)}
                   >
-                    Move to {l.title}
+                    Move to {wishListLabel(l, c.user)}
                   </button>
                 ))}
             </div>
@@ -1752,7 +1753,7 @@ export function Wishlists() {
                         className={wishListId === l.id ? "" : "secondary"}
                         onClick={() => setWishListId(l.id)}
                       >
-                        {l.title}
+                        {wishListLabel(l, c.user)}
                       </button>
                     ))}
                     <button
@@ -2355,3 +2356,4 @@ export function Notes() {
     </section>
   );
 }
+
