@@ -18,6 +18,7 @@ export default function PromiseLedger({
   pendingOnly?: boolean;
 }) {
   const c = useKeepsakes(),
+    [startingBalance, setStartingBalance] = useState(100),
     [rows, setRows] = useState<PromiseRow[]>([]),
     [wallets, setWallets] = useState<{ user_id: string; balance: number }[]>(
       [],
@@ -73,18 +74,33 @@ export default function PromiseLedger({
       <h2>{pendingOnly ? "A little promise to keep" : "Our Promise Ledger"}</h2>
       {!pendingOnly && (
         <>
+          <div className="list-tabs" aria-label="Starting wallet chips">
+            {[10, 20, 50, 100].map((n) => (
+              <button
+                key={n}
+                className={startingBalance === n ? "" : "secondary"}
+                aria-pressed={startingBalance === n}
+                onClick={() => setStartingBalance(n)}
+              >
+                {n} chips
+              </button>
+            ))}
+          </div>
           <button
             className="secondary"
             onClick={() =>
+              window.confirm(
+                `Reset both wallets to ${startingBalance} chips each?`,
+              ) &&
               void c.db
-                ?.rpc("reset_ledger_wallets", { amount: 10 })
+                ?.rpc("reset_ledger_wallets", { amount: startingBalance })
                 .then((r) => {
                   if (r.error) setError(r.error.message);
                   else void load();
                 })
             }
           >
-            Reset both wallets to 10
+            Reset both wallets to {startingBalance}
           </button>
           <p>Promises kept: {rows.filter((x) => x.status === "done").length}</p>
           <div className="plugin-hud">

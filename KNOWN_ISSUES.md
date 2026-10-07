@@ -10,7 +10,7 @@ Updated 2026-10-07. Keep only actionable current facts; detailed evidence lives 
 - **Historical records can be stale:** PRODUCT.md and DESIGN.md contain older stage checkpoints. Use PROJECT_SPEC.md for current intended behavior; exact code/schema and fresh evidence take precedence over summaries.
 - **Receiving alerts needs device setup:** read-only check found Elaine has no notification preferences/device registration. Local environment lacks Firebase/VAPID/webhook configuration; Vercel settings were not inspected. New direct tap dispatch is implemented, but actual alerts remain unverified. See docs/CONNECTION_CHECKPOINT.md.
 - Owner reported `/api/push/tap` HTTP 500 on October 7 at 23:29 Manila time. Safe stage/error-code logging is added; saved taps survive delivery exceptions. Exact hosted cause remains unverified until another attempt supplies the new log. Default quiet hours also cover that time, independently of the 500.
-- Blackjack lobby recovery is hardened against late restore/background responses; wallet query failures no longer appear as zero, and unfunded low-wallet users can invoke the existing daily top-up. Eight focused tests and production build passed. Migration 032 for 100-chip resets awaits owner confirmation; hosted two-account reproduction/acceptance is pending.
+- Blackjack lobby recovery is hardened against late restore/background responses; wallet query failures no longer appear as zero, and unfunded low-wallet users can invoke the existing daily top-up. Eight focused tests and production build passed. Migration 032 for 100-chip resets is owner-confirmed applied; hosted two-account reproduction/acceptance is pending.
 
 Do not store API keys, passwords, service-account data, raw private media or unnecessary account identifiers in these notes.
 
@@ -18,4 +18,5 @@ Do not store API keys, passwords, service-account data, raw private media or unn
 
 - Ledger matched-bet and Draw & Guess round/timer update passed 14 local fixtures and production build. Migration 030 is owner-confirmed; live visual/two-phone acceptance is unverified.
 - Wish Jar redesign passed four focused fixtures and production build; geometry, secret filtering and 100-wish render cap are tested. Responsive screenshots, physical motion input and two-phone animation acceptance remain pending under the browser-policy block. No new migration is required.
+
 
