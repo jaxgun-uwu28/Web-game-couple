@@ -2305,7 +2305,15 @@ export function Notes() {
               </>
             ) : (
               <>
-                <h2 id="open-letter-title">{opened.title}</h2>
+                <div className="letter-paper-heading"><h2 id="open-letter-title">{opened.title}</h2><span className="letter-paper-seal" aria-hidden="true"><Heart size={23} /></span></div>
+                <p className="handwritten">{opened.content.body}</p>
+                {opened.content.media_kind === "photo" && (
+                  <Photo
+                    path={opened.content.media_path}
+                    alt="Photo enclosed in your letter"
+                  />
+                )}
+                {voiceUrl && <audio controls src={voiceUrl} />}
                 <div className="letter-reader-actions">
                   <button
                     className="secondary"
@@ -2333,14 +2341,7 @@ export function Notes() {
                     keep it.
                   </p>
                 )}
-                <p className="handwritten">{opened.content.body}</p>
-                {opened.content.media_kind === "photo" && (
-                  <Photo
-                    path={opened.content.media_path}
-                    alt="Photo enclosed in your letter"
-                  />
-                )}
-                {voiceUrl && <audio controls src={voiceUrl} />}
+
               </>
             )}
           </article>
@@ -2356,4 +2357,5 @@ export function Notes() {
     </section>
   );
 }
+
 

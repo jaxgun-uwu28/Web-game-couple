@@ -674,6 +674,53 @@
 .open-letter.is-reading {
   animation: letter-unfold 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+.letter-reveal-backdrop .open-letter.is-reading {
+  background: #fff8f0;
+  color: #50313f;
+  border: 1px solid #e4b9c8;
+  border-radius: 8px 8px 22px 8px;
+  padding: clamp(24px, 5vw, 48px);
+  box-shadow: 0 24px 64px #1e122d66, 5px 7px 0 -1px #edd9d0;
+}
+.open-letter.is-reading::before {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 1px solid #edccd3;
+  border-radius: 3px 3px 14px 3px;
+  pointer-events: none;
+}
+.letter-paper-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #edccd3;
+}
+.letter-paper-heading h2 { color: #50313f; font-size: clamp(1.5rem, 4vw, 2rem); margin: 0; overflow-wrap: anywhere; }
+.letter-paper-seal {
+  display: grid;
+  place-items: center;
+  flex: 0 0 46px;
+  height: 46px;
+  background: #9d304f;
+  color: #fff8f0;
+  border-radius: 48% 52% 45% 55%;
+  transform: rotate(-9deg);
+  box-shadow: 0 3px 5px #50313f24;
+}
+.open-letter.is-reading .handwritten {
+  color: #87304b;
+  margin: 24px 0 28px;
+  line-height: 1.75;
+  font-size: clamp(1.55rem, 4vw, 2rem);
+}
+.open-letter.is-reading .letter-reader-actions { margin-top: 28px; padding-top: 20px; border-top: 1px solid #edccd3; }
+.open-letter.is-reading .letter-reader-actions button { background: #f8c9d8; color: #50313f; }
+.open-letter.is-reading .letter-reader-actions .secondary { background: #f1e4dd; color: #50313f; }
+.open-letter.is-reading .letter-read-once { color: #76505e; margin-top: 12px; font-size: .8rem; line-height: 1.5; }
+.open-letter.is-reading audio { margin-top: 12px; border-radius: 12px; color-scheme: light; }
 .letter-envelope-scene {
   position: relative;
   width: min(78vw, 360px);
