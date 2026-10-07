@@ -29,9 +29,8 @@ export default function GameInvites() {
       .eq("couple_id", c.couple)
       .eq("status", "invited")
       .neq("host", c.user);
-    if (!r.error)
-      setRows([
-        ...(r.data || []),
+    setRows([
+        ...(!r.error ? r.data || [] : []),
         ...(h.data || []).map((x) => ({
           ...x,
           game_id: "heartblast" as const,
@@ -63,8 +62,13 @@ export default function GameInvites() {
         },
         () => void load(),
       )
-      .subscribe();
+      .subscribe(() => void load());
+    const refresh = () => void load();
+    window.addEventListener("focus", refresh);
+    window.addEventListener("arcade:couple-update", refresh);
     return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("arcade:couple-update", refresh);
       void c.db!.removeChannel(ch);
     };
   }, [load, c.db, c.preview, c.couple]);

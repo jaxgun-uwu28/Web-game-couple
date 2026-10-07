@@ -906,7 +906,7 @@ export default function BlockBattle({
                   )}
                 </span>
               </div>
-              {!asyncMode && !preview && !presence.paired && !terminal && (
+              {!asyncMode && !preview && (!presence.paired || challenge?.status === "invited") && !terminal && (
                 <p role="status" className="notice">
                   {peerSeen
                     ? `Reconnecting · ${Math.max(0, 60 - Math.floor((clock + offset - Date.parse(peerSeen)) / 1000))}s grace`

@@ -101,8 +101,13 @@ export default function StageOne() {
       setInvitedConfig(typeof detail === "string" ? {} : detail.config);
       setTab("play");
     };
+    const openHeart = () => setTab("play");
     window.addEventListener("arcade-open-plugin", open);
-    return () => window.removeEventListener("arcade-open-plugin", open);
+    window.addEventListener("arcade-open-heart", openHeart);
+    return () => {
+      window.removeEventListener("arcade-open-plugin", open);
+      window.removeEventListener("arcade-open-heart", openHeart);
+    };
   }, []);
   useEffect(() => {
     const open = () => setTab("notes");
@@ -466,6 +471,7 @@ export default function StageOne() {
                 }}
               />
               <main id="main">
+                <GameInvites />
                 <OfflineShell />
                 {(error || message) && (
                   <div
@@ -832,7 +838,6 @@ export default function StageOne() {
                     <VoiceCassettes latest />
                     <Postcards shortcut />
                     <PromiseLedger pendingOnly />
-                    <GameInvites />
                     <DailySyncPuzzle />
                     <DailyHeartChallenge
                       names={names}
