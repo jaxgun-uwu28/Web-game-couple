@@ -8,6 +8,7 @@ import { armGameSounds, playGameSound, coinFly } from "@/lib/game-feel";
 import StickerPicker from "./StickerPicker";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SupabaseClient, RealtimeChannel } from "@supabase/supabase-js";
+import { pluginRealtimeClient } from "@/lib/plugin-realtime";
 import {
   ArrowLeft,
   ArrowUp,
@@ -283,7 +284,8 @@ export default function PluginGame({
   useEffect(() => {
     if (!snapshot || preview || !db || !active || !couple) return;
     let cancelled = false;
-    const ch = db
+    const liveDb = pluginRealtimeClient(db);
+    const ch = liveDb
       .channel(`couple:${couple}`, {
         config: { private: true, presence: { key: user } },
       })
@@ -338,7 +340,7 @@ export default function PluginGame({
     liveChannel.current = ch;
     void db.auth.getSession().then(async ({ data }) => {
       if (!data.session || cancelled) return;
-      await db.realtime.setAuth(data.session.access_token);
+      await liveDb.realtime.setAuth(data.session.access_token);
       if (!cancelled)
         ch.subscribe((status) => {
           if (status === "SUBSCRIBED")
@@ -364,7 +366,7 @@ export default function PluginGame({
       cancelled = true;
       liveChannel.current = null;
       setPartnerHere(false);
-      void db.removeChannel(ch);
+      void liveDb.removeChannel(ch).finally(() => liveDb.realtime.disconnect());
     };
   }, [db, snapshot?.match.id, preview, call, active, couple, user]);
   useEffect(() => {
