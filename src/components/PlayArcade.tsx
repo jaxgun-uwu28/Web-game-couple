@@ -1,4 +1,5 @@
 "use client";
+import { playGameSound } from "@/lib/game-feel";
 import { readAudio, saveAudio, tactile as haptic } from "@/lib/music";
 import GameCover from "./GameCover";
 import { useGameMusic, useSoundPreference } from "./MusicControls";
@@ -44,7 +45,7 @@ export default function PlayArcade({
   names,
   preview,
   active = true,
-  invitedGame=null,
+  invitedGame = null,
   invitedConfig,
 }: {
   db: SupabaseClient | null;
@@ -54,12 +55,22 @@ export default function PlayArcade({
   names: string[];
   preview: boolean;
   active?: boolean;
-  invitedGame?:GameId|null;
-  invitedConfig?:Record<string,string|number|boolean>;
+  invitedGame?: GameId | null;
+  invitedConfig?: Record<string, string | number | boolean>;
 }) {
   const [games, setGames] = useState<Game[]>([]),
     [selected, setSelected] = useState<string | null>(null),
     [start, setStart] = useState<BoardKind | null>(null),
+    [stats, setStats] = useState<
+      {
+        wins: number;
+        losses: number;
+        draws: number;
+        streak: number;
+        best_streak: number;
+        comeback: number;
+      }[]
+    >([]),
     [score, setScore] = useState<number[]>([0, 0]),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -75,9 +86,14 @@ export default function PlayArcade({
     finished = game && game.state.status !== "playing";
   const [blockKey, setBlockKey] = useState(0);
   const [pluginOpen, setPluginOpen] = useState<GameId | null>(null);
-  useEffect(()=>{if(invitedGame)setPluginOpen(invitedGame);},[invitedGame]);
+  useEffect(() => {
+    if (invitedGame) setPluginOpen(invitedGame);
+  }, [invitedGame]);
   useSoundPreference(setSound);
-  useGameMusic(game?.kind || "", !!game && !finished && active && !blockOpen && !extraOpen && !pluginOpen);
+  useGameMusic(
+    game?.kind || "",
+    !!game && !finished && active && !blockOpen && !extraOpen && !pluginOpen,
+  );
   useEffect(() => {
     const daily = () => {
       window.history.pushState({ arcadeGame: true }, "");
@@ -90,7 +106,11 @@ export default function PlayArcade({
       setStart(null);
     };
     window.addEventListener("arcade:daily-block", daily);
-    return () => window.removeEventListener("arcade:daily-block", daily);
+    window.addEventListener("arcade-open-heart", daily);
+    return () => {
+      window.removeEventListener("arcade:daily-block", daily);
+      window.removeEventListener("arcade-open-heart", daily);
+    };
   }, []);
   const attendance = useGamePresence(
     db,
@@ -108,14 +128,15 @@ export default function PlayArcade({
         .in("kind", ["tic", "connect"])
         .order("created_at", { ascending: false })
         .limit(100),
-      db.rpc("scoreboard"),
+      db.rpc("scoreboard_details"),
     ]);
     if (g.error || s.error) {
       setError("Saved games could not load. Check your connection and retry.");
       return;
     }
     setGames(g.data as Game[]);
-    setScore(s.data);
+    setStats(s.data);
+    setScore(s.data.map((x: { wins: number }) => x.wins));
     setError("");
   }, [db, session, coupleId, preview]);
   useEffect(() => {
@@ -137,7 +158,12 @@ export default function PlayArcade({
     live
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "arcade_matches", filter: `couple_id=eq.${coupleId}` },
+        {
+          event: "*",
+          schema: "public",
+          table: "arcade_matches",
+          filter: `couple_id=eq.${coupleId}`,
+        },
         sharedUpdate,
       )
       .on(
@@ -211,23 +237,7 @@ export default function PlayArcade({
   );
   function tactile(win = false) {
     void haptic(win ? [35, 50, 35] : 12);
-    if (!sound || !readAudio().sounds) return;
-    try {
-      const ctx = (audio.current ??= new AudioContext());
-      void ctx.resume();
-      const oscillator = ctx.createOscillator(),
-        gain = ctx.createGain();
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(win ? 660 : 440, ctx.currentTime);
-      gain.gain.setValueAtTime(0.035 * readAudio().games, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-      oscillator.connect(gain);
-      gain.connect(ctx.destination);
-      oscillator.start();
-      oscillator.stop(ctx.currentTime + 0.12);
-    } catch {
-      /* Sound is optional. */
-    }
+    playGameSound(win ? "win-fanfare" : "chip-click");
   }
   async function request(kind: BoardKind, id?: string, cell?: number) {
     if (!session) throw new Error("Sign in to play together.");
@@ -308,16 +318,44 @@ export default function PlayArcade({
         <span>
           {names[0]}
           <strong>{score[0]}</strong>
+          {stats[0] && (
+            <small>
+              {stats[0].losses} losses · {stats[0].streak} win streak · best{" "}
+              {stats[0].best_streak}
+              <br />
+              Biggest comeback: {stats[0].comeback} points
+            </small>
+          )}
         </span>
         <b>vs</b>
         <span>
           {names[1]}
           <strong>{score[1]}</strong>
+          {stats[1] && (
+            <small>
+              {stats[1].losses} losses · {stats[1].streak} win streak · best{" "}
+              {stats[1].best_streak}
+              <br />
+              Biggest comeback: {stats[1].comeback} points
+            </small>
+          )}
         </span>
       </p>
     </section>
   );
-  if (pluginOpen) return <PluginGame startConfig={pluginOpen===invitedGame?invitedConfig:undefined} active={active} id={pluginOpen} db={db} user={session?.user.id||'preview-0'} couple={coupleId} preview={preview} close={()=>setPluginOpen(null)}/>;
+  if (pluginOpen)
+    return (
+      <PluginGame
+        startConfig={pluginOpen === invitedGame ? invitedConfig : undefined}
+        active={active}
+        id={pluginOpen}
+        db={db}
+        user={session?.user.id || "preview-0"}
+        couple={coupleId}
+        preview={preview}
+        close={() => setPluginOpen(null)}
+      />
+    );
   if (extraOpen)
     return (
       <ExtraGame
@@ -380,7 +418,7 @@ export default function PlayArcade({
       {!game && !start ? (
         <>
           <div className="cartridge-shelf">
-            <PluginCards open={setPluginOpen}/>
+            <PluginCards open={setPluginOpen} />
             {arcadeRegistry.map((g) => (
               <button
                 key={g.id}
@@ -462,7 +500,10 @@ export default function PlayArcade({
               className="icon-button"
               aria-label={sound ? "Turn game sound off" : "Turn game sound on"}
               aria-pressed={sound}
-              onClick={() => { setSound(!sound); saveAudio({ ...readAudio(), sounds: !sound }); }}
+              onClick={() => {
+                setSound(!sound);
+                saveAudio({ ...readAudio(), sounds: !sound });
+              }}
             >
               {sound ? <Volume2 size={20} /> : <VolumeX size={20} />}
             </button>
@@ -690,5 +731,3 @@ export default function PlayArcade({
     </div>
   );
 }
-
-

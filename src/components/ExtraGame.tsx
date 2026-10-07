@@ -1,4 +1,5 @@
 "use client";
+import { playGameSound } from "@/lib/game-feel";
 import { readAudio, saveAudio, tactile } from "@/lib/music";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
@@ -153,20 +154,7 @@ function ExtraGameInternal({
   );
   function feedback(win = false) {
     void tactile(win ? [30, 40, 30] : 10);
-    if (!sound || !readAudio().sounds) return;
-    try {
-      const ctx = (audio.current ??= new AudioContext());
-      void ctx.resume();
-      const o = ctx.createOscillator(),
-        g = ctx.createGain();
-      o.frequency.value = win ? 660 : 440;
-      g.gain.setValueAtTime(0.025 * readAudio().games, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-      o.connect(g);
-      g.connect(ctx.destination);
-      o.start();
-      o.stop(ctx.currentTime + 0.12);
-    } catch {}
+    playGameSound(win ? "win-fanfare" : "button-tap");
   }
   async function work(fn: () => Promise<void>) {
     if (lock.current) return;
@@ -332,7 +320,10 @@ function ExtraGameInternal({
           className="icon-button"
           aria-label={sound ? "Turn game sound off" : "Turn game sound on"}
           aria-pressed={sound}
-          onClick={() => { setSound(!sound); saveAudio({ ...readAudio(), sounds: !sound }); }}
+          onClick={() => {
+            setSound(!sound);
+            saveAudio({ ...readAudio(), sounds: !sound });
+          }}
         >
           {sound ? <Volume2 size={20} /> : <VolumeX size={20} />}
         </button>

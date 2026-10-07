@@ -1,4 +1,5 @@
 "use client";
+import { useCosmetics } from "./CosmeticUnlocks";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Mic,
@@ -100,6 +101,7 @@ export default function VoiceCassettes({
   latest?: boolean;
 }) {
   const artwork = useArtworkLibrary();
+  const unlocked = useCosmetics();
   const c = useKeepsakes(),
     [rows, setRows] = useState<VoiceMessage[]>([]),
     [error, setError] = useState(""),
@@ -119,6 +121,13 @@ export default function VoiceCassettes({
     [filter, setFilter] = useState(false),
     [maxSeconds, setMaxSeconds] = useState(60),
     [usage, setUsage] = useState({ used: 0, cap: 314572800 });
+  const previewUrls = useRef(new Set<string>());
+  useEffect(
+    () => () => {
+      for (const url of previewUrls.current) URL.revokeObjectURL(url);
+    },
+    [],
+  );
   const recorder = useRef<MediaRecorder | null>(null),
     stream = useRef<MediaStream | null>(null),
     ctx = useRef<AudioContext | null>(null),
@@ -172,7 +181,12 @@ export default function VoiceCassettes({
         s: p.sticker,
       });
       if (result.error) throw result.error;
-      void gameRequest(c.db, { kind: "voice", id: p.id }, fetch, "/api/push/media").catch(() => {});
+      void gameRequest(
+        c.db,
+        { kind: "voice", id: p.id },
+        fetch,
+        "/api/push/media",
+      ).catch(() => {});
     },
     [c.db, c.preview, c.user, c.couple],
   );
@@ -276,12 +290,15 @@ export default function VoiceCassettes({
         return;
       }
       stream.current = s;
-      for (const track of s.getAudioTracks()) track.onended = () => {
-        if (recorder.current?.state === "recording") {
-          stop();
-          setError("Recording was interrupted. Your preview is ready to check.");
-        }
-      };
+      for (const track of s.getAudioTracks())
+        track.onended = () => {
+          if (recorder.current?.state === "recording") {
+            stop();
+            setError(
+              "Recording was interrupted. Your preview is ready to check.",
+            );
+          }
+        };
       const r = new MediaRecorder(s, {
         mimeType: mime,
         audioBitsPerSecond: 32000,
@@ -378,6 +395,7 @@ export default function VoiceCassettes({
       const p = { ...draft, label: label.slice(0, 30), color, sticker };
       if (c.preview) {
         const url = URL.createObjectURL(p.blob);
+        previewUrls.current.add(url);
         setRows((prev) => [
           {
             id: p.id,
@@ -438,11 +456,11 @@ export default function VoiceCassettes({
                 : x,
         ),
       );
-      return;
+      return true;
     }
     const r = await c.db?.rpc("voice_action", { i: row.id, a, v });
-    if (r?.error) setError(r.error.message);
-    else void refresh();
+    if (r?.error) {setError(r.error.message);return false;}
+    void refresh();return true;
   }
   async function backup() {
     const JSZip = (await import("jszip")).default,
@@ -622,15 +640,17 @@ export default function VoiceCassettes({
             />
           </label>
           <div className="cassette-colors">
-            {colors.map((x, i) => (
-              <button
-                key={x}
-                style={{ background: x }}
-                aria-label={`Cassette color ${i + 1}`}
-                aria-pressed={color === x}
-                onClick={() => setColor(x)}
-              />
-            ))}
+            {colors
+              .filter((x, i) => i === 0 || unlocked.includes("cassette-colors"))
+              .map((x, i) => (
+                <button
+                  key={x}
+                  style={{ background: x }}
+                  aria-label={`Cassette color ${i + 1}`}
+                  aria-pressed={color === x}
+                  onClick={() => setColor(x)}
+                />
+              ))}
           </div>
           <button disabled={busy} onClick={() => void send()}>
             <Send size={18} />{" "}
@@ -656,17 +676,23 @@ export default function VoiceCassettes({
                 aria-label={`Play ${row.label || "cassette"}`}
               >
                 <Tape row={row} />
-                {row.sender_id !== c.user && !row.listened_at && <span className="cassette-new">New</span>}
+                {row.sender_id !== c.user && !row.listened_at && (
+                  <span className="cassette-new">New</span>
+                )}
               </button>
               <p>
                 {row.sender_id === c.user ? "You" : "Partner"} ·{" "}
                 {new Date(row.created_at).toLocaleDateString()}{" "}
                 {row.sender_id === c.user &&
-                  (row.listened_at
-                    ? <span className="cassette-listened"><Heart size={16} fill="currentColor" /> Listened</span>
-                    : row.delivered_at
-                      ? "Delivered"
-                      : "Sent")}
+                  (row.listened_at ? (
+                    <span className="cassette-listened">
+                      <Heart size={16} fill="currentColor" /> Listened
+                    </span>
+                  ) : row.delivered_at ? (
+                    "Delivered"
+                  ) : (
+                    "Sent"
+                  ))}
               </p>
               <button
                 className="text-button"
@@ -751,6 +777,11 @@ export default function VoiceCassettes({
                 .eq("sender_id", c.user);
               if (removed.error) throw removed.error;
             }
+            for (const row of old)
+              if (row.storage_path.startsWith("blob:")) {
+                URL.revokeObjectURL(row.storage_path);
+                previewUrls.current.delete(row.storage_path);
+              }
             setRows((current) =>
               current.filter((r) => !old.some((x) => x.id === r.id)),
             );
@@ -818,7 +849,7 @@ function CassettePlayer({
 }: {
   row: VoiceMessage;
   close: () => void;
-  action: (r: VoiceMessage, a: string, v?: string) => Promise<void>;
+  action: (r: VoiceMessage, a: string, v?: string) => Promise<boolean>;
 }) {
   const c = useKeepsakes(),
     audio = useRef<HTMLAudioElement | null>(null),
@@ -827,6 +858,9 @@ function CassettePlayer({
     [error, setError] = useState(""),
     [playing, setPlaying] = useState(false),
     [progress, setProgress] = useState(0),
+    [displayPeaks, setDisplayPeaks] = useState(() =>
+      normalizePeaks(row.peaks || []),
+    ),
     [rate, setRate] = useState(1),
     [loop, setLoop] = useState(false),
     owner = useRef(`cassette-${row.id}`),
@@ -834,9 +868,7 @@ function CassettePlayer({
   const markHeard = () => {
     if (!heard.current) {
       heard.current = true;
-      void action(row, "listened").catch(() => {
-        heard.current = false;
-      });
+      void action(row,"listened").then(ok=>{if(!ok)heard.current=false;}).catch(()=>{heard.current=false;});
     }
   };
   useEffect(() => {
@@ -857,6 +889,40 @@ function CassettePlayer({
       music(owner.current, false);
     };
   }, [c.db, c.preview, row.storage_path]);
+  useEffect(() => {
+    if (
+      !url ||
+      (row.peaks?.length === 64 &&
+        row.peaks.every((x) => Number.isFinite(x) && x >= 0 && x <= 1))
+    )
+      return;
+    let alive = true;
+    const abort = new AbortController(),
+      decoder = new AudioContext();
+    void fetch(url, { signal: abort.signal })
+      .then((r) => r.arrayBuffer())
+      .then((b) => decoder.decodeAudioData(b))
+      .then((buffer) => {
+        if (!alive) return;
+        const samples = buffer.getChannelData(0),
+          peaks = Array.from({ length: 64 }, (_, i) => {
+            let max = 0;
+            const start = Math.floor((i * samples.length) / 64),
+              end = Math.floor(((i + 1) * samples.length) / 64);
+            for (let j = start; j < end; j++)
+              max = Math.max(max, Math.abs(samples[j]));
+            return max;
+          });
+        setDisplayPeaks(normalizePeaks(peaks));
+      })
+      .catch(() => {})
+      .finally(() => void decoder.close().catch(() => {}));
+    return () => {
+      alive = false;
+      abort.abort();
+      void decoder.close().catch(() => {});
+    };
+  }, [url, row.peaks]);
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -938,7 +1004,7 @@ function CassettePlayer({
         }
         preload="metadata"
       />
-      <Wave peaks={row.peaks} progress={progress} />
+      <Wave peaks={displayPeaks} progress={progress} />
       <label>
         Seek recording
         <input
@@ -1039,7 +1105,14 @@ function CassettePlayer({
             </button>
           );
         })}
-        <button onClick={()=>{close();window.dispatchEvent(new Event('arcade-open-notes'));}}>Send one back</button>
+        <button
+          onClick={() => {
+            close();
+            window.dispatchEvent(new Event("arcade-open-notes"));
+          }}
+        >
+          Send one back
+        </button>
       </div>
     </dialog>
   );

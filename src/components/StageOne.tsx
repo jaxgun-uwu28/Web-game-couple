@@ -37,15 +37,17 @@ import {
   WishlistShortcut,
   KeepsakeBackup,
 } from "./Keepsakes";
+import GameFeel from "./GameFeel";
 import Ambience from "./Ambience";
+import CosmeticUnlocks from "./CosmeticUnlocks";
 import MusicControls from "./MusicControls";
 import HoldHands, { HoldStats } from "./HoldHands";
 import VoiceCassettes from "./VoiceCassettes";
 import Postcards from "./Postcards";
 import PromiseLedger from "./PromiseLedger";
 import GameInvites from "./GameInvites";
-import MediaStorage from './MediaStorage';
-import type {GameId} from '@/lib/plugin-games/types';
+import MediaStorage from "./MediaStorage";
+import type { GameId } from "@/lib/plugin-games/types";
 import InstallSupport, { NativeBridge, OfflineShell } from "./InstallSupport";
 import TogetherActivities from "./TogetherActivities";
 import DailyHeartChallenge from "./DailyHeartChallenge";
@@ -71,8 +73,10 @@ export default function StageOne() {
     [anniversary, setAnniversary] = useState<string | null>(null),
     [loaded, setLoaded] = useState(false),
     [tab, setTab] = useState("home"),
-    [invitedGame,setInvitedGame]=useState<GameId|null>(null),
-    [invitedConfig,setInvitedConfig]=useState<Record<string,string|number|boolean>>({}),
+    [invitedGame, setInvitedGame] = useState<GameId | null>(null),
+    [invitedConfig, setInvitedConfig] = useState<
+      Record<string, string | number | boolean>
+    >({}),
     [editing, setEditing] = useState(false),
     [date, setDate] = useState(""),
     [busy, setBusy] = useState(false),
@@ -85,8 +89,26 @@ export default function StageOne() {
       { id: string; slot: number; nickname: string }[]
     >([]),
     [nickname, setNickname] = useState("");
-  useEffect(()=>{const open=(e:Event)=>{const detail=(e as CustomEvent<GameId|{id:GameId;config:Record<string,string|number|boolean>}>).detail;setInvitedGame(typeof detail==='string'?detail:detail.id);setInvitedConfig(typeof detail==='string'?{}:detail.config);setTab('play');};window.addEventListener('arcade-open-plugin',open);return()=>window.removeEventListener('arcade-open-plugin',open);},[]);
-  useEffect(()=>{const open=()=>setTab('notes');window.addEventListener('arcade-open-notes',open);return()=>window.removeEventListener('arcade-open-notes',open);},[]);
+  useEffect(() => {
+    const open = (e: Event) => {
+      const detail = (
+        e as CustomEvent<
+          | GameId
+          | { id: GameId; config: Record<string, string | number | boolean> }
+        >
+      ).detail;
+      setInvitedGame(typeof detail === "string" ? detail : detail.id);
+      setInvitedConfig(typeof detail === "string" ? {} : detail.config);
+      setTab("play");
+    };
+    window.addEventListener("arcade-open-plugin", open);
+    return () => window.removeEventListener("arcade-open-plugin", open);
+  }, []);
+  useEffect(() => {
+    const open = () => setTab("notes");
+    window.addEventListener("arcade-open-notes", open);
+    return () => window.removeEventListener("arcade-open-notes", open);
+  }, []);
   useEffect(() => {
     setNow(new Date());
     const timer = setInterval(() => setNow(new Date()), 10000);
@@ -413,6 +435,7 @@ export default function StageOne() {
                 </p>
                 <div className="header-tools">
                   <Ambience />
+                  <GameFeel />
                   {(session || preview) && (
                     <button
                       className="icon-button"
@@ -467,7 +490,12 @@ export default function StageOne() {
                 ) : !session && !preview ? (
                   <section className="welcome">
                     <div className="welcome-sticker">
-                      <img src="/icons/icon-192.png" width={150} height={150} alt="Two kitties together"/>
+                      <img
+                        src="/icons/icon-192.png"
+                        width={150}
+                        height={150}
+                        alt="Two kitties together"
+                      />
                     </div>
                     <h1>
                       A little world.
@@ -605,6 +633,7 @@ export default function StageOne() {
                       anniversary={anniversary}
                     />
                     <MusicControls />
+                    <CosmeticUnlocks />
                     <ArtSettings />
                     <section className="nickname-setting">
                       <h2>Your account</h2>
@@ -654,12 +683,16 @@ export default function StageOne() {
                     <Wishlists />
                     <TogetherActivities />
                     <PromiseLedger />
-                    <HoldStats db={db} preview={preview}/>
+                    <HoldStats db={db} preview={preview} />
                   </>
                 ) : tab === "memories" ? (
                   <Memories />
                 ) : tab === "notes" ? (
-                  <><VoiceCassettes /><Postcards shortcut /><Notes /></>
+                  <>
+                    <VoiceCassettes />
+                    <Postcards shortcut />
+                    <Notes />
+                  </>
                 ) : tab === "play" ? null : (
                   <>
                     <div className="page-heading">
@@ -790,7 +823,12 @@ export default function StageOne() {
                       <DailyConnection />
                     </div>
                     <ConnectionMoments />
-                    <HoldHands db={db} session={session} couple={coupleId} preview={preview}/>
+                    <HoldHands
+                      db={db}
+                      session={session}
+                      couple={coupleId}
+                      preview={preview}
+                    />
                     <VoiceCassettes latest />
                     <Postcards shortcut />
                     <PromiseLedger pendingOnly />

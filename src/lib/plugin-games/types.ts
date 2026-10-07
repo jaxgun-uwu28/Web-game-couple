@@ -1,5 +1,5 @@
 export type Seat = 0 | 1;
-export type GameId = "ledger" | "lostfound" | "syncsteps";
+export type GameId = "ledger" | "lostfound" | "syncsteps" | "blackjack";
 export type Config = Record<string, string | number | boolean | string[]>;
 export type Move = { type: string; [key: string]: unknown };
 export type Result = { winner: Seat | null; scores: number[]; reason: string };

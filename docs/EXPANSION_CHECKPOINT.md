@@ -16,7 +16,16 @@ Use PROJECT_SPEC.md + the relevant ARCHITECTURE.md row first. Read only the sour
 
 - Finish full 360/768/1280 day/night capture matrix for games/cassettes/studio. Envelope seal alignment was measured at zero center offset at all three widths and screenshots reviewed in both palettes; local send/open completed. Ledger/Lost initial captures exist. Browser preview tests never establish physical mic/camera/push success.
 - Real two-phone games and Hold Hands; Android microphone/WebView/heartbeat; iPhone media format; measure actual 60s audio size; push registrations/preferences/server secrets/quiet hours on recipient. Do not claim these pass from fixture tests.
-- Larger requested polish/integration still needs work: custom art wiring on every tile/avatar, authored level curation, expanded loss/streak/comeback stats, Heartblast challenge/reconnect integration, Promise expiry/reminders/photo proof, cosmetic unlocks, postcard smart reply/full box illustration/extra fonts/drop-in paper choice, voice peaks decode fallback and full preview blob cleanup. Preserve incumbent Heartblast design and mechanics.
+- Larger requested polish/integration still needs work: custom art wiring on every tile/avatar, authored level curation, Promise expiry/reminders/photo proof, extra postcard fonts/drop-in paper choice and richer authored box artwork. Preserve incumbent Heartblast design and mechanics.
 - Hosted behavior is user-confirmed migration application, not verified hosted RLS tests. Run fixture tests and build before a commit; fixture ENOMEM needs sandbox escalation, no hosted calls.
 
 Latest focused checks: typecheck passed; seven plugin tests passed including 100 maze seeds; two expansion database tests passed, migration 020 applied twice in fixtures. Full fixture suite: 65/65 passed. Production build passed after the latest integration edits. These checks do not establish real-device acceptance.
+
+
+## Game-feel release — 2026-10-07
+
+Migrations 021–025 are owner-confirmed applied. Heartblast has challenge acceptance and durable 60-second reconnect handling. Rivalry includes losses, current/best streaks and replay-derived Heartblast comeback deficits, ordered by completion time for new results. Postcards add collection filters and smart replies; cassettes clean up preview URLs and decode missing waveform peaks; Settings offers reward-coin cosmetic unlocks.
+
+Shared game-feel/card engine: src/lib/game-feel.ts, cards.ts, board-feel.ts; PlayingCard, GameDie, StickerPicker and CasinoChip. Ledger uses private server-selected values, own tap-flip/roll, 20-second auto-flip, then suspense and resolution. Blackjack pure rules live in src/lib/plugin-games/blackjack.ts, UI in BlackjackTable.tsx, authoritative route in api/game/plugin. Wallet buy-ins/cash-outs are transactional; accepted notes cover requirements only, never add chips. Bonuses use remaining loser chips, rounded down and capped. Decks and opponent hole cards remain hidden. Ledger/BJ cannot overlap on one wallet; reset is blocked during either.
+
+Checks: 77 automated fixtures passed, including 1,000 conserved-chip sessions and repeat-run database/privacy/retry checks. Localhost Blackjack preview exercised bet/match/flip/stand/payout; layouts reviewed at 360, 768 and 1280. Chips are round and fallback card ranks readable; active table fits the available viewport. Real two-phone/network/push/microphone acceptance remains pending. Native release target: 1.0.3 (code 4).

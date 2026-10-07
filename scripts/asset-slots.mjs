@@ -87,7 +87,10 @@ export const slots = [
   ["app-icon", "icon-foreground", 1024, 1024],
   ["app-icon", "icon-background", 1024, 1024],
   ["app-icon", "splash", 1600, 1600],
-  ["sounds", "ambient", 0, 0],
+  ...['blackjack-cover','blackjack-background','blackjack-table','blackjack-card-back','blackjack-mascot','blackjack-wax-seal',...Array.from({length:5},(_,i)=>'blackjack-chip-'+(i+1))].map(name=>['game-art',name,800,600]),
+  ...['card-flip','card-deal','card-slide','dice-shake','dice-roll','dice-land','chip-click','chip-stack','coin-win','win-fanfare','lose-sad','wax-seal','button-tap','turn-ping','tick'].map(name=>['sounds',name,0,0]),
+  ...['ledger-dice-d6','ledger-dice-d20','ledger-dice-cup','ledger-felt-table',...Array.from({length:52},(_,i)=>'ledger-card-face-'+(i+1))].map(name=>['game-art',name,500,700]),
+  ['sounds', 'ambient', 0, 0],
   ["sounds", "click", 0, 0],
   ["sounds", "win", 0, 0],
 ].map(([folder, name, width, height]) => ({ folder, name, width, height }));

@@ -104,3 +104,7 @@ Migration 013 adds author-only caption editing and recoverable photo archiving. 
 # Connection checkpoint
 
 Home now opens Hold Hands; Activities shows held moments. Memories photo viewers support hearts and comments. Settings has separate background/game volumes and master sounds/haptics; supplied game tracks pause background music while playing. Migrations 014/015 are owner-confirmed. Follow [the two-phone checklist](docs/CONNECTION_CHECKPOINT.md); remaining staged scope is in [EXPANSION_PLAN.md](docs/EXPANSION_PLAN.md). Compact current requirements and targeted file discovery live in PROJECT_SPEC.md and ARCHITECTURE.md.
+
+
+### Game-feel / Blackjack release checklist
+Migrations 021–025 add Heartblast challenges, rivalry details, Blackjack wallets/private decks, cosmetics and wallet-session guards. Manual two-phone checks: accept a Heartblast challenge, reconnect after 60 seconds, verify completion streaks; flip both Ledger cards or roll d6/d20, confirm opponent values stay hidden; play Blackjack with different buy-ins, accepted/declined notes, push carry-over, capped 3:2 payout, resignation and cash-out. Check sound toggle (off initially), reduced motion, keyboard flip/action controls and drop-in card/chip/dice art. Unit and database fixtures cover 1,000 chip-conserving sessions, private hole/deck reads, idempotent cash-out and unlocks. Blackjack notes have no chip value; bonuses never create chips.

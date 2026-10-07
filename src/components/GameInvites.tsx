@@ -7,7 +7,12 @@ import type { GameId } from "@/lib/plugin-games/types";
 export default function GameInvites() {
   const c = useKeepsakes(),
     [rows, setRows] = useState<
-      { id: string; game_id: GameId; host: string; status: string }[]
+      {
+        id: string;
+        game_id: GameId | "heartblast";
+        host: string;
+        status: string;
+      }[]
     >([]),
     [error, setError] = useState("");
   const load = useCallback(async () => {
@@ -18,7 +23,20 @@ export default function GameInvites() {
       .eq("couple_id", c.couple)
       .eq("status", "invited")
       .neq("host", c.user);
-    if (!r.error) setRows(r.data || []);
+    const h = await c.db
+      .from("heart_challenges")
+      .select("id,host,status")
+      .eq("couple_id", c.couple)
+      .eq("status", "invited")
+      .neq("host", c.user);
+    if (!r.error)
+      setRows([
+        ...(r.data || []),
+        ...(h.data || []).map((x) => ({
+          ...x,
+          game_id: "heartblast" as const,
+        })),
+      ]);
   }, [c.db, c.preview, c.couple, c.user]);
   useEffect(() => {
     void load();
@@ -35,6 +53,16 @@ export default function GameInvites() {
         },
         () => void load(),
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "heart_challenges",
+          filter: `couple_id=eq.${c.couple}`,
+        },
+        () => void load(),
+      )
       .subscribe();
     return () => {
       void c.db!.removeChannel(ch);
@@ -42,10 +70,18 @@ export default function GameInvites() {
   }, [load, c.db, c.preview, c.couple]);
   async function respond(id: string, action: string) {
     try {
-      await gameRequest(c.db, { id, action }, fetch, "/api/game/plugin");
+      const heart = rows.find((x) => x.id === id)?.game_id === "heartblast";
+      await gameRequest(
+        c.db,
+        heart
+          ? { id, kind: "block", heartblast: true, action: { type: action } }
+          : { id, action },
+        fetch,
+        heart ? "/api/game" : "/api/game/plugin",
+      );
       if (action === "accept")
         window.dispatchEvent(
-          new CustomEvent("arcade-open-plugin", {
+          new CustomEvent(heart ? "arcade-open-heart" : "arcade-open-plugin", {
             detail: rows.find((x) => x.id === id)?.game_id,
           }),
         );
@@ -60,7 +96,11 @@ export default function GameInvites() {
       {error && <p role="alert">{error}</p>}
       {rows.map((r) => (
         <article key={r.id}>
-          <h3>{plugin(r.game_id).title}</h3>
+          <h3>
+            {r.game_id === "heartblast"
+              ? "Block Hearts Duel"
+              : plugin(r.game_id).title}
+          </h3>
           <p>Partner is inviting you to play.</p>
           <div>
             <button onClick={() => void respond(r.id, "accept")}>Accept</button>

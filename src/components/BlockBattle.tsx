@@ -1,4 +1,5 @@
 "use client";
+import { playGameSound } from "@/lib/game-feel";
 import { readAudio, saveAudio, tactile } from "@/lib/music";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
@@ -98,6 +99,11 @@ export default function BlockBattle({
   onResult: (winner: number | null) => void;
 }) {
   const [options, setOptions] = useState<HeartOptions>(defaultHeartOptions),
+    [challenge, setChallenge] = useState<{
+      host: string;
+      status: string;
+    } | null>(null),
+    [peerSeen, setPeerSeen] = useState<string | null>(null),
     [match, setMatch] = useState<Match | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -150,7 +156,7 @@ export default function BlockBattle({
     match?.id,
     "block",
     !preview && pageActive && !asyncMode,
-    !asyncMode,
+    false,
   );
   const request = useCallback(
     async (
@@ -170,7 +176,15 @@ export default function BlockBattle({
     [db],
   );
   const adopt = useCallback(
-    (r: { match: Match; server_now: string; clientMid?: number }) => {
+    (r: {
+      match: Match;
+      server_now: string;
+      clientMid?: number;
+      challenge?: { host: string; status: string } | null;
+      peer_seen_at?: string | null;
+    }) => {
+      setChallenge(r.challenge || null);
+      setPeerSeen(r.peer_seen_at || null);
       setMatch((old) =>
         old?.id === r.match.id && (old.revision || 0) > (r.match.revision || 0)
           ? old
@@ -414,21 +428,12 @@ export default function BlockBattle({
               ? ImpactStyle.Medium
               : ImpactStyle.Light,
       }).catch(() => {});
-    } else if (readAudio().haptics) navigator.vibrate?.(combo > 1 ? [20, 30, 40] : lines ? 30 : 10);
+    } else if (readAudio().haptics)
+      navigator.vibrate?.(combo > 1 ? [20, 30, 40] : lines ? 30 : 10);
     if (!sound || !readAudio().sounds || !lines) return;
-    soundCtx.current ||= new AudioContext();
-    void soundCtx.current.resume();
-    [0, 1, 2].slice(0, Math.min(3, lines)).forEach((_, i) => {
-      const osc = soundCtx.current!.createOscillator(),
-        gain = soundCtx.current!.createGain(),
-        t = soundCtx.current!.currentTime + i * 0.08;
-      osc.frequency.value = 440 + lines * 110 + i * 110;
-      gain.gain.setValueAtTime(0.045 * readAudio().games, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-      osc.connect(gain).connect(soundCtx.current!.destination);
-      osc.start(t);
-      osc.stop(t + 0.2);
-    });
+    playGameSound(
+      lines >= 3 ? "win-fanfare" : lines === 2 ? "coin-win" : "chip-stack",
+    );
   }
   async function begin(config = options) {
     await work(async () => {
@@ -450,7 +455,20 @@ export default function BlockBattle({
           winner: null,
           state: initialHeartState(seed, config),
         });
-      } else adopt(await request(null, {}, config));
+      } else {
+        const r = await request(null, {}, config);
+        adopt(r);
+        if (
+          r.challenge?.host === session?.user.id &&
+          r.challenge.status === "invited"
+        )
+          void gameRequest(
+            db,
+            { kind: "heart-challenge", id: r.match.id },
+            fetch,
+            "/api/push/media",
+          ).catch(() => {});
+      }
     });
   }
   async function ready() {
@@ -630,7 +648,8 @@ export default function BlockBattle({
           className="icon-button"
           aria-label={sound ? "Mute game sounds" : "Enable game sounds"}
           onClick={() => {
-            setSound(!sound); saveAudio({ ...readAudio(), sounds: !sound });
+            setSound(!sound);
+            saveAudio({ ...readAudio(), sounds: !sound });
             localStorage.setItem("arcade-heart-sound", String(!sound));
           }}
         >
@@ -889,7 +908,40 @@ export default function BlockBattle({
               </div>
               {!asyncMode && !preview && !presence.paired && !terminal && (
                 <p role="status" className="notice">
-                  Waiting for your person.
+                  {peerSeen
+                    ? `Reconnecting · ${Math.max(0, 60 - Math.floor((clock + offset - Date.parse(peerSeen)) / 1000))}s grace`
+                    : "Waiting for Partner."}
+                  {challenge?.status === "invited" &&
+                    challenge.host !== session?.user.id && (
+                      <button
+                        disabled={busy}
+                        onClick={() =>
+                          void work(async () =>
+                            adopt(await request(match.id, { type: "accept" })),
+                          )
+                        }
+                      >
+                        Accept challenge
+                      </button>
+                    )}
+                  {challenge?.status === "invited" &&
+                    challenge.host === session?.user.id && (
+                      <span> Challenge sent · waiting for acceptance.</span>
+                    )}
+                  {match.status === "playing" &&
+                    peerSeen &&
+                    clock + offset - Date.parse(peerSeen) >= 60000 && (
+                      <button
+                        disabled={busy}
+                        onClick={() =>
+                          void work(async () =>
+                            adopt(await request(match.id, { type: "claim" })),
+                          )
+                        }
+                      >
+                        Claim win
+                      </button>
+                    )}
                 </p>
               )}
               <div className="battle-layout">

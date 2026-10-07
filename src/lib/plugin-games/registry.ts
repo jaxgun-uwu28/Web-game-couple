@@ -1,10 +1,16 @@
+import { blackjack } from "./blackjack";
 import { ledger } from "./ledger";
 import { lostfound } from "./lostfound";
 import { syncsteps } from "./syncsteps";
 import { heartblast } from "./heartblast";
 import type { Module, GameId } from "./types";
 // State types are checked within each module. The wire boundary validates game IDs and delegates to that module.
-export const pluginRegistry = [ledger, lostfound, syncsteps] as const;
+export const pluginRegistry = [
+  ledger,
+  lostfound,
+  syncsteps,
+  blackjack,
+] as const;
 export const arcadeModules = [heartblast, ...pluginRegistry] as const;
 export function plugin(id: string): Module<never, unknown> {
   const m = pluginRegistry.find((x) => x.id === id);

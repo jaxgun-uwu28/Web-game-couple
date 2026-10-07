@@ -1,3 +1,4 @@
+import { secureDeck } from "@/lib/cards";
 import { createHmac, randomInt, randomUUID } from "node:crypto";
 import { serverUser, routeError } from "@/lib/server-user";
 import { plugin, isPlugin } from "@/lib/plugin-games/registry";
@@ -45,13 +46,17 @@ export async function POST(req: Request) {
       if (existing.data) id = existing.data.id;
       else {
         if (b.game === "syncsteps" && config.daily) {
-          config.day = new Date().toISOString().slice(0,10);
+          config.day = new Date().toISOString().slice(0, 10);
           config.infinite = true;
           config.difficulty = 2;
         }
-        const seed = b.game === 'syncsteps' && config.daily
-          ? createHmac('sha256',process.env.SUPABASE_SERVICE_ROLE_KEY!).update(`${profile.couple_id}:${config.day}:syncsteps`).digest().readUInt32BE(0) & 0x7fffffff
-          : randomInt(0, 2147483647),
+        const seed =
+            b.game === "syncsteps" && config.daily
+              ? createHmac("sha256", process.env.SUPABASE_SERVICE_ROLE_KEY!)
+                  .update(`${profile.couple_id}:${config.day}:syncsteps`)
+                  .digest()
+                  .readUInt32BE(0) & 0x7fffffff
+              : randomInt(0, 2147483647),
           state = m.createMatch(config, seed);
         const created = await db.rpc("create_plugin_match", {
           mid: randomUUID(),
@@ -86,6 +91,20 @@ export async function POST(req: Request) {
       .update({ seen_at: new Date().toISOString() })
       .eq("match_id", id)
       .eq("user_id", user.id);
+    if (b.action === "buyin") {
+      const paid = await db.rpc("blackjack_buyin", {
+        mid: id,
+        uid: user.id,
+        amount: b.move?.amount,
+      });
+      if (paid.error) throw paid.error;
+      const fresh = await db
+        .from("arcade_matches")
+        .select("*")
+        .eq("id", id)
+        .single();
+      Object.assign(r, fresh.data);
+    }
     if (b.action === "claim") {
       const claimed = await db.rpc("claim_plugin_win", {
         mid: id,
@@ -119,6 +138,14 @@ export async function POST(req: Request) {
       if (r.status === "invited")
         throw new Error("Partner must accept the challenge first.");
       if (r.status !== "waiting") throw new Error("This lobby is closed.");
+      if (r.game_id === "blackjack") {
+        const funded = await db
+          .from("blackjack_players")
+          .select("buy_in")
+          .eq("session_id", id);
+        if (funded.data?.length !== 2 || funded.data.some((x) => x.buy_in < 10))
+          throw new Error("Both players must lock a buy-in first");
+      }
       const ready = [...new Set([...r.ready, user.id])],
         both =
           ready.length === 2 &&
@@ -132,7 +159,7 @@ export async function POST(req: Request) {
         .update({
           ready,
           status: both ? "playing" : "waiting",
-          started_at: both ? new Date().toISOString() : null,
+          started_at: both ? new Date(Date.now() + 3000).toISOString() : null,
           revision: r.revision + 1,
         })
         .eq("id", id)
@@ -149,6 +176,16 @@ export async function POST(req: Request) {
       .single();
     if (secret.error) throw new Error("Match state unavailable.");
     let state = secret.data.state;
+    if (
+      r.game_id === "blackjack" &&
+      r.status === "playing" &&
+      state.status === "buyin" &&
+      Date.now() >= Date.parse(r.started_at)
+    ) {
+      b.action = "move";
+      b.move = { type: "start" };
+      b.requestId = randomUUID();
+    }
     const deadline = state.turnExpiresAt,
       timedOut =
         r.game_id === "lostfound" &&
@@ -160,6 +197,27 @@ export async function POST(req: Request) {
     if (timedOut) {
       b.action = "move";
       b.move = { type: "timeout" };
+      b.requestId = randomUUID();
+    }
+    if(r.game_id==="ledger"&&b.move?.type==="reveal"&&!["flipping","suspense"].includes(state.status))b.action="get";
+    const blackjackTimeout =
+      r.game_id === "blackjack" &&
+      r.status === "playing" &&
+      state.endsAt &&
+      Date.now() >= state.endsAt;
+    if (blackjackTimeout) {
+      b.action = "move";
+      b.move = { type: "end" };
+      b.requestId = randomUUID();
+    }
+    const ledgerTimeout =
+      r.game_id === "ledger" &&
+      r.status === "playing" &&
+      ((state.status === "flipping" && Date.now() >= state.flipDeadline) ||
+        (state.status === "suspense" && Date.now() >= state.revealAt));
+    if (ledgerTimeout) {
+      b.action = "move";
+      b.move = { type: "reveal" };
       b.requestId = randomUUID();
     }
     const duplicate = b.requestId
@@ -175,25 +233,37 @@ export async function POST(req: Request) {
         throw new Error("Both players must accept and be ready.");
       if (
         !timedOut &&
+        !ledgerTimeout &&
+        !blackjackTimeout &&
         players.some(
           (x) =>
             x.user_id !== user.id && Date.now() - Date.parse(x.seen_at) > 60000,
         )
       )
         throw new Error("Partner is reconnecting. Wait or end this match.");
+      if (Date.now() < Date.parse(r.started_at))
+        throw new Error("Ready countdown is still running");
       const move = { ...b.move };
       move.serverNow = Date.now();
-      if(move.type==='powerup'&&r.game_id==='lostfound')move.axis=randomInt(0,2)?'row':'column';
-      if (r.game_id === "ledger") {
+      if (move.type === "powerup" && r.game_id === "lostfound")
+        move.axis = randomInt(0, 2) ? "row" : "column";
+      delete move.serverCards;
+      delete move.serverValues;
+      delete move.serverDeck;
+      delete move.noteId;
+      if (r.game_id === "blackjack") {
+        if(["match","accept_note"].includes(move.type)&&state.pending?.kind==="match") move.serverDeck=secureDeck();
+        if(move.type==="stake_note")move.noteId=randomUUID();
+      }
+      if (r.game_id === "ledger" && move.type === "lock") {
         const max =
           r.config.duel === "d20" ? 20 : r.config.duel === "d6" ? 6 : 13;
         const draw = () => {
           if (r.config.duel !== "card")
             return [randomInt(1, max + 1), randomInt(1, max + 1)];
-          const first = randomInt(0, 52);
-          let second = randomInt(0, 51);
-          if (second >= first) second++;
-          return [(first % 13) + 2, (second % 13) + 2];
+          const cards = secureDeck().slice(0, 2);
+          move.serverCards = cards;
+          return cards.map((c) => c.rank);
         };
         move.serverValues = draw();
         const st = state as LedgerState;
@@ -239,6 +309,16 @@ export async function POST(req: Request) {
       if (updated.data) Object.assign(r, updated.data);
     }
     return Response.json({
+      wallet:
+        r.game_id === "blackjack"
+          ? (
+              await db
+                .from("ledger_wallets")
+                .select("balance")
+                .eq("user_id", user.id)
+                .single()
+            ).data?.balance
+          : undefined,
       serverTime: new Date().toISOString(),
       match: r,
       state: m.getPublicState(state as never, p.seat as Seat),

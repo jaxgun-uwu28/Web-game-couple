@@ -1,4 +1,5 @@
 "use client";
+import { useCosmetics } from "./CosmeticUnlocks";
 import { gameRequest } from "@/lib/game-request";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -87,8 +88,20 @@ export default function Postcards({
     [selected, setSelected] = useState<Card | null>(null),
     [error, setError] = useState(""),
     [wall, setWall] = useState(false),
+    [collection, setCollection] = useState("All"),
+    [limit, setLimit] = useState(12),
+    [replyTo, setReplyTo] = useState<Card | null>(null),
     local = useRef(new Map<string, Card>()),
     flushing = useRef(false);
+  useEffect(
+    () => () => {
+      for (const row of local.current.values()) {
+        URL.revokeObjectURL(row.front_path);
+        URL.revokeObjectURL(row.back_path);
+      }
+    },
+    [],
+  );
   const load = useCallback(async () => {
     if (c.preview || !c.db) return;
     const r = await c.db
@@ -134,7 +147,12 @@ export default function Postcards({
         unlock: p.unlock ? new Date(p.unlock).toISOString() : null,
       });
       if (r.error) throw r.error;
-      void gameRequest(c.db, { kind: "postcard", id: p.id }, fetch, "/api/push/media").catch(() => {});
+      void gameRequest(
+        c.db,
+        { kind: "postcard", id: p.id },
+        fetch,
+        "/api/push/media",
+      ).catch(() => {});
     },
     [c.db, c.user, c.couple],
   );
@@ -211,7 +229,7 @@ export default function Postcards({
         front_path: URL.createObjectURL(p.front),
         back_path: URL.createObjectURL(p.back),
         message: p.doc.message,
-        layers: p.doc,
+        layers: { ...p.doc, photoPath: p.photo ? "preview-photo" : undefined },
       };
       local.current.set(row.id, row);
       setRows((x) => [row, ...x]);
@@ -246,6 +264,32 @@ export default function Postcards({
           </button>
         )}
       </header>
+      {!shortcut && (
+        <>
+          <div className="postcard-box-art" aria-hidden="true">
+            <Slot name="postcard-box">
+              <span>✉ ♥ ✉</span>
+            </Slot>
+          </div>
+          <div className="sticker-picker">
+            <div>
+              {["All", "Unread", "Favorites"].map((x) => (
+                <button
+                  key={x}
+                  aria-pressed={collection === x}
+                  className={collection === x ? "selected" : ""}
+                  onClick={() => {
+                    setCollection(x);
+                    setLimit(12);
+                  }}
+                >
+                  {x}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
       {error && <p role="alert">{error}</p>}
       {(!shortcut ||
         rows.some((r) => r.sender_id !== c.user && !r.opened_at)) && (
@@ -254,8 +298,13 @@ export default function Postcards({
             .filter((r) =>
               shortcut
                 ? r.sender_id !== c.user && !r.opened_at
-                : !wall || r.favorite_by.includes(c.user),
+                : (!wall || r.favorite_by.includes(c.user)) &&
+                  (collection !== "Unread" ||
+                    (!r.opened_at && r.sender_id !== c.user)) &&
+                  (collection !== "Favorites" ||
+                    r.favorite_by.includes(c.user)),
             )
+            .slice(0, shortcut ? 3 : limit)
             .map((r, i) => {
               const locked =
                 !!r.unlock_at &&
@@ -293,15 +342,28 @@ export default function Postcards({
             })}
         </div>
       )}
+      {!shortcut && rows.length > limit && (
+        <button onClick={() => setLimit((x) => x + 12)}>More postcards</button>
+      )}
       {!shortcut && !rows.length && (
         <p>Your postcard box is waiting for its first little letter.</p>
       )}
-      {editor && <PostcardEditor close={() => setEditor(false)} send={sent} />}{" "}
+      {editor && (
+        <PostcardEditor
+          replyTo={replyTo}
+          close={() => {
+            setEditor(false);
+            setReplyTo(null);
+          }}
+          send={sent}
+        />
+      )}{" "}
       {selected && (
         <PostcardViewer
           row={selected}
           close={() => setSelected(null)}
           reply={() => {
+            setReplyTo(selected);
             setSelected(null);
             setEditor(true);
           }}
@@ -312,12 +374,15 @@ export default function Postcards({
   );
 }
 function PostcardEditor({
+  replyTo,
   close,
   send,
 }: {
   close: () => void;
   send: (p: SendCard) => Promise<void>;
+  replyTo?: Card | null;
 }) {
+  const unlocked = useCosmetics();
   const artwork = useArtworkLibrary(),
     [sealing, setSealing] = useState(false),
     [canvasArt, setCanvasArt] = useState<Record<string, ImageBitmap>>({});
@@ -360,7 +425,28 @@ function PostcardEditor({
   const c = useKeepsakes(),
     canvas = useRef<HTMLCanvasElement | null>(null),
     dialog = useRef<HTMLDialogElement | null>(null),
-    [doc, setDoc] = useState(blankPostcard),
+    [doc, setDoc] = useState(() => {
+      const d = blankPostcard();
+      if (replyTo) {
+        d.paper = replyTo.layers.paper;
+        d.pattern = "hearts";
+        d.stamp = replyTo.stamp_id;
+        d.texts = [
+          {
+            id: crypto.randomUUID(),
+            text: "A little reply",
+            x: 450,
+            y: 110,
+            color: "#9D304F",
+            size: 44,
+            font: "Caveat",
+            style: "label",
+            curve: false,
+          },
+        ];
+      }
+      return d;
+    }),
     [step, setStep] = useState(0),
     [tool, setTool] = useState("crop"),
     [pen, setPen] = useState("pen"),
@@ -390,6 +476,9 @@ function PostcardEditor({
     } | null>(null),
     docRef = useRef(doc),
     autosave = useRef(0);
+  const photoRef = useRef(photo);
+  photoRef.current = photo;
+  useEffect(() => () => photoRef.current?.close(), []);
   docRef.current = doc;
   const draftKey = `postcard-draft:${c.user}`;
   useEffect(() => {
@@ -408,7 +497,7 @@ function PostcardEditor({
         }
       }
     };
-    void restore();
+    if (!replyTo) void restore();
     return () => {
       if (autosave.current) clearTimeout(autosave.current);
     };
@@ -629,7 +718,12 @@ function PostcardEditor({
       setSealing(true);
       tactile(30);
       softSound("paper");
-      await new Promise(resolve => setTimeout(resolve, matchMedia('(prefers-reduced-motion: reduce)').matches ? 250 : 1800));
+      await new Promise((resolve) =>
+        setTimeout(
+          resolve,
+          matchMedia("(prefers-reduced-motion: reduce)").matches ? 250 : 1800,
+        ),
+      );
       await send({
         id: crypto.randomUUID(),
         doc,
@@ -662,7 +756,16 @@ function PostcardEditor({
       aria-label="Postcard studio"
       onCancel={close}
     >
-      {sealing && <div className="postcard-send-scene" role="status" aria-label="Sealing your postcard"><EnvelopeAnimation color={envelope} sending /><span>Sealed with a little love</span></div>}
+      {sealing && (
+        <div
+          className="postcard-send-scene"
+          role="status"
+          aria-label="Sealing your postcard"
+        >
+          <EnvelopeAnimation color={envelope} sending />
+          <span>Sealed with a little love</span>
+        </div>
+      )}
       <header>
         <h1>A little postcard</h1>
         <button
@@ -752,7 +855,15 @@ function PostcardEditor({
             >
               Plain paper
             </button>
-            <select aria-label="Paper pattern" value={doc.pattern||'Plain'} onChange={e=>change({pattern:e.target.value})}>{['Plain','Dots','Gingham','Hearts'].map(pattern=><option key={pattern}>{pattern}</option>)}</select>
+            <select
+              aria-label="Paper pattern"
+              value={doc.pattern || "Plain"}
+              onChange={(e) => change({ pattern: e.target.value })}
+            >
+              {["Plain", "Dots", "Gingham", "Hearts"].map((pattern) => (
+                <option key={pattern}>{pattern}</option>
+              ))}
+            </select>
             <label>
               <input
                 type="checkbox"
@@ -868,38 +979,43 @@ function PostcardEditor({
                 ["ribbon", Ribbon],
                 ["bubble", MessageCircle],
                 ["tape", Square],
-              ].map(([k, I]) => {
-                const Icon = I as typeof Heart;
-                return (
-                  <button
-                    key={String(k)}
-                    aria-label={`Add ${k} sticker`}
-                    disabled={doc.stickers.length >= 60}
-                    onClick={() => {
-                      const id = crypto.randomUUID();
-                      change({
-                        stickers: [
-                          ...doc.stickers,
-                          {
-                            id,
-                            kind: String(k),
-                            x: doc.portrait ? 300 : 450,
-                            y: doc.portrait ? 450 : 300,
-                            scale: 1,
-                            rotation: 0,
-                            flip: false,
-                          },
-                        ],
-                      });
-                      setSelected(id);
-                      setTool("crop");
-                      tactile(20);
-                    }}
-                  >
-                    <Icon />
-                  </button>
-                );
-              })}
+              ]
+                .filter(
+                  ([k]) =>
+                    k !== "star" || unlocked.includes("sticker-sparkles"),
+                )
+                .map(([k, I]) => {
+                  const Icon = I as typeof Heart;
+                  return (
+                    <button
+                      key={String(k)}
+                      aria-label={`Add ${k} sticker`}
+                      disabled={doc.stickers.length >= 60}
+                      onClick={() => {
+                        const id = crypto.randomUUID();
+                        change({
+                          stickers: [
+                            ...doc.stickers,
+                            {
+                              id,
+                              kind: String(k),
+                              x: doc.portrait ? 300 : 450,
+                              y: doc.portrait ? 450 : 300,
+                              scale: 1,
+                              rotation: 0,
+                              flip: false,
+                            },
+                          ],
+                        });
+                        setSelected(id);
+                        setTool("crop");
+                        tactile(20);
+                      }}
+                    >
+                      <Icon />
+                    </button>
+                  );
+                })}
             </div>
             {selected && (
               <>
@@ -1154,10 +1270,25 @@ function PostcardEditor({
               value={doc.stamp}
               onChange={(e) => change({ stamp: e.target.value })}
             >
-              {["heart", "flower", "star", "cloud"].map((x) => (
+              {(unlocked.includes("postcard-stamps")
+                ? ["heart", "flower", "star", "cloud"]
+                : ["heart"]
+              ).map((x) => (
                 <option key={x}>{x}</option>
               ))}
-              {Object.keys(canvasArt).filter(x => x.startsWith('postcard-stamp-') || artwork[x]?.original?.includes('/stickers/')).map(x => <option key={x} value={x}>{x.replace(/^postcard-stamp-/, 'Stamp ').replaceAll('-', ' ')}</option>)}
+              {Object.keys(canvasArt)
+                .filter(
+                  (x) =>
+                    x.startsWith("postcard-stamp-") ||
+                    artwork[x]?.original?.includes("/stickers/"),
+                )
+                .map((x) => (
+                  <option key={x} value={x}>
+                    {x
+                      .replace(/^postcard-stamp-/, "Stamp ")
+                      .replaceAll("-", " ")}
+                  </option>
+                ))}
             </select>
             <label>
               <input
@@ -1173,15 +1304,17 @@ function PostcardEditor({
           <>
             <fieldset className="postcard-swatches">
               <legend>Envelope color</legend>
-              {swatches.map((color, i) => (
-                <button
-                  key={color}
-                  style={{ background: color }}
-                  aria-label={`Envelope color ${i + 1}`}
-                  aria-pressed={envelope === color}
-                  onClick={() => setEnvelope(color)}
-                />
-              ))}
+              {swatches
+                .filter((x, i) => i < 2 || unlocked.includes("envelope-colors"))
+                .map((color, i) => (
+                  <button
+                    key={color}
+                    style={{ background: color }}
+                    aria-label={`Envelope color ${i + 1}`}
+                    aria-pressed={envelope === color}
+                    onClick={() => setEnvelope(color)}
+                  />
+                ))}
             </fieldset>
             <button
               onClick={() => {
@@ -1256,35 +1389,74 @@ function PostcardViewer({
     [urls, setUrls] = useState<string[]>([]),
     [back, setBack] = useState(false),
     [opening, setOpening] = useState(true),
-    frontLayers = useRef<HTMLCanvasElement|null>(null),
+    frontLayers = useRef<HTMLCanvasElement | null>(null),
     [layered, setLayered] = useState(false),
     [error, setError] = useState("");
-  useEffect(()=>{
-    if(opening||back||!frontLayers.current||row.layers?.version!==1)return;
-    let alive=true,interval:ReturnType<typeof setInterval>|undefined,photo:ImageBitmap|null=null;
-    const doc=row.layers;
+  useEffect(() => {
+    if (opening || back || !frontLayers.current || row.layers?.version !== 1)
+      return;
+    let alive = true,
+      interval: ReturnType<typeof setInterval> | undefined,
+      photo: ImageBitmap | null = null;
+    const doc = row.layers;
     // Custom artwork uses the exported image on devices without the source assets.
-    if(doc.stickers.some(s=>s.kind.startsWith('asset:')))return;
-    void (async()=>{
-      if(doc.photoPath){
-        if(c.preview)return;
-        const signed=await c.db!.storage.from('postcards').createSignedUrl(doc.photoPath,600);
-        if(signed.error)throw signed.error;
-        photo=await createImageBitmap(await (await fetch(signed.data.signedUrl)).blob());
+    if (
+      doc.stickers.some((s) => s.kind.startsWith("asset:")) ||
+      doc.stamp.startsWith("postcard-stamp-") ||
+      doc.frame.startsWith("postcard-frame-")
+    )
+      return;
+    void (async () => {
+      if (doc.photoPath) {
+        if (c.preview) return;
+        const signed = await c
+          .db!.storage.from("postcards")
+          .createSignedUrl(doc.photoPath, 600);
+        if (signed.error) throw signed.error;
+        photo = await createImageBitmap(
+          await (await fetch(signed.data.signedUrl)).blob(),
+        );
       }
-      if(!alive){photo?.close();return;}
-      const total=doc.strokes.length+doc.stickers.length+doc.texts.length;
-      let count=matchMedia('(prefers-reduced-motion: reduce)').matches?total:0;
-      const paint=()=>{
-        if(!alive||!frontLayers.current)return;
-        drawPostcard(frontLayers.current,{...doc,strokes:doc.strokes.slice(0,count),stickers:doc.stickers.slice(0,Math.max(0,count-doc.strokes.length)),texts:doc.texts.slice(0,Math.max(0,count-doc.strokes.length-doc.stickers.length))},photo);
+      if (!alive) {
+        photo?.close();
+        return;
+      }
+      const total = doc.strokes.length + doc.stickers.length + doc.texts.length;
+      let count = matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? total
+        : 0;
+      const paint = () => {
+        if (!alive || !frontLayers.current) return;
+        drawPostcard(
+          frontLayers.current,
+          {
+            ...doc,
+            strokes: doc.strokes.slice(0, count),
+            stickers: doc.stickers.slice(
+              0,
+              Math.max(0, count - doc.strokes.length),
+            ),
+            texts: doc.texts.slice(
+              0,
+              Math.max(0, count - doc.strokes.length - doc.stickers.length),
+            ),
+          },
+          photo,
+        );
         setLayered(true);
-        if(count++>=total&&interval)clearInterval(interval);
+        if (count++ >= total && interval) clearInterval(interval);
       };
-      paint();if(count<=total)interval=setInterval(paint,80);
-    })().catch(()=>{if(alive)setLayered(false);});
-    return()=>{alive=false;if(interval)clearInterval(interval);photo?.close();};
-  },[opening,back,row,c.db,c.preview]);
+      paint();
+      if (count <= total) interval = setInterval(paint, 80);
+    })().catch(() => {
+      if (alive) setLayered(false);
+    });
+    return () => {
+      alive = false;
+      if (interval) clearInterval(interval);
+      photo?.close();
+    };
+  }, [opening, back, row, c.db, c.preview]);
   useEffect(() => {
     dialog.current?.showModal();
     let alive = true;
@@ -1302,7 +1474,12 @@ function PostcardViewer({
           );
       if (alive) {
         setUrls(u);
-        setTimeout(() => { if (alive) setOpening(false); }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 250 : 1800);
+        setTimeout(
+          () => {
+            if (alive) setOpening(false);
+          },
+          matchMedia("(prefers-reduced-motion: reduce)").matches ? 250 : 1800,
+        );
       }
     })().catch(() => setError("Your postcard could not open. Try again."));
     return () => {
@@ -1348,7 +1525,12 @@ function PostcardViewer({
         <X />
       </button>
       {error && <p role="alert">{error}</p>}
-      {opening && !error && <div className="postcard-open-scene" role="status"><EnvelopeAnimation color={row.envelope_color} /><span>Opening your postcard…</span></div>}
+      {opening && !error && (
+        <div className="postcard-open-scene" role="status">
+          <EnvelopeAnimation color={row.envelope_color} />
+          <span>Opening your postcard…</span>
+        </div>
+      )}
       <button
         className={`postcard-flip ${back ? "is-back" : ""} ${opening ? "is-opening" : "postcard-revealed"}`}
         aria-label="Flip postcard"
@@ -1360,12 +1542,17 @@ function PostcardViewer({
       >
         {urls.length > 0 && (
           <img
-            style={{display:layered&&!back?'none':undefined}}
+            style={{ display: layered && !back ? "none" : undefined }}
             src={urls[back ? 1 : 0]}
             alt={back ? "Postcard message" : "Postcard front"}
           />
         )}
-        <canvas ref={frontLayers} className="postcard-layer-front" style={{display:layered&&!back?'block':'none'}} aria-label="Postcard front design" />
+        <canvas
+          ref={frontLayers}
+          className="postcard-layer-front"
+          style={{ display: layered && !back ? "block" : "none" }}
+          aria-label="Postcard front design"
+        />
       </button>
       <p>Tap your postcard to flip it.</p>
       <div className="postcard-actions">
@@ -1412,11 +1599,29 @@ function PostcardViewer({
     </dialog>
   );
 }
-function EnvelopeAnimation({color,sending=false}:{color:string;sending?:boolean}) {
- return <div className={`postcard-envelope-scene ${sending?'is-sending':'is-receiving'}`} style={{background:color}} aria-hidden="true">
-  <div className="postcard-envelope-letter"><Heart /></div>
-  <div className="postcard-envelope-flap" />
-  <div className="postcard-envelope-seal"><Slot name="postcard-wax-seal"><Heart /></Slot></div>
-  <Slot name="postcard-envelope" className="postcard-envelope-art" />
- </div>;
+function EnvelopeAnimation({
+  color,
+  sending = false,
+}: {
+  color: string;
+  sending?: boolean;
+}) {
+  return (
+    <div
+      className={`postcard-envelope-scene ${sending ? "is-sending" : "is-receiving"}`}
+      style={{ background: color }}
+      aria-hidden="true"
+    >
+      <div className="postcard-envelope-letter">
+        <Heart />
+      </div>
+      <div className="postcard-envelope-flap" />
+      <div className="postcard-envelope-seal">
+        <Slot name="postcard-wax-seal">
+          <Heart />
+        </Slot>
+      </div>
+      <Slot name="postcard-envelope" className="postcard-envelope-art" />
+    </div>
+  );
 }

@@ -40,3 +40,12 @@ Only NEXT_PUBLIC Supabase URL/publishable key belong in browser configuration. G
 Follow AGENTS.md; use ARCHITECTURE.md for targeted file discovery and TODO.md/KNOWN_ISSUES.md for pending facts. Keep changes scoped, checks meaningful and reports short. No new dependencies when existing tools suffice. Review relevant bundled Next docs before code changes. Detailed setup: SUPABASE-SETUP.md, GEMINI_SETUP.md, PUSH-SETUP.md, INSTALL.md. Do not load all of them for unrelated fixes.
 
 Verification is evidence-specific: fixture/build success does not establish two-account, browser, physical camera or push acceptance. Current pending boundaries are in KNOWN_ISSUES.md.
+
+
+## Game-feel release — 2026-10-07
+
+Migrations 021–025 are owner-confirmed applied. Heartblast has challenge acceptance and durable 60-second reconnect handling. Rivalry includes losses, current/best streaks and replay-derived Heartblast comeback deficits, ordered by completion time for new results. Postcards add collection filters and smart replies; cassettes clean up preview URLs and decode missing waveform peaks; Settings offers reward-coin cosmetic unlocks.
+
+Shared game-feel/card engine: src/lib/game-feel.ts, cards.ts, board-feel.ts; PlayingCard, GameDie, StickerPicker and CasinoChip. Ledger uses private server-selected values, own tap-flip/roll, 20-second auto-flip, then suspense and resolution. Blackjack pure rules live in src/lib/plugin-games/blackjack.ts, UI in BlackjackTable.tsx, authoritative route in api/game/plugin. Wallet buy-ins/cash-outs are transactional; accepted notes cover requirements only, never add chips. Bonuses use remaining loser chips, rounded down and capped. Decks and opponent hole cards remain hidden. Ledger/BJ cannot overlap on one wallet; reset is blocked during either.
+
+Checks: 77 automated fixtures passed, including 1,000 conserved-chip sessions and repeat-run database/privacy/retry checks. Localhost Blackjack preview exercised bet/match/flip/stand/payout; layouts reviewed at 360, 768 and 1280. Chips are round and fallback card ranks readable; active table fits the available viewport. Real two-phone/network/push/microphone acceptance remains pending. Native release target: 1.0.3 (code 4).

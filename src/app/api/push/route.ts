@@ -43,6 +43,7 @@ export async function POST(req: Request) {
         "voice_messages",
         "postcards",
         "arcade_matches",
+        "heart_challenges",
       ].includes(table) ||
       !id
     )
@@ -97,9 +98,21 @@ export async function POST(req: Request) {
           ? "memories"
           : table === "love_notes"
             ? "notes"
-            : table === "arcade_matches" ? "turns" : table === "notifications_log" ? "holdhands" : table === "voice_messages" ? "voice" : table === "postcards" ? "postcards" : "taps";
+            : table === "arcade_matches" || table === "heart_challenges"
+              ? "turns"
+              : table === "notifications_log"
+                ? "holdhands"
+                : table === "voice_messages"
+                  ? "voice"
+                  : table === "postcards"
+                    ? "postcards"
+                    : "taps";
       if (event.type !== "INSERT") return Response.json({ ignored: true });
-      if(table==='arcade_matches'&&row.status!=='invited') return Response.json({ignored:true});
+      if (
+        (table === "arcade_matches" || table === "heart_challenges") &&
+        row.status !== "invited"
+      )
+        return Response.json({ ignored: true });
     }
     const profiles = await db
       .from("profiles")
@@ -114,10 +127,32 @@ export async function POST(req: Request) {
             row.message,
             profiles.data?.find((p) => p.id === author)?.nickname,
           )
-        : table === "arcade_matches" ? {title:"A little challenge",body:`Partner challenged you to ${({ledger:'The Ledger Duel',lostfound:'Lost & Found',syncsteps:'Sync Steps'} as Record<string,string>)[row.game_id]||'a game'}.`} : table === "notifications_log" ? { title: "Hold hands", body: "Someone wants to hold your hand." } : table === "voice_messages" ? {title:"A little cassette",body:"You have a new voice message."} : table === "postcards" ? {title:"A little postcard",body:"You have a postcard."} : {
-            title: "Our Little Arcade",
-            body: "Your person left a little something for you.",
-          };
+        : table === "heart_challenges"
+          ? {
+              title: "A little challenge",
+              body: "Partner challenged you to Block Hearts Duel.",
+            }
+          : table === "arcade_matches"
+            ? {
+                title: "A little challenge",
+                body: `Partner challenged you to ${({ ledger: "The Ledger Duel", lostfound: "Lost & Found", syncsteps: "Sync Steps", blackjack: "Blackjack Duel" } as Record<string, string>)[row.game_id] || "a game"}.`,
+              }
+            : table === "notifications_log"
+              ? {
+                  title: "Hold hands",
+                  body: "Someone wants to hold your hand.",
+                }
+              : table === "voice_messages"
+                ? {
+                    title: "A little cassette",
+                    body: "You have a new voice message.",
+                  }
+                : table === "postcards"
+                  ? { title: "A little postcard", body: "You have a postcard." }
+                  : {
+                      title: "Our Little Arcade",
+                      body: "Your person left a little something for you.",
+                    };
     const eventKey = createHash("sha256")
       .update(
         `${table}:${id}:${type}:${event.type}:${table === "games" ? JSON.stringify(row.state) : row.status || ""}`,
@@ -129,7 +164,8 @@ export async function POST(req: Request) {
     if (claimed.error?.code === "23505")
       return Response.json({ duplicate: true });
     if (claimed.error) throw claimed.error;
-    let sent = 0, failed = 0;
+    let sent = 0,
+      failed = 0;
     for (const recipient of recipients) {
       const preference = await db
         .from("notification_preferences")
@@ -209,7 +245,8 @@ export async function POST(req: Request) {
         }
       }
     }
-    if (!sent && failed) await db.from("push_deliveries").delete().eq("event_key", eventKey);
+    if (!sent && failed)
+      await db.from("push_deliveries").delete().eq("event_key", eventKey);
     return Response.json({ sent, failed });
   } catch {
     return Response.json(

@@ -2,7 +2,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
-import { createLedger, ledgerMove } from "../src/lib/plugin-games/ledger";
+import {
+  createLedger,
+  ledgerMove as applyLedgerMove,
+} from "../src/lib/plugin-games/ledger";
 import { createLost, lostMove } from "../src/lib/plugin-games/lostfound";
 const a = "10000000-0000-4000-8000-000000000001",
   b = "10000000-0000-4000-8000-000000000002",
@@ -100,8 +103,19 @@ test("Plugin transactions conserve wallets, retry exactly once, refund cancellat
     );
     await db.exec(sql);
     await db.exec(sql);
-    await db.exec(`create function my_slot() returns int language sql stable security definer as $$select slot from profiles where id=auth.uid()$$;create table games(couple_id uuid,kind text,state jsonb);create table block_matches(couple_id uuid,state jsonb,status text,winner int);create table hold_sessions(couple_id uuid,duration_sec int);`);
-    for(const file of ['016_voice_cassettes.sql','017_postcards.sql','019_expansion_integration.sql','020_game_details.sql']){const integration=await readFile(`supabase/migrations/${file}`,'utf8');await db.exec(integration);await db.exec(integration);}
+    await db.exec(
+      `create function my_slot() returns int language sql stable security definer as $$select slot from profiles where id=auth.uid()$$;create table games(couple_id uuid,kind text,state jsonb);create table block_matches(couple_id uuid,state jsonb,status text,winner int);create table hold_sessions(couple_id uuid,duration_sec int);`,
+    );
+    for (const file of [
+      "016_voice_cassettes.sql",
+      "017_postcards.sql",
+      "019_expansion_integration.sql",
+      "020_game_details.sql",
+    ]) {
+      const integration = await readFile(`supabase/migrations/${file}`, "utf8");
+      await db.exec(integration);
+      await db.exec(integration);
+    }
     const initial = createLedger({ wallet: 10, rounds: 1, entry: 1 });
     await db.query("select create_plugin_match($1,$2,'ledger',$3,77,$4)", [
       id,
@@ -159,18 +173,55 @@ test("Plugin transactions conserve wallets, retry exactly once, refund cancellat
       ).rows[0].total,
       20,
     );
-    const huntId='20000000-0000-4000-8000-000000000002', powerId='30000000-0000-4000-8000-000000000002';
-    let hunt=createLost({size:5,mode:'race'},99);
-    hunt=lostMove(hunt,{type:'hide',cell:0},0);hunt=lostMove(hunt,{type:'hide',cell:24},1);
-    await db.query("select create_plugin_match($1,$2,'lostfound',$3,99,$4)",[huntId,a,hunt.config,hunt]);
-    await db.query("update arcade_matches set status='playing' where id=$1",[huntId]);
-    const powered=lostMove(hunt,{type:'powerup',kind:'sonar',axis:'row'},0);
-    const spend=()=>db.query("select commit_plugin_move($1,$2,0,$3,$4,$5,'playing',null,'[]')",[huntId,a,powerId,{type:'powerup',kind:'sonar'},powered]);
+    const huntId = "20000000-0000-4000-8000-000000000002",
+      powerId = "30000000-0000-4000-8000-000000000002";
+    let hunt = createLost({ size: 5, mode: "race" }, 99);
+    hunt = lostMove(hunt, { type: "hide", cell: 0 }, 0);
+    hunt = lostMove(hunt, { type: "hide", cell: 24 }, 1);
+    await db.query("select create_plugin_match($1,$2,'lostfound',$3,99,$4)", [
+      huntId,
+      a,
+      hunt.config,
+      hunt,
+    ]);
+    await db.query("update arcade_matches set status='playing' where id=$1", [
+      huntId,
+    ]);
+    const powered = lostMove(
+      hunt,
+      { type: "powerup", kind: "sonar", axis: "row" },
+      0,
+    );
+    const spend = () =>
+      db.query(
+        "select commit_plugin_move($1,$2,0,$3,$4,$5,'playing',null,'[]')",
+        [huntId, a, powerId, { type: "powerup", kind: "sonar" }, powered],
+      );
     await assert.rejects(spend());
-    assert.equal((await db.query<{revision:number}>('select revision from arcade_matches where id=$1',[huntId])).rows[0].revision,0);
-    await db.query('insert into game_rewards(user_id,couple_id,coins,xp) values($1,$2,10,0)',[a,c]);
-    await spend();await spend();
-    assert.equal((await db.query<{coins:number}>('select coins from game_rewards where user_id=$1',[a])).rows[0].coins,5);
+    assert.equal(
+      (
+        await db.query<{ revision: number }>(
+          "select revision from arcade_matches where id=$1",
+          [huntId],
+        )
+      ).rows[0].revision,
+      0,
+    );
+    await db.query(
+      "insert into game_rewards(user_id,couple_id,coins,xp) values($1,$2,10,0)",
+      [a, c],
+    );
+    await spend();
+    await spend();
+    assert.equal(
+      (
+        await db.query<{ coins: number }>(
+          "select coins from game_rewards where user_id=$1",
+          [a],
+        )
+      ).rows[0].coins,
+      5,
+    );
     await as(db, o);
     assert.equal(
       (await db.query("select * from arcade_matches")).rows.length,
@@ -181,3 +232,16 @@ test("Plugin transactions conserve wallets, retry exactly once, refund cancellat
   }
 });
 
+function ledgerMove(
+  s: ReturnType<typeof createLedger>,
+  m: Parameters<typeof applyLedgerMove>[1],
+  p: 0 | 1,
+) {
+  let next = applyLedgerMove(s, { ...m, serverNow: 1000 }, p);
+  if (next.status === "flipping") {
+    next = applyLedgerMove(next, { type: "flip", serverNow: 1100 }, 0);
+    next = applyLedgerMove(next, { type: "flip", serverNow: 1200 }, 1);
+    next = applyLedgerMove(next, { type: "reveal", serverNow: 2600 }, 0);
+  }
+  return next;
+}

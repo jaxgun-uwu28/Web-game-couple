@@ -26,19 +26,27 @@ export async function POST(req: Request) {
           ? "voice_messages"
           : b.kind === "postcard"
             ? "postcards"
-            : b.kind === "challenge"
-              ? "arcade_matches"
-              : "";
+            : b.kind === "heart-challenge"
+              ? "heart_challenges"
+              : b.kind === "challenge"
+                ? "arcade_matches"
+                : "";
     if (!table || typeof b.id !== "string") throw new Error("Invalid request");
     const r = await db
       .from(table)
-      .select(table === "arcade_matches" ? "host" : "sender_id")
+      .select(
+        table === "arcade_matches" || table === "heart_challenges"
+          ? "host"
+          : "sender_id",
+      )
       .eq("id", b.id)
       .single();
     if (
       r.error ||
       (r.data as unknown as { sender_id?: string; host?: string })[
-        table === "arcade_matches" ? "host" : "sender_id"
+        table === "arcade_matches" || table === "heart_challenges"
+          ? "host"
+          : "sender_id"
       ] !== data.user.id
     )
       return Response.json({ error: "Message unavailable." }, { status: 403 });

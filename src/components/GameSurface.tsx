@@ -1,4 +1,5 @@
 "use client";
+import { winningCells } from "@/lib/board-feel";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -65,6 +66,13 @@ export default function GameSurface({
   const s = game.state,
     definition = registry.find((g) => g.id === game.kind)!,
     finished = s.status !== "playing";
+  const winning = s.board
+    ? winningCells(
+        s.board,
+        game.kind === "tic" ? 3 : 7,
+        game.kind === "tic" ? 3 : 4,
+      )
+    : new Set<number>();
   const submitted = s.submitted?.includes(slot);
   useGameMusic(game.kind, musicActive && !finished);
   const questions =
@@ -133,8 +141,8 @@ export default function GameSurface({
             {s.board!.map((value, i) =>
               game.kind === "tic" ? (
                 <button
-                  key={i}
-                  className={`piece p${value}`}
+                  key={`${i}:${value}`}
+                  className={`piece p${value} ${finished && value && s.winner !== null ? (winning.has(i) ? "winning-piece" : s.winner !== value - 1 ? "losing-piece" : "") : ""}`}
                   aria-label={`Row ${Math.floor(i / 3) + 1}, column ${(i % 3) + 1}: ${value === 0 ? "empty" : names[value - 1]}`}
                   disabled={busy || finished || s.turn !== slot || value !== 0}
                   onClick={() => void move({ cell: i })}
@@ -143,8 +151,8 @@ export default function GameSurface({
                 </button>
               ) : (
                 <span
-                  key={i}
-                  className={`piece p${value}`}
+                  key={`${i}:${value}`}
+                  className={`piece p${value} ${winning.has(i) ? "winning-piece" : ""}`}
                   aria-label={`Row ${Math.floor(i / 7) + 1}, column ${(i % 7) + 1}: ${value === 0 ? "empty" : names[value - 1]}`}
                 >
                   {value === 1 ? "×" : value === 2 ? "○" : ""}

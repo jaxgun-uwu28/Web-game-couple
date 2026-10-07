@@ -30,3 +30,12 @@ Read the row relevant to the task, then follow actual imports. Paths are relativ
 Commands: `npm run dev` (localhost:3000), `npm run typecheck`, `npm test` (fixtures), `npm run build`, `npm run android:build`. Focused tests: `node --import ./tests/gemini-env.mjs --import tsx --test tests/<relevant>.test.ts`. Do not run `gemini:check` under the exhausted live-call allowance.
 
 Migrations and RLS are authoritative for online data access. Read later migrations that replace the affected RPC/policy. Tests use local fixtures/database emulation; they do not verify the hosted deployment.
+
+
+## Game-feel release — 2026-10-07
+
+Migrations 021–025 are owner-confirmed applied. Heartblast has challenge acceptance and durable 60-second reconnect handling. Rivalry includes losses, current/best streaks and replay-derived Heartblast comeback deficits, ordered by completion time for new results. Postcards add collection filters and smart replies; cassettes clean up preview URLs and decode missing waveform peaks; Settings offers reward-coin cosmetic unlocks.
+
+Shared game-feel/card engine: src/lib/game-feel.ts, cards.ts, board-feel.ts; PlayingCard, GameDie, StickerPicker and CasinoChip. Ledger uses private server-selected values, own tap-flip/roll, 20-second auto-flip, then suspense and resolution. Blackjack pure rules live in src/lib/plugin-games/blackjack.ts, UI in BlackjackTable.tsx, authoritative route in api/game/plugin. Wallet buy-ins/cash-outs are transactional; accepted notes cover requirements only, never add chips. Bonuses use remaining loser chips, rounded down and capped. Decks and opponent hole cards remain hidden. Ledger/BJ cannot overlap on one wallet; reset is blocked during either.
+
+Checks: 77 automated fixtures passed, including 1,000 conserved-chip sessions and repeat-run database/privacy/retry checks. Localhost Blackjack preview exercised bet/match/flip/stand/payout; layouts reviewed at 360, 768 and 1280. Chips are round and fallback card ranks readable; active table fits the available viewport. Real two-phone/network/push/microphone acceptance remains pending. Native release target: 1.0.3 (code 4).

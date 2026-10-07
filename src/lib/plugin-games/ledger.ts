@@ -1,3 +1,4 @@
+import type { Card } from "../cards";
 import { type Module, type Config, type Move, type Seat, other } from "./types";
 export type LedgerState = {
   config: Config;
@@ -11,9 +12,13 @@ export type LedgerState = {
   ties: number;
   wins: number[];
   values: number[] | null;
+  cards?: Card[];
+  flipped?: boolean[];
+  flipDeadline?: number;
+  revealAt?: number;
   revealed: string[][];
   winner: Seat | null;
-  status: "betting" | "reveal" | "done";
+  status: "betting" | "flipping" | "suspense" | "reveal" | "done";
   history: { winner: Seat; notes: string[]; pot: number }[];
 };
 export function createLedger(config: Config): LedgerState {
@@ -53,6 +58,31 @@ export function ledgerMove(input: LedgerState, move: Move, player: Seat) {
     s.ties = 0;
     return s;
   }
+  if (s.status === "flipping") {
+    const now = Number(move.serverNow);
+    if (!Number.isFinite(now)) throw new Error("Server time unavailable");
+    s.flipped ??= [false, false];
+    if (move.type === "flip") s.flipped[player] = true;
+    else if (move.type !== "reveal" || now < (s.flipDeadline || Infinity))
+      throw new Error("Tap your card or roll your die");
+    if (now >= (s.flipDeadline || Infinity)) s.flipped = [true, true];
+    if (s.flipped.every(Boolean)) {
+      s.status = "suspense";
+      s.revealAt =
+        now +
+        (s.config.duel === "d6" || s.config.duel === "d20" ? 1400 : 600) +
+        700;
+    }
+    return s;
+  }
+  if (s.status === "suspense") {
+    if (
+      move.type !== "reveal" ||
+      Number(move.serverNow) < (s.revealAt || Infinity)
+    )
+      throw new Error("The reveal is coming");
+    return resolveLedger(s);
+  }
   if (s.status !== "betting" || s.locked[player])
     throw new Error("Your bet is already sealed.");
   if (move.type !== "lock") throw new Error("Choose a bet to seal.");
@@ -81,33 +111,44 @@ export function ledgerMove(input: LedgerState, move: Move, player: Seat) {
     )
       throw new Error("The server has not drawn this round.");
     s.values = values as number[];
-    if (values[0] === values[1]) {
-      s.ties++;
-      s.locked = [false, false];
-      if (s.wallets.every((x) => x === 0)) {
-        // No coins remain: resolve with a fresh secure draw without another ante.
-        throw new Error("A tied empty wallet needs a fresh server draw.");
-      }
-      return s;
-    }
-    const winner = (values[0] > values[1] ? 0 : 1) as Seat,
-      loser = other(winner);
-    s.wallets[winner] += s.pot;
-    s.wins[winner]++;
-    s.history.push({ winner, notes: [...s.notes[loser]], pot: s.pot });
-    s.revealed[loser] = [...s.notes[loser]];
-    if (s.config.revealBoth) s.revealed[winner] = [...s.notes[winner]];
-    s.winner = winner;
-    s.pot = 0;
-    const rounds = Number(s.config.rounds) || 1,
-      over =
-        s.config.rounds === "broke"
-          ? s.wallets.some((x) => x === 0)
-          : s.wins[winner] >= Math.ceil(rounds / 2);
-    s.status = over ? "done" : "reveal";
+    s.cards = Array.isArray(move.serverCards)
+      ? (move.serverCards as Card[])
+      : undefined;
+    s.flipped = [false, false];
+    s.flipDeadline = Number(move.serverNow) + 20000;
+    s.status = "flipping";
   }
   if (s.wallets.reduce((a, b) => a + b, 0) + s.pot !== s.initial)
     throw new Error("Wallet conservation failed.");
+  return s;
+}
+export function resolveLedger(s: LedgerState) {
+  const values = s.values!;
+  if (values[0] === values[1]) {
+    s.ties++;
+    s.status = "betting";
+    s.locked = [false, false];
+    if (s.wallets.every((x) => x === 0)) {
+      // No coins remain: resolve with a fresh secure draw without another ante.
+      throw new Error("A tied empty wallet needs a fresh server draw.");
+    }
+    return s;
+  }
+  const winner = (values[0] > values[1] ? 0 : 1) as Seat,
+    loser = other(winner);
+  s.wallets[winner] += s.pot;
+  s.wins[winner]++;
+  s.history.push({ winner, notes: [...s.notes[loser]], pot: s.pot });
+  s.revealed[loser] = [...s.notes[loser]];
+  if (s.config.revealBoth) s.revealed[winner] = [...s.notes[winner]];
+  s.winner = winner;
+  s.pot = 0;
+  const rounds = Number(s.config.rounds) || 1,
+    over =
+      s.config.rounds === "broke"
+        ? s.wallets.some((x) => x === 0)
+        : s.wins[winner] >= Math.ceil(rounds / 2);
+  s.status = over ? "done" : "reveal";
   return s;
 }
 export const ledger: Module<LedgerState, unknown> = {
@@ -127,6 +168,12 @@ export const ledger: Module<LedgerState, unknown> = {
   getPublicState(s, viewer) {
     return {
       ...s,
+      cards: s.cards?.map((c, i) =>
+        s.status === "flipping" && i !== viewer ? null : c,
+      ),
+      values: s.values?.map((v, i) =>
+        s.status === "flipping" && i !== viewer ? null : v,
+      ),
       notes: s.notes.map((notes, i) => (i === viewer ? notes : s.revealed[i])),
       history: s.history,
       initial: undefined,

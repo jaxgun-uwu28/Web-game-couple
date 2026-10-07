@@ -1,4 +1,5 @@
 "use client";
+import StickerPicker from "./StickerPicker";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { ArrowLeft, Brain, Check, Users } from "lucide-react";
@@ -257,15 +258,13 @@ export default function BrainDuel({
                 <>
                   <fieldset disabled={busy}>
                     <legend>What are we curious about?</legend>
-                    <select
-                      aria-label="Topic"
+                    <StickerPicker
+                      label="Topic"
                       value={topic}
-                      onChange={(e) => setTopic(e.target.value)}
-                    >
-                      {[...topics, "Custom Topic"].map((t) => (
-                        <option key={t}>{t}</option>
-                      ))}
-                    </select>
+                      options={[...topics, "Custom Topic"]}
+                      onChange={setTopic}
+                    />
+
                     {topic === "Custom Topic" && (
                       <label>
                         Our topic
