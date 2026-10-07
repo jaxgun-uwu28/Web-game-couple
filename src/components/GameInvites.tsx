@@ -19,6 +19,7 @@ export default function GameInvites() {
       .from("arcade_matches")
       .select("id,game_id,host,status")
       .eq("couple_id", c.couple)
+      .neq("game_id", "syncsteps")
       .in("status", ["invited", "waiting"])
       .neq("host", c.user);
     setRows(!r.error ? r.data || [] : []);

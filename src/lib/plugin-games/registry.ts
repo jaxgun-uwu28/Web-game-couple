@@ -8,12 +8,12 @@ import type { Module, GameId } from "./types";
 export const pluginRegistry = [
   ledger,
   lostfound,
-  syncsteps,
   blackjack,
 ] as const;
 export const arcadeModules = [heartblast, ...pluginRegistry] as const;
 export function plugin(id: string): Module<never, unknown> {
-  const m = pluginRegistry.find((x) => x.id === id);
+  // Retain the engine for historical results; retired games cannot create rooms.
+  const m = [...pluginRegistry, syncsteps].find((x) => x.id === id);
   if (!m) throw new Error("Unknown game.");
   return m as Module<never, unknown>;
 }
