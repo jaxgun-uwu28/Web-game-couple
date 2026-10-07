@@ -56,7 +56,7 @@ create or replace function public.postcard_action(i uuid,a text,v text default '
  if not found or (r.sender_id<>auth.uid() and r.unlock_at>now()) then raise exception 'Open this postcard first';end if;
  if a='favorite' then update postcards set favorite_by=case when auth.uid()=any(favorite_by) then array_remove(favorite_by,auth.uid()) else array_append(favorite_by,auth.uid()) end where id=i;
  elsif a='react' and v in ('heart','sparkle','kiss') then update postcards set reactions=jsonb_set(reactions,array[auth.uid()::text],to_jsonb(v)) where id=i;
- elsif a='delete' and r.sender_id=auth.uid() then delete from postcards where id=i;
+ elsif a='delete' then delete from postcards where id=i;
  else raise exception 'Action unavailable';end if;
 end $$;
 revoke execute on function public.can_open_postcard_file(text),public.send_postcard(uuid,jsonb,text,text,text,timestamptz),public.open_postcard(uuid),public.postcard_action(uuid,text,text) from public,anon;

@@ -1,4 +1,4 @@
-export const voiceMimeTypes = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/ogg;codecs=opus'] as const;
+export const voiceMimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus', 'audio/ogg'] as const;
 export function supportedVoiceMime(supports: (mime: string) => boolean) {
   return voiceMimeTypes.find(supports) || null;
 }

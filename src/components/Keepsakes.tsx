@@ -1304,10 +1304,16 @@ export function Notes() {
       setTimeout(() => {
         if (r.state === "recording") r.stop();
       }, 60000);
-    } catch {
+    } catch (e) {
+      const isDenied =
+        e instanceof Error &&
+        (e.name === "NotAllowedError" ||
+          /permission denied|not allowed/i.test(e.message));
       await c.run(async () => {
         throw new Error(
-          "Microphone access is unavailable. You can write a note or attach a photo.",
+          isDenied
+            ? "Microphone access was denied. In your Android app or browser settings, allow microphone access, then try again."
+            : "Microphone access is unavailable. You can write a note or attach a photo.",
         );
       });
     }

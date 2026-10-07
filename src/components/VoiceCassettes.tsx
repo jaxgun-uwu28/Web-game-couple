@@ -278,13 +278,25 @@ export default function VoiceCassettes({
       );
       if (!mime)
         throw new Error("Voice recording is not supported in this browser.");
-      const s = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
+      let s: MediaStream;
+      try {
+        s = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+      } catch (err) {
+        if (
+          err instanceof Error &&
+          (err.name === "OverconstrainedError" || err.name === "TypeError")
+        ) {
+          s = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } else {
+          throw err;
+        }
+      }
       if (!wanted.current) {
         s.getTracks().forEach((t) => t.stop());
         return;
@@ -380,10 +392,16 @@ export default function VoiceCassettes({
       tick();
     } catch (e) {
       wanted.current = false;
+      const isDenied =
+        e instanceof Error &&
+        (e.name === "NotAllowedError" ||
+          /permission denied|not allowed/i.test(e.message));
       setError(
-        e instanceof Error
-          ? e.message
-          : "Microphone unavailable. Allow microphone access in your browser or Android app settings.",
+        isDenied
+          ? "Microphone access was denied. In your Android app or browser settings, allow microphone access, then try again."
+          : e instanceof Error
+            ? e.message
+            : "Microphone unavailable. Allow microphone access in your browser or Android app settings.",
       );
       music(owner.current, false);
     }

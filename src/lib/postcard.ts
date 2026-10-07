@@ -75,6 +75,7 @@ function heart(
   y: number,
   size: number,
 ) {
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(size) || size <= 0) return;
   g.beginPath();
   g.moveTo(x, y + size * 0.4);
   g.bezierCurveTo(
@@ -130,21 +131,222 @@ function stamp(
   g.fillText("WITH LOVE", x + 44, y + 92);
 }
 function motif(g: CanvasRenderingContext2D, kind: string, size = 35) {
+  if (!Number.isFinite(size) || size <= 0) return;
+  g.save();
   g.strokeStyle = "#50313F";
   g.lineWidth = 2;
-  g.beginPath();
-  if (kind === "star") {
-    for (let i = 0; i < 10; i++) {
-      const a = -Math.PI / 2 + (i * Math.PI) / 5,
-        r = i % 2 ? size * 0.45 : size;
-      const x = Math.cos(a) * r,
-        y = Math.sin(a) * r;
-      if (i) g.lineTo(x, y);
-      else g.moveTo(x, y);
+
+  if (kind === "sparkles" || kind === "star") {
+    g.fillStyle = "#FBBF24";
+    g.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = (i * Math.PI) / 4;
+      const r = i % 2 === 0 ? size : size * 0.35;
+      const px = Math.cos(a) * r,
+        py = Math.sin(a) * r;
+      if (i === 0) g.moveTo(px, py);
+      else g.lineTo(px, py);
     }
     g.closePath();
     g.fill();
     g.stroke();
+    g.fillStyle = "#FDE68A";
+    g.beginPath();
+    g.arc(-size * 0.6, -size * 0.55, size * 0.18, 0, Math.PI * 2);
+    g.arc(size * 0.65, size * 0.45, size * 0.14, 0, Math.PI * 2);
+    g.fill();
+    g.stroke();
+  } else if (kind === "rose") {
+    g.fillStyle = "#4ADE80";
+    g.beginPath();
+    g.ellipse(size * 0.65, size * 0.35, size * 0.35, size * 0.18, 0.6, 0, Math.PI * 2);
+    g.fill();
+    g.stroke();
+
+    g.fillStyle = "#E11D48";
+    for (let i = 0; i < 5; i++) {
+      const a = (i * Math.PI * 2) / 5;
+      g.beginPath();
+      g.arc(
+        Math.cos(a) * size * 0.45,
+        Math.sin(a) * size * 0.45,
+        size * 0.42,
+        0,
+        Math.PI * 2,
+      );
+      g.fill();
+      g.stroke();
+    }
+    g.fillStyle = "#FB7185";
+    g.beginPath();
+    g.arc(0, 0, size * 0.36, 0, Math.PI * 2);
+    g.fill();
+    g.stroke();
+    g.fillStyle = "#FFF1F2";
+    g.beginPath();
+    g.arc(-size * 0.08, -size * 0.08, size * 0.18, 0, Math.PI * 2);
+    g.fill();
+  } else if (kind === "kiss") {
+    g.fillStyle = "#F43F5E";
+    g.beginPath();
+    g.moveTo(-size, 0);
+    g.quadraticCurveTo(-size * 0.5, -size * 0.65, -size * 0.15, -size * 0.4);
+    g.lineTo(0, -size * 0.25);
+    g.lineTo(size * 0.15, -size * 0.4);
+    g.quadraticCurveTo(size * 0.5, -size * 0.65, size, 0);
+    g.quadraticCurveTo(0, size * 0.1, -size, 0);
+    g.closePath();
+    g.fill();
+    g.stroke();
+    g.beginPath();
+    g.moveTo(-size * 0.85, 0);
+    g.quadraticCurveTo(0, size * 0.85, size * 0.85, 0);
+    g.quadraticCurveTo(0, size * 0.1, -size * 0.85, 0);
+    g.closePath();
+    g.fill();
+    g.stroke();
+    g.fillStyle = "rgba(255, 255, 255, 0.45)";
+    g.beginPath();
+    g.ellipse(0, size * 0.35, size * 0.3, size * 0.1, 0, 0, Math.PI * 2);
+    g.fill();
+  } else if (kind === "letter") {
+    g.fillStyle = "#FFFBEB";
+    g.beginPath();
+    g.roundRect(-size, -size * 0.65, size * 2, size * 1.3, 6);
+    g.fill();
+    g.stroke();
+    g.beginPath();
+    g.moveTo(-size, -size * 0.65);
+    g.lineTo(0, size * 0.1);
+    g.lineTo(size, -size * 0.65);
+    g.stroke();
+    g.fillStyle = "#E11D48";
+    heart(g, 0, 0, size * 0.32);
+  } else if (kind === "ribbon") {
+    g.fillStyle = "#F472B6";
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.bezierCurveTo(-size * 0.5, -size * 0.7, -size, -size * 0.5, -size * 0.9, 0);
+    g.bezierCurveTo(-size, size * 0.5, -size * 0.5, size * 0.7, 0, 0);
+    g.fill();
+    g.stroke();
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.bezierCurveTo(size * 0.5, -size * 0.7, size, -size * 0.5, size * 0.9, 0);
+    g.bezierCurveTo(size, size * 0.5, size * 0.5, size * 0.7, 0, 0);
+    g.fill();
+    g.stroke();
+    g.beginPath();
+    g.moveTo(-size * 0.2, size * 0.1);
+    g.lineTo(-size * 0.6, size * 0.9);
+    g.lineTo(-size * 0.35, size * 0.75);
+    g.lineTo(-size * 0.05, size * 0.85);
+    g.lineTo(0, size * 0.15);
+    g.fill();
+    g.stroke();
+    g.beginPath();
+    g.moveTo(size * 0.2, size * 0.1);
+    g.lineTo(size * 0.6, size * 0.9);
+    g.lineTo(size * 0.35, size * 0.75);
+    g.lineTo(size * 0.05, size * 0.85);
+    g.lineTo(0, size * 0.15);
+    g.fill();
+    g.stroke();
+    g.fillStyle = "#DB2777";
+    g.beginPath();
+    g.arc(0, 0, size * 0.25, 0, Math.PI * 2);
+    g.fill();
+    g.stroke();
+  } else if (kind === "lock") {
+    g.fillStyle = "#F59E0B";
+    g.strokeStyle = "#78350F";
+    g.lineWidth = 4;
+    g.beginPath();
+    g.arc(0, -size * 0.3, size * 0.4, Math.PI, 0);
+    g.stroke();
+    g.lineWidth = 2;
+    g.fillStyle = "#F43F5E";
+    heart(g, 0, size * 0.2, size * 0.7);
+    g.fillStyle = "#3F2C35";
+    g.beginPath();
+    g.arc(0, size * 0.15, size * 0.12, 0, Math.PI * 2);
+    g.fill();
+    g.beginPath();
+    g.moveTo(-size * 0.07, size * 0.18);
+    g.lineTo(size * 0.07, size * 0.18);
+    g.lineTo(size * 0.05, size * 0.38);
+    g.lineTo(-size * 0.05, size * 0.38);
+    g.closePath();
+    g.fill();
+  } else if (kind === "gift") {
+    g.fillStyle = "#F472B6";
+    g.beginPath();
+    g.roundRect(-size * 0.75, -size * 0.4, size * 1.5, size * 1.25, 6);
+    g.fill();
+    g.stroke();
+    g.fillStyle = "#FBBF24";
+    g.fillRect(-size * 0.15, -size * 0.4, size * 0.3, size * 1.25);
+    g.strokeRect(-size * 0.15, -size * 0.4, size * 0.3, size * 1.25);
+    g.fillRect(-size * 0.75, size * 0.1, size * 1.5, size * 0.3);
+    g.strokeRect(-size * 0.75, size * 0.1, size * 1.5, size * 0.3);
+    g.beginPath();
+    g.arc(-size * 0.25, -size * 0.55, size * 0.2, 0, Math.PI * 2);
+    g.arc(size * 0.25, -size * 0.55, size * 0.2, 0, Math.PI * 2);
+    g.fill();
+    g.stroke();
+  } else if (kind === "bubble") {
+    g.fillStyle = "#FFF1F2";
+    g.beginPath();
+    g.roundRect(-size, -size * 0.65, size * 2, size * 1.2, 14);
+    g.fill();
+    g.stroke();
+    g.beginPath();
+    g.moveTo(-size * 0.3, size * 0.52);
+    g.lineTo(-size * 0.6, size * 0.95);
+    g.lineTo(-size * 0.05, size * 0.52);
+    g.fill();
+    g.stroke();
+    g.fillStyle = "#F43F5E";
+    heart(g, 0, -size * 0.05, size * 0.35);
+  } else if (kind === "bear") {
+    g.fillStyle = "#D97706";
+    g.beginPath();
+    g.arc(-size * 0.65, -size * 0.55, size * 0.35, 0, Math.PI * 2);
+    g.arc(size * 0.65, -size * 0.55, size * 0.35, 0, Math.PI * 2);
+    g.fill();
+    g.stroke();
+    g.fillStyle = "#FBCFE8";
+    g.beginPath();
+    g.arc(-size * 0.65, -size * 0.55, size * 0.18, 0, Math.PI * 2);
+    g.arc(size * 0.65, -size * 0.55, size * 0.18, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "#D97706";
+    g.beginPath();
+    g.arc(0, 0, size * 0.8, 0, Math.PI * 2);
+    g.fill();
+    g.stroke();
+    g.fillStyle = "#FDA4AF";
+    g.beginPath();
+    g.arc(-size * 0.45, size * 0.15, size * 0.15, 0, Math.PI * 2);
+    g.arc(size * 0.45, size * 0.15, size * 0.15, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "#FEF3C7";
+    g.beginPath();
+    g.ellipse(0, size * 0.18, size * 0.35, size * 0.25, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "#3F2C35";
+    g.beginPath();
+    g.arc(0, size * 0.1, size * 0.1, 0, Math.PI * 2);
+    g.fill();
+    g.beginPath();
+    g.arc(-size * 0.32, -size * 0.1, size * 0.09, 0, Math.PI * 2);
+    g.arc(size * 0.32, -size * 0.1, size * 0.09, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "#FFFFFF";
+    g.beginPath();
+    g.arc(-size * 0.34, -size * 0.13, size * 0.035, 0, Math.PI * 2);
+    g.arc(size * 0.3, -size * 0.13, size * 0.035, 0, Math.PI * 2);
+    g.fill();
   } else if (kind === "cloud") {
     g.roundRect(-size, -size * 0.25, size * 2, size * 0.8, size * 0.35);
     g.fill();
@@ -177,66 +379,12 @@ function motif(g: CanvasRenderingContext2D, kind: string, size = 35) {
     g.beginPath();
     g.arc(0, 0, size * 0.3, 0, Math.PI * 2);
     g.fill();
-  } else if (kind === "strawberry") {
-    g.fillStyle = "#F59AAF";
-    g.moveTo(-size, -size * 0.55);
-    g.bezierCurveTo(-size, size * 0.3, 0, size, 0, size);
-    g.bezierCurveTo(size, size * 0.2, size, -size * 0.5, -size, -size * 0.55);
-    g.fill();
-    g.stroke();
-    g.fillStyle = "#79AA88";
-    for (let i = -1; i < 2; i++) {
-      g.beginPath();
-      g.ellipse(
-        i * size * 0.25,
-        -size * 0.5,
-        size * 0.4,
-        size * 0.15,
-        i * 0.8,
-        0,
-        Math.PI * 2,
-      );
-      g.fill();
-    }
-    g.fillStyle = "#FFF8F3";
-    for (const [x, y] of [
-      [-0.45, 0],
-      [0.3, 0],
-      [-0.2, 0.35],
-      [0.2, 0.55],
-    ]) {
-      g.beginPath();
-      g.ellipse(x * size, y * size, 2, 4, 0, 0, Math.PI * 2);
-      g.fill();
-    }
-  } else if (kind === "bubble") {
-    g.roundRect(-size, -size * 0.6, size * 2, size * 1.2, 12);
-    g.fill();
-    g.stroke();
-    g.beginPath();
-    g.moveTo(-size * 0.3, size * 0.5);
-    g.lineTo(-size * 0.5, size);
-    g.lineTo(size * 0.2, size * 0.5);
-    g.fill();
-  } else if (kind === "ribbon") {
-    g.moveTo(0, 0);
-    g.lineTo(-size, -size * 0.6);
-    g.lineTo(-size, size * 0.6);
-    g.closePath();
-    g.moveTo(0, 0);
-    g.lineTo(size, -size * 0.6);
-    g.lineTo(size, size * 0.6);
-    g.closePath();
-    g.fill();
-    g.stroke();
-    g.beginPath();
-    g.arc(0, 0, 8, 0, Math.PI * 2);
-    g.fill();
   } else {
-    g.roundRect(-size, -size * 0.3, size * 2, size * 0.6, 3);
+    g.roundRect(-size, -size * 0.3, size * 2, size * 0.6, 4);
     g.fill();
     g.stroke();
   }
+  g.restore();
 }
 function strokes(base: CanvasRenderingContext2D, items: Stroke[]) {
   if (!items.length) return;
@@ -392,16 +540,35 @@ export function drawPostcard(
     g.restore();
     strokes(g, d.strokes);
     for (const s of d.stickers) {
+      if (!Number.isFinite(s.x) || !Number.isFinite(s.y)) continue;
+      const sScale = Number.isFinite(s.scale) && s.scale > 0 ? s.scale : 1;
+      const sRot = Number.isFinite(s.rotation) ? s.rotation : 0;
       g.save();
       g.translate(s.x, s.y);
-      g.rotate((s.rotation * Math.PI) / 180);
-      g.scale(s.scale * (s.flip ? -1 : 1), s.scale);
+      g.rotate((sRot * Math.PI) / 180);
+      g.scale(sScale * (s.flip ? -1 : 1), sScale);
       g.fillStyle =
-        s.kind === "cloud"
-          ? "#EAE1F5"
-          : s.kind === "star"
-            ? "#F7E6A6"
-            : "#F8C9D8";
+        s.kind === "sparkles"
+          ? "#FBBF24"
+          : s.kind === "rose"
+            ? "#E11D48"
+            : s.kind === "letter"
+              ? "#FFFBEB"
+              : s.kind === "ribbon" || s.kind === "gift"
+                ? "#F472B6"
+                : s.kind === "lock"
+                  ? "#F59E0B"
+                  : s.kind === "bear"
+                    ? "#D97706"
+                    : s.kind === "kiss"
+                      ? "#F43F5E"
+                      : s.kind === "bubble"
+                        ? "#FFF1F2"
+                        : s.kind === "cloud"
+                          ? "#EAE1F5"
+                          : s.kind === "star"
+                            ? "#F7E6A6"
+                            : "#F8C9D8";
       if (s.kind.startsWith("asset:") && assets[s.kind.slice(6)])
         g.drawImage(assets[s.kind.slice(6)], -40, -40, 80, 80);
       else if (s.kind === "heart") heart(g, 0, 0, 35);

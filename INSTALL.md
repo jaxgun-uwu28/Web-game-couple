@@ -20,7 +20,7 @@ The service worker caches the public app shell and static assets only. It never 
 
 ## Voice recording on Android
 
-The native manifest includes RECORD_AUDIO. Install the signed APK, open Notes, press the cassette record button, read the microphone prompt and allow microphone access. Android system Settings → Apps → Our Little Arcade → Permissions → Microphone can restore access after denial. The WebView loads the HTTPS Vercel origin; recording from an insecure LAN HTTP address is unsupported. Test a short recording, slide-left cancellation, slide-up lock, playback and interruption on the physical phone. Browser fixtures cannot verify Android permission handling or recording size. Native changes require `npm run android:build`; web-only cassette changes load from Vercel.
+The native manifest includes RECORD_AUDIO and MODIFY_AUDIO_SETTINGS. Install the signed APK, open Notes, press the cassette record button, read the microphone prompt and allow microphone access. Android system Settings → Apps → Our Little Arcade → Permissions → Microphone can restore access after denial. The WebView loads the HTTPS Vercel origin; recording from an insecure LAN HTTP address is unsupported. Test a short recording, slide-left cancellation, slide-up lock, playback and interruption on the physical phone. Browser fixtures cannot verify Android permission handling or recording size. Native changes require `npm run android:build`; web-only cassette changes load from Vercel.
 
 Offline cassettes and postcards are queued for the originating account and retry with stable IDs. Settings controls the shared storage cap (300 MB default). Postcards sealed for a future date remain inaccessible to the recipient until their server unlock time.
 

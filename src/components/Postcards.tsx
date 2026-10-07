@@ -12,6 +12,7 @@ import {
   Camera,
   ImagePlus,
   Pen,
+  Move,
   Type,
   Stamp,
   Undo2,
@@ -23,12 +24,13 @@ import {
   Copy,
   ArrowUp,
   FlipHorizontal,
-  Flower,
-  Cloud,
-  Square,
-  Cherry,
+  Flower2,
   Ribbon,
-  MessageCircle,
+  MessageCircleHeart,
+  Gift,
+  Smile,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useKeepsakes } from "./Keepsakes";
 import { Slot, useArtworkLibrary } from "./ArtSlots";
@@ -368,6 +370,12 @@ export default function Postcards({
             setEditor(true);
           }}
           refresh={load}
+          onDelete={(id) => {
+            if (c.preview) {
+              local.current.delete(id);
+              setRows((prev) => prev.filter((x) => x.id !== id));
+            }
+          }}
         />
       )}
     </section>
@@ -474,6 +482,7 @@ function PostcardEditor({
       zoom: number;
       rotation: number;
     } | null>(null),
+    [discarding, setDiscarding] = useState(false),
     docRef = useRef(doc),
     autosave = useRef(0);
   const photoRef = useRef(photo);
@@ -506,6 +515,13 @@ function PostcardEditor({
     if (!canvas.current) return;
     drawPostcard(canvas.current, doc, photo, step === 2, canvasArt);
   }, [doc, photo, step, canvasArt]);
+  useEffect(() => {
+    setTool("crop");
+    stroke.current = [];
+    drag.current = null;
+    pinch.current = null;
+    pointers.current.clear();
+  }, [step]);
   useEffect(() => {
     autosave.current = window.setTimeout(
       () =>
@@ -569,29 +585,48 @@ function PostcardEditor({
     pointers.current.set(e.pointerId, p);
     if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
       const s = doc.stickers.find((x) => x.id === selected);
       pinch.current = {
-        distance: Math.hypot(a.x - b.x, a.y - b.y),
-        angle: Math.atan2(b.y - a.y, b.x - a.x),
-        zoom: s?.scale || doc.photoTransform.zoom,
-        rotation: s?.rotation || 0,
+        distance: Math.max(10, Number.isFinite(dist) ? dist : 10),
+        angle: Number.isFinite(Math.atan2(b.y - a.y, b.x - a.x))
+          ? Math.atan2(b.y - a.y, b.x - a.x)
+          : 0,
+        zoom:
+          s && Number.isFinite(s.scale) && s.scale > 0
+            ? s.scale
+            : Number.isFinite(doc.photoTransform.zoom) && doc.photoTransform.zoom > 0
+              ? doc.photoTransform.zoom
+              : 1,
+        rotation: s && Number.isFinite(s.rotation) ? s.rotation : 0,
       };
       return;
     }
-    if (tool === "draw") {
+    const isDrawing = tool === "draw" && (step === 1 || step === 2);
+    if (isDrawing) {
       stroke.current = [p];
     } else {
       const s = [...doc.stickers]
         .reverse()
-        .find((x) => Math.hypot(x.x - p.x, x.y - p.y) < 50 * x.scale);
-      if (s) setSelected(s.id);
+        .find(
+          (x) =>
+            Math.hypot(x.x - p.x, x.y - p.y) <
+            50 * (Number.isFinite(x.scale) ? x.scale : 1),
+        );
+      if (s) {
+        setSelected(s.id);
+        setTool("crop");
+      }
       const text = doc.texts.find(
         (t) =>
           p.x >= t.x &&
           p.x <= t.x + t.text.length * t.size * 0.65 &&
           Math.abs(p.y - t.y) < t.size,
       );
-      if (text) setSelected(text.id);
+      if (text) {
+        setSelected(text.id);
+        setTool("crop");
+      }
       drag.current = { x: p.x, y: p.y, id: text?.id || s?.id || null };
       setHistory((x) => [...x.slice(-39), doc]);
     }
@@ -601,25 +636,44 @@ function PostcardEditor({
     const p = point(e);
     pointers.current.set(e.pointerId, p);
     if (pointers.current.size === 2 && pinch.current) {
-      const [a, b] = [...pointers.current.values()],
-        ratio = Math.hypot(a.x - b.x, a.y - b.y) / pinch.current.distance,
-        rotation =
-          pinch.current.rotation +
-          ((Math.atan2(b.y - a.y, b.x - a.x) - pinch.current.angle) * 180) /
-            Math.PI;
+      const [a, b] = [...pointers.current.values()];
+      if (!a || !b) return;
+      const currentDist = Math.hypot(a.x - b.x, a.y - b.y);
+      if (
+        !Number.isFinite(currentDist) ||
+        currentDist <= 0 ||
+        pinch.current.distance <= 0
+      )
+        return;
+      const ratio = currentDist / pinch.current.distance;
+      if (!Number.isFinite(ratio) || ratio <= 0) return;
+      const angle = Math.atan2(b.y - a.y, b.x - a.x);
+      const angleDiff = ((angle - pinch.current.angle) * 180) / Math.PI;
+      const rotation = Number.isFinite(angleDiff)
+        ? pinch.current.rotation + angleDiff
+        : pinch.current.rotation;
+      const baseZoom =
+        Number.isFinite(pinch.current.zoom) && pinch.current.zoom > 0
+          ? pinch.current.zoom
+          : 1;
+      const rawScale = baseZoom * ratio;
+      const newScale = Number.isFinite(rawScale)
+        ? Math.max(0.2, Math.min(4, rawScale))
+        : 1;
+
+      const isStickerSelected = doc.stickers.some((s) => s.id === selected);
       setDoc((d) =>
-        selected
+        isStickerSelected
           ? {
               ...d,
               stickers: d.stickers.map((s) =>
                 s.id === selected
                   ? {
                       ...s,
-                      scale: Math.max(
-                        0.2,
-                        Math.min(4, pinch.current!.zoom * ratio),
-                      ),
-                      rotation,
+                      scale: newScale,
+                      rotation: Number.isFinite(rotation)
+                        ? Math.round(rotation)
+                        : s.rotation,
                     }
                   : s,
               ),
@@ -628,28 +682,45 @@ function PostcardEditor({
               ...d,
               photoTransform: {
                 ...d.photoTransform,
-                zoom: Math.max(1, Math.min(4, pinch.current!.zoom * ratio)),
+                zoom: Math.max(1, Math.min(4, newScale)),
               },
             },
       );
       return;
     }
-    if (tool === "draw") {
+    const isDrawing = tool === "draw" && (step === 1 || step === 2);
+    if (isDrawing) {
       stroke.current.push(p);
       if (canvas.current) {
-        drawPostcard(
-          canvas.current,
-          {
-            ...doc,
-            [step === 2 ? "backStrokes" : "strokes"]: [
-              ...doc[step === 2 ? "backStrokes" : "strokes"],
-              { points: stroke.current, color: ink, size, pen },
-            ],
-          },
-          photo,
-          step === 2,
-          canvasArt,
-        );
+        if (step === 1) {
+          drawPostcard(
+            canvas.current,
+            {
+              ...doc,
+              strokes: [
+                ...doc.strokes,
+                { points: stroke.current, color: ink, size, pen },
+              ],
+            },
+            photo,
+            false,
+            canvasArt,
+          );
+        } else if (step === 2) {
+          drawPostcard(
+            canvas.current,
+            {
+              ...doc,
+              backStrokes: [
+                ...doc.backStrokes,
+                { points: stroke.current, color: ink, size, pen },
+              ],
+            },
+            null,
+            true,
+            canvasArt,
+          );
+        }
       }
       return;
     }
@@ -685,13 +756,28 @@ function PostcardEditor({
   }
   function up(e: React.PointerEvent<HTMLCanvasElement>) {
     pointers.current.delete(e.pointerId);
-    pinch.current = null;
-    drag.current = null;
+    if (pointers.current.size < 2) {
+      pinch.current = null;
+    }
+    if (pointers.current.size === 0) {
+      drag.current = null;
+    }
     if (stroke.current.length) {
-      const key = step === 2 ? "backStrokes" : "strokes";
-      change({
-        [key]: [...doc[key], { points: stroke.current, color: ink, size, pen }],
-      });
+      if (step === 1) {
+        change({
+          strokes: [
+            ...doc.strokes,
+            { points: stroke.current, color: ink, size, pen },
+          ],
+        });
+      } else if (step === 2) {
+        change({
+          backStrokes: [
+            ...doc.backStrokes,
+            { points: stroke.current, color: ink, size, pen },
+          ],
+        });
+      }
       stroke.current = [];
     }
   }
@@ -749,6 +835,8 @@ function PostcardEditor({
       setSealing(false);
     }
   }
+  const selectedSticker = doc.stickers.find((s) => s.id === selected);
+
   return (
     <dialog
       ref={dialog}
@@ -766,34 +854,106 @@ function PostcardEditor({
           <span>Sealed with a little love</span>
         </div>
       )}
-      <header>
-        <h1>A little postcard</h1>
-        <button
-          className="icon-button"
-          aria-label="Close studio"
-          onClick={close}
+
+      {discarding && (
+        <div
+          className="postcard-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Discard postcard"
         >
-          <X />
-        </button>
-      </header>
-      <nav aria-label="Postcard steps">
-        {["Photo", "Front", "Back", "Preview"].map((x, i) => (
+          <div className="postcard-confirm-dialog">
+            <h3>Discard this postcard?</h3>
+            <p>Your postcard draft and any changes will be deleted. This cannot be undone.</p>
+            <div className="postcard-confirm-actions">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setDiscarding(false)}
+              >
+                Keep editing
+              </button>
+              <button
+                type="button"
+                className="danger"
+                onClick={async () => {
+                  const { removeMedia } = await import("@/lib/media-outbox");
+                  await removeMedia(draftKey);
+                  photoRef.current?.close();
+                  setPhoto(null);
+                  photoBlob.current = null;
+                  setDoc(blankPostcard());
+                  setDiscarding(false);
+                  close();
+                }}
+              >
+                <Trash2 size={16} /> Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <header className="postcard-studio-header">
+        <div>
+          <h1>A little postcard</h1>
+          <p className="postcard-studio-step-hint">
+            Step {step + 1} of 4: {["Photo & Paper", "Decorate Front", "Note & Stamp", "Seal & Send"][step]}
+          </p>
+        </div>
+        <div className="postcard-studio-header-actions">
           <button
-            key={x}
-            aria-current={step === i ? "step" : undefined}
-            onClick={() => setStep(i)}
+            type="button"
+            className="secondary"
+            onClick={() => setDiscarding(true)}
+            title="Discard this postcard"
           >
-            {x}
+            <Trash2 size={16} /> Discard
           </button>
-        ))}
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Save draft and close studio"
+            onClick={close}
+            title="Close"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      </header>
+
+      <nav className="postcard-stepper" aria-label="Postcard steps">
+        {[
+          { label: "Photo & Paper", icon: Camera },
+          { label: "Front Decor", icon: Sparkles },
+          { label: "Note & Stamp", icon: Pen },
+          { label: "Preview & Send", icon: Mail },
+        ].map((item, i) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.label}
+              type="button"
+              className={`postcard-step-pill ${step === i ? "is-active" : ""}`}
+              aria-current={step === i ? "step" : undefined}
+              onClick={() => setStep(i)}
+            >
+              <Icon size={16} />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
       </nav>
+
       {error && <p role="alert">{error}</p>}
+
       <div
         className="postcard-canvas-wrap"
         style={{ maxWidth: `min(95vw,${doc.portrait ? 34 : 78}dvh,860px)` }}
       >
         <canvas
           ref={canvas}
+          style={{ touchAction: "none" }}
           aria-label={step === 2 ? "Back of postcard" : "Front of postcard"}
           onPointerDown={down}
           onPointerMove={move}
@@ -801,195 +961,245 @@ function PostcardEditor({
           onPointerCancel={up}
         />
       </div>
+
       <div className="postcard-dock">
-        {step === 0 ? (
-          <>
-            <label className="upload-button">
-              <ImagePlus size={20} /> Gallery
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  if (e.target.files?.[0]) void choose(e.target.files[0]);
-                }}
-              />
-            </label>
-            <label className="upload-button">
-              <Camera size={20} /> Camera
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={(e) => {
-                  if (e.target.files?.[0]) void choose(e.target.files[0]);
-                }}
-              />
-            </label>
-            <select
-              aria-label="Choose a Memories photo"
-              defaultValue=""
-              onChange={(e) => {
-                if (e.target.value)
-                  void c
-                    .signed(e.target.value)
-                    .then((u) => fetch(u))
-                    .then((r) => r.blob())
-                    .then(choose);
-              }}
-            >
-              <option value="">Use a Memories photo</option>
-              {c.memories
-                .filter((x) => x.image_path && !x.archived_at)
-                .map((x) => (
-                  <option key={x.id} value={x.image_path!}>
-                    {x.caption || new Date(x.created_at).toLocaleDateString()}
-                  </option>
-                ))}
-            </select>
-            <button
-              className="secondary"
-              onClick={() => {
-                setPhoto(null);
-                photoBlob.current = null;
-              }}
-            >
-              Plain paper
-            </button>
-            <select
-              aria-label="Paper pattern"
-              value={doc.pattern || "Plain"}
-              onChange={(e) => change({ pattern: e.target.value })}
-            >
-              {["Plain", "Dots", "Gingham", "Hearts"].map((pattern) => (
-                <option key={pattern}>{pattern}</option>
-              ))}
-            </select>
-            <label>
-              <input
-                type="checkbox"
-                checked={doc.portrait}
-                onChange={(e) => change({ portrait: e.target.checked })}
-              />{" "}
-              Portrait
-            </label>
-            <label>
-              Zoom
-              <input
-                type="range"
-                min={1}
-                max={4}
-                step={0.05}
-                value={doc.photoTransform.zoom}
-                onChange={(e) =>
-                  change({
-                    photoTransform: {
-                      ...doc.photoTransform,
-                      zoom: Number(e.target.value),
-                    },
-                  })
-                }
-              />
-            </label>
-          </>
-        ) : null}
-        {step === 1 && (
-          <>
-            <select
-              aria-label="Photo filter"
-              value={doc.filter}
-              onChange={(e) => change({ filter: e.target.value })}
-            >
-              {Object.keys(cardFilters).map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
-            <button
-              aria-pressed={tool === "draw"}
-              onClick={() => setTool(tool === "draw" ? "crop" : "draw")}
-            >
-              <Pen size={18} /> Draw
-            </button>
-            <select
-              aria-label="Pen style"
-              value={pen}
-              onChange={(e) => setPen(e.target.value)}
-            >
-              {[
-                "pen",
-                "marker",
-                "crayon",
-                "glitter",
-                "neon",
-                "hearts",
-                "eraser",
-              ].map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
-            <label>
-              Brush size
-              <input
-                type="range"
-                min={2}
-                max={40}
-                value={size}
-                onChange={(e) => setSize(Number(e.target.value))}
-              />
-            </label>
-            <input
-              type="color"
-              aria-label="Ink color"
-              value={ink}
-              onChange={(e) => setInk(e.target.value)}
-            />
-            <div className="postcard-stickers" aria-label="Add sticker">
-              {Object.keys(canvasArt)
-                .filter((name) => !name.startsWith("postcard-"))
-                .map((name) => (
+        {step === 0 && (
+          <div className="postcard-editor-section" style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className="postcard-tool-group">
+              <span className="postcard-group-title">Photo</span>
+              <div className="postcard-button-row">
+                <label className="upload-button">
+                  <ImagePlus size={18} /> Gallery
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) void choose(e.target.files[0]);
+                    }}
+                  />
+                </label>
+                <label className="upload-button">
+                  <Camera size={18} /> Camera
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) void choose(e.target.files[0]);
+                    }}
+                  />
+                </label>
+                <select
+                  aria-label="Choose a Memories photo"
+                  defaultValue=""
+                  onChange={(e) => {
+                    if (e.target.value)
+                      void c
+                        .signed(e.target.value)
+                        .then((u) => fetch(u))
+                        .then((r) => r.blob())
+                        .then(choose);
+                  }}
+                >
+                  <option value="">Memories photo...</option>
+                  {c.memories
+                    .filter((x) => x.image_path && !x.archived_at)
+                    .map((x) => (
+                      <option key={x.id} value={x.image_path!}>
+                        {x.caption || new Date(x.created_at).toLocaleDateString()}
+                      </option>
+                    ))}
+                </select>
+                {photo && (
                   <button
-                    key={name}
-                    aria-label={`Add ${name} sticker`}
-                    disabled={doc.stickers.length >= 60}
-                    onClick={() =>
+                    type="button"
+                    className="secondary"
+                    onClick={() => {
+                      setPhoto(null);
+                      photoBlob.current = null;
+                    }}
+                  >
+                    Remove photo
+                  </button>
+                )}
+              </div>
+              {photo && (
+                <label style={{ display: "flex", alignItems: "center", gap: 10, maxWidth: 360 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Zoom</span>
+                  <input
+                    type="range"
+                    min={1}
+                    max={4}
+                    step={0.05}
+                    value={doc.photoTransform.zoom}
+                    onChange={(e) =>
                       change({
-                        stickers: [
-                          ...doc.stickers,
-                          {
-                            id: crypto.randomUUID(),
-                            kind: `asset:${name}`,
-                            x: doc.portrait ? 300 : 450,
-                            y: doc.portrait ? 450 : 300,
-                            scale: 1,
-                            rotation: 0,
-                            flip: false,
-                          },
-                        ],
+                        photoTransform: {
+                          ...doc.photoTransform,
+                          zoom: Number(e.target.value),
+                        },
                       })
                     }
-                  >
-                    <Slot name={name} alt={name} />
-                  </button>
+                  />
+                </label>
+              )}
+            </div>
+
+            <div className="postcard-tool-group">
+              <span className="postcard-group-title">Paper Color & Pattern</span>
+              <div className="postcard-swatches" aria-label="Paper colors">
+                {swatches.map((x, i) => (
+                  <button
+                    key={x}
+                    type="button"
+                    style={{ background: x }}
+                    className={doc.paper === x ? "is-selected-swatch" : ""}
+                    aria-label={`Paper color ${i + 1}`}
+                    aria-pressed={doc.paper === x}
+                    onClick={() => change({ paper: x })}
+                  />
                 ))}
-              {[
-                ["heart", Heart],
-                ["star", Star],
-                ["flower", Flower],
-                ["cloud", Cloud],
-                ["strawberry", Cherry],
-                ["ribbon", Ribbon],
-                ["bubble", MessageCircle],
-                ["tape", Square],
-              ]
-                .filter(
-                  ([k]) =>
-                    k !== "star" || unlocked.includes("sticker-sparkles"),
-                )
-                .map(([k, I]) => {
-                  const Icon = I as typeof Heart;
-                  return (
+              </div>
+              <div className="postcard-button-row">
+                <select
+                  aria-label="Paper pattern"
+                  value={doc.pattern || "Plain"}
+                  onChange={(e) => change({ pattern: e.target.value })}
+                >
+                  {["Plain", "Dots", "Gingham", "Hearts"].map((pattern) => (
+                    <option key={pattern} value={pattern}>{pattern} Pattern</option>
+                  ))}
+                </select>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={doc.portrait}
+                    onChange={(e) => change({ portrait: e.target.checked })}
+                  />
+                  <span>Portrait orientation</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 1 && (
+          <div className="postcard-editor-section" style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className="postcard-tool-group">
+              <span className="postcard-group-title">Tools & Effects</span>
+              <div className="postcard-button-row">
+                <button
+                  type="button"
+                  aria-pressed={tool === "crop"}
+                  className={tool === "crop" ? "active" : "secondary"}
+                  onClick={() => setTool("crop")}
+                >
+                  <Move size={16} /> Select & Move
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={tool === "draw"}
+                  className={tool === "draw" ? "active" : "secondary"}
+                  onClick={() => setTool("draw")}
+                >
+                  <Pen size={16} /> Draw
+                </button>
+                <select
+                  aria-label="Photo filter"
+                  value={doc.filter}
+                  onChange={(e) => change({ filter: e.target.value })}
+                >
+                  {Object.keys(cardFilters).map((x) => (
+                    <option key={x} value={x}>{x} Filter</option>
+                  ))}
+                </select>
+                <select
+                  aria-label="Frame"
+                  value={doc.frame}
+                  onChange={(e) => change({ frame: e.target.value })}
+                >
+                  {[
+                    "Printed",
+                    "Scalloped",
+                    "Polaroid",
+                    "Film strip",
+                    "Torn edge",
+                    "Lace",
+                  ].map((x) => (
+                    <option key={x} value={x}>{x} Frame</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  aria-label="Undo design"
+                  disabled={!history.length}
+                  onClick={undo}
+                  title="Undo"
+                >
+                  <Undo2 size={16} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Redo design"
+                  disabled={!future.length}
+                  onClick={redo}
+                  title="Redo"
+                >
+                  <Redo2 size={16} />
+                </button>
+              </div>
+
+              {tool === "draw" && (
+                <div className="postcard-button-row" style={{ paddingTop: 6, borderTop: "1px dashed var(--line)" }}>
+                  <select
+                    aria-label="Pen style"
+                    value={pen}
+                    onChange={(e) => setPen(e.target.value)}
+                  >
+                    {[
+                      "pen",
+                      "marker",
+                      "crayon",
+                      "glitter",
+                      "neon",
+                      "hearts",
+                      "eraser",
+                    ].map((x) => (
+                      <option key={x} value={x}>{x.charAt(0).toUpperCase() + x.slice(1)}</option>
+                    ))}
+                  </select>
+                  <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+                    Size
+                    <input
+                      type="range"
+                      min={2}
+                      max={40}
+                      value={size}
+                      onChange={(e) => setSize(Number(e.target.value))}
+                    />
+                    <span>{size}px</span>
+                  </label>
+                  <input
+                    type="color"
+                    aria-label="Ink color"
+                    value={ink}
+                    onChange={(e) => setInk(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="postcard-tool-group">
+              <span className="postcard-group-title">Cute & Romantic Stickers (Tap to add)</span>
+              <div className="postcard-stickers-tray">
+                {Object.keys(canvasArt)
+                  .filter((name) => !name.startsWith("postcard-"))
+                  .map((name) => (
                     <button
-                      key={String(k)}
-                      aria-label={`Add ${k} sticker`}
+                      key={name}
+                      type="button"
+                      className="postcard-sticker-btn"
+                      aria-label={`Add ${name} sticker`}
                       disabled={doc.stickers.length >= 60}
                       onClick={() => {
                         const id = crypto.randomUUID();
@@ -998,7 +1208,7 @@ function PostcardEditor({
                             ...doc.stickers,
                             {
                               id,
-                              kind: String(k),
+                              kind: `asset:${name}`,
                               x: doc.portrait ? 300 : 450,
                               y: doc.portrait ? 450 : 300,
                               scale: 1,
@@ -1012,377 +1222,450 @@ function PostcardEditor({
                         tactile(20);
                       }}
                     >
-                      <Icon />
+                      <Slot name={name} alt={name} />
                     </button>
-                  );
-                })}
-            </div>
-            {selected && (
-              <>
-                <button
-                  aria-label="Duplicate sticker"
-                  onClick={() => {
-                    const s = doc.stickers.find((x) => x.id === selected);
-                    if (s && doc.stickers.length < 60)
+                  ))}
+                {[
+                  { id: "heart", label: "Heart", icon: Heart },
+                  { id: "sparkles", label: "Sparkles", icon: Sparkles, requiresUnlock: "sticker-sparkles" },
+                  { id: "rose", label: "Rose", icon: Flower2 },
+                  { id: "kiss", label: "Kiss", icon: Smile },
+                  { id: "letter", label: "Love Letter", icon: Mail },
+                  { id: "ribbon", label: "Ribbon Bow", icon: Ribbon },
+                  { id: "lock", label: "Love Lock", icon: Lock },
+                  { id: "gift", label: "Sweet Gift", icon: Gift },
+                  { id: "bubble", label: "Love Note", icon: MessageCircleHeart },
+                  { id: "bear", label: "Teddy Bear", icon: Smile },
+                ]
+                  .filter((s) => !s.requiresUnlock || unlocked.includes(s.requiresUnlock))
+                  .map((s) => {
+                    const Icon = s.icon;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        className="postcard-sticker-btn"
+                        aria-label={`Add ${s.label} sticker`}
+                        title={s.label}
+                        disabled={doc.stickers.length >= 60}
+                        onClick={() => {
+                          const id = crypto.randomUUID();
+                          change({
+                            stickers: [
+                              ...doc.stickers,
+                              {
+                                id,
+                                kind: s.id,
+                                x: doc.portrait ? 300 : 450,
+                                y: doc.portrait ? 450 : 300,
+                                scale: 1,
+                                rotation: 0,
+                                flip: false,
+                              },
+                            ],
+                          });
+                          setSelected(id);
+                          setTool("crop");
+                          tactile(20);
+                        }}
+                      >
+                        <Icon size={22} />
+                      </button>
+                    );
+                  })}
+              </div>
+
+              {selectedSticker && (
+                <div className="postcard-selected-sticker-bar">
+                  <button
+                    type="button"
+                    title="Duplicate sticker"
+                    onClick={() => {
+                      if (doc.stickers.length < 60)
+                        change({
+                          stickers: [
+                            ...doc.stickers,
+                            {
+                              ...selectedSticker,
+                              id: crypto.randomUUID(),
+                              x: selectedSticker.x + 20,
+                              y: selectedSticker.y + 20,
+                            },
+                          ],
+                        });
+                    }}
+                  >
+                    <Copy size={16} /> Duplicate
+                  </button>
+                  <button
+                    type="button"
+                    title="Flip sticker"
+                    onClick={() => editSticker({ flip: !selectedSticker.flip })}
+                  >
+                    <FlipHorizontal size={16} /> Flip
+                  </button>
+                  <button
+                    type="button"
+                    title="Bring sticker to front"
+                    onClick={() =>
                       change({
                         stickers: [
-                          ...doc.stickers,
-                          {
-                            ...s,
-                            id: crypto.randomUUID(),
-                            x: s.x + 20,
-                            y: s.y + 20,
-                          },
+                          ...doc.stickers.filter((x) => x.id !== selected),
+                          selectedSticker,
                         ],
+                      })
+                    }
+                  >
+                    <ArrowUp size={16} /> Front
+                  </button>
+                  <button
+                    type="button"
+                    className="danger-btn"
+                    title="Delete sticker"
+                    onClick={() => {
+                      change({
+                        stickers: doc.stickers.filter((x) => x.id !== selected),
                       });
-                  }}
+                      setSelected(null);
+                    }}
+                  >
+                    <Trash2 size={16} /> Delete
+                  </button>
+                  <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+                    Size
+                    <input
+                      type="range"
+                      min={0.2}
+                      max={4}
+                      step={0.1}
+                      value={selectedSticker.scale || 1}
+                      onChange={(e) => editSticker({ scale: Number(e.target.value) })}
+                    />
+                  </label>
+                  <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+                    Rotate
+                    <input
+                      type="range"
+                      min={-180}
+                      max={180}
+                      value={selectedSticker.rotation || 0}
+                      onChange={(e) => editSticker({ rotation: Number(e.target.value) })}
+                    />
+                  </label>
+                  <button type="button" className="secondary" onClick={() => setSelected(null)}>
+                    Done
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="postcard-tool-group">
+              <span className="postcard-group-title">Add Text Note</span>
+              <div className="postcard-button-row">
+                <input
+                  aria-label="Add postcard text"
+                  placeholder="Write a sweet phrase..."
+                  value={newText}
+                  maxLength={80}
+                  onChange={(e) => setNewText(e.target.value)}
+                  style={{ minWidth: 200, flex: 1 }}
+                />
+                <select
+                  aria-label="Text font"
+                  value={font}
+                  onChange={(e) => setFont(e.target.value)}
                 >
-                  <Copy />
-                </button>
+                  {["Caveat", "Fredoka", "Nunito Sans", "serif"].map((x) => (
+                    <option key={x} value={x}>{x}</option>
+                  ))}
+                </select>
+                <select
+                  aria-label="Text style"
+                  value={textStyle}
+                  onChange={(e) => setTextStyle(e.target.value)}
+                >
+                  {["plain", "outline", "highlight", "bubble", "label"].map((x) => (
+                    <option key={x} value={x}>{x.charAt(0).toUpperCase() + x.slice(1)}</option>
+                  ))}
+                </select>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+                  <input
+                    type="checkbox"
+                    checked={curve}
+                    onChange={(e) => setCurve(e.target.checked)}
+                  />
+                  Curved
+                </label>
                 <button
-                  aria-label="Delete sticker"
+                  type="button"
+                  disabled={!newText.trim()}
                   onClick={() => {
                     change({
-                      stickers: doc.stickers.filter((x) => x.id !== selected),
+                      texts: [
+                        ...doc.texts,
+                        {
+                          id: crypto.randomUUID(),
+                          text: newText,
+                          x: 80,
+                          y: 500,
+                          color: ink,
+                          size: 36,
+                          font,
+                          style: textStyle,
+                          curve,
+                        },
+                      ],
                     });
-                    setSelected(null);
+                    setNewText("");
                   }}
                 >
-                  <Trash2 />
+                  <Type size={16} /> Add text
                 </button>
-                <button
-                  aria-label="Bring sticker to front"
-                  onClick={() =>
-                    change({
-                      stickers: [
-                        ...doc.stickers.filter((x) => x.id !== selected),
-                        ...doc.stickers.filter((x) => x.id === selected),
-                      ],
-                    })
-                  }
-                >
-                  <ArrowUp />
-                </button>
-                <button
-                  aria-label="Flip sticker"
-                  onClick={() =>
-                    editSticker({
-                      flip: !doc.stickers.find((x) => x.id === selected)?.flip,
-                    })
-                  }
-                >
-                  <FlipHorizontal />
-                </button>
-                <label>
-                  Sticker size
-                  <input
-                    type="range"
-                    min={0.2}
-                    max={4}
-                    step={0.1}
-                    value={
-                      doc.stickers.find((x) => x.id === selected)?.scale || 1
-                    }
-                    onChange={(e) =>
-                      editSticker({ scale: Number(e.target.value) })
-                    }
-                  />
-                </label>
-                <label>
-                  Sticker rotation
-                  <input
-                    type="range"
-                    min={-180}
-                    max={180}
-                    value={
-                      doc.stickers.find((x) => x.id === selected)?.rotation || 0
-                    }
-                    onChange={(e) =>
-                      editSticker({ rotation: Number(e.target.value) })
-                    }
-                  />
-                </label>
-              </>
-            )}
-            <input
-              aria-label="Add postcard text"
-              value={newText}
-              maxLength={80}
-              onChange={(e) => setNewText(e.target.value)}
-            />
-            <select
-              aria-label="Text font"
-              value={font}
-              onChange={(e) => setFont(e.target.value)}
-            >
-              {["Caveat", "Fredoka", "Nunito Sans", "serif"].map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
-            <select
-              aria-label="Text style"
-              value={textStyle}
-              onChange={(e) => setTextStyle(e.target.value)}
-            >
-              {["plain", "outline", "highlight", "bubble", "label"].map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
-            <label>
-              <input
-                type="checkbox"
-                checked={curve}
-                onChange={(e) => setCurve(e.target.checked)}
-              />{" "}
-              Curved text
-            </label>
-            <button
-              disabled={!newText.trim()}
-              onClick={() => {
-                change({
-                  texts: [
-                    ...doc.texts,
-                    {
-                      id: crypto.randomUUID(),
-                      text: newText,
-                      x: 80,
-                      y: 500,
-                      color: ink,
-                      size: 36,
-                      font,
-                      style: textStyle,
-                      curve,
-                    },
-                  ],
-                });
-                setNewText("");
-              }}
-            >
-              <Type size={18} /> Add text
-            </button>
-            {doc.texts.map((text) => (
-              <details key={text.id}>
-                <summary>{text.text}</summary>
-                <label>
-                  Text
-                  <input
-                    value={text.text}
-                    maxLength={80}
-                    onChange={(e) =>
-                      change({
-                        texts: doc.texts.map((t) =>
-                          t.id === text.id ? { ...t, text: e.target.value } : t,
-                        ),
-                      })
-                    }
-                  />
-                </label>
-                <label>
-                  Across
-                  <input
-                    type="range"
-                    min={20}
-                    max={doc.portrait ? 550 : 850}
-                    value={text.x}
-                    onChange={(e) =>
-                      change({
-                        texts: doc.texts.map((t) =>
-                          t.id === text.id
-                            ? { ...t, x: Number(e.target.value) }
-                            : t,
-                        ),
-                      })
-                    }
-                  />
-                </label>
-                <label>
-                  Down
-                  <input
-                    type="range"
-                    min={30}
-                    max={doc.portrait ? 850 : 550}
-                    value={text.y}
-                    onChange={(e) =>
-                      change({
-                        texts: doc.texts.map((t) =>
-                          t.id === text.id
-                            ? { ...t, y: Number(e.target.value) }
-                            : t,
-                        ),
-                      })
-                    }
-                  />
-                </label>
-                <button
-                  onClick={() =>
-                    change({ texts: doc.texts.filter((t) => t.id !== text.id) })
-                  }
-                >
-                  Remove text
-                </button>
-              </details>
-            ))}
-            <select
-              aria-label="Frame"
-              value={doc.frame}
-              onChange={(e) => change({ frame: e.target.value })}
-            >
-              {[
-                "Printed",
-                "Scalloped",
-                "Polaroid",
-                "Film strip",
-                "Torn edge",
-                "Lace",
-              ].map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
-          </>
+              </div>
+
+              {doc.texts.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+                  {doc.texts.map((text) => (
+                    <div key={text.id} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--paper)", border: "1px solid var(--line)", borderRadius: 8, padding: "4px 8px", fontSize: 13 }}>
+                      <span>{text.text}</span>
+                      <button
+                        type="button"
+                        style={{ padding: "2px 6px", fontSize: 11 }}
+                        className="danger-btn"
+                        title="Remove text"
+                        onClick={() => change({ texts: doc.texts.filter((t) => t.id !== text.id) })}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         )}
+
         {step === 2 && (
-          <>
-            <label>
-              Your message
-              <textarea
-                maxLength={280}
-                value={doc.message}
-                onChange={(e) => change({ message: e.target.value })}
-              />
-              <span>{doc.message.length}/280</span>
-            </label>
-            <label>
-              Place
-              <input
-                maxLength={60}
-                value={doc.place}
-                onChange={(e) => change({ place: e.target.value })}
-              />
-            </label>
-            <button
-              aria-pressed={tool === "draw"}
-              onClick={() => setTool(tool === "draw" ? "crop" : "draw")}
-            >
-              <Pen size={18} /> Draw your message
-            </button>
-            <select
-              aria-label="Stamp"
-              value={doc.stamp}
-              onChange={(e) => change({ stamp: e.target.value })}
-            >
-              {(unlocked.includes("postcard-stamps")
-                ? ["heart", "flower", "star", "cloud"]
-                : ["heart"]
-              ).map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-              {Object.keys(canvasArt)
-                .filter(
-                  (x) =>
-                    x.startsWith("postcard-stamp-") ||
-                    artwork[x]?.original?.includes("/stickers/"),
-                )
-                .map((x) => (
-                  <option key={x} value={x}>
-                    {x
-                      .replace(/^postcard-stamp-/, "Stamp ")
-                      .replaceAll("-", " ")}
-                  </option>
-                ))}
-            </select>
-            <label>
-              <input
-                type="checkbox"
-                checked={doc.frontStamp}
-                onChange={(e) => change({ frontStamp: e.target.checked })}
-              />{" "}
-              Stamp on front too
-            </label>
-          </>
-        )}
-        {step === 3 && (
-          <>
-            <fieldset className="postcard-swatches">
-              <legend>Envelope color</legend>
-              {swatches
-                .filter((x, i) => i < 2 || unlocked.includes("envelope-colors"))
-                .map((color, i) => (
-                  <button
-                    key={color}
-                    style={{ background: color }}
-                    aria-label={`Envelope color ${i + 1}`}
-                    aria-pressed={envelope === color}
-                    onClick={() => setEnvelope(color)}
+          <div className="postcard-editor-section" style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className="postcard-tool-group">
+              <span className="postcard-group-title">Your Handwritten Message</span>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <textarea
+                  maxLength={280}
+                  placeholder="Write your sweet message or love note here..."
+                  value={doc.message}
+                  onChange={(e) => change({ message: e.target.value })}
+                  style={{ width: "100%", minHeight: 120, padding: 12, borderRadius: 12 }}
+                />
+                <span style={{ fontSize: 12, textAlign: "right", color: "var(--ink)", opacity: 0.7 }}>
+                  {doc.message.length} / 280 characters
+                </span>
+              </label>
+            </div>
+
+            <div className="postcard-tool-group">
+              <span className="postcard-group-title">Place & Stamp</span>
+              <div className="postcard-button-row">
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 8, flex: 1, minWidth: 200 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>Sent from</span>
+                  <input
+                    maxLength={60}
+                    placeholder="Where are you? (e.g. Under the stars)"
+                    value={doc.place}
+                    onChange={(e) => change({ place: e.target.value })}
+                    style={{ flex: 1 }}
                   />
-                ))}
-            </fieldset>
-            <button
-              onClick={() => {
-                if (canvas.current)
-                  drawPostcard(
-                    canvas.current,
-                    doc,
-                    photo,
-                    canvas.current.dataset.back !== "true",
-                  );
-                if (canvas.current)
-                  canvas.current.dataset.back =
-                    canvas.current.dataset.back === "true" ? "false" : "true";
-              }}
-            >
-              <RotateCcw size={18} /> Flip preview
-            </button>
-            <label>
-              Open on a date
-              <input
-                type="datetime-local"
-                value={unlock}
-                onChange={(e) => setUnlock(e.target.value)}
-              />
-            </label>
-            <button disabled={busy} onClick={() => void seal()}>
-              <Send size={18} /> {busy ? "Sealing…" : "Seal and send"}
-            </button>
-          </>
+                </label>
+                <select
+                  aria-label="Stamp"
+                  value={doc.stamp}
+                  onChange={(e) => change({ stamp: e.target.value })}
+                >
+                  {[
+                    { id: "heart", label: "Heart Stamp" },
+                    { id: "rose", label: "Rose Stamp" },
+                    { id: "sparkles", label: "Sparkles Stamp" },
+                    { id: "letter", label: "Love Letter Stamp" },
+                  ].map((s) => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
+                  {Object.keys(canvasArt)
+                    .filter(
+                      (x) =>
+                        x.startsWith("postcard-stamp-") ||
+                        artwork[x]?.original?.includes("/stickers/"),
+                    )
+                    .map((x) => (
+                      <option key={x} value={x}>
+                        {x
+                          .replace(/^postcard-stamp-/, "Stamp ")
+                          .replaceAll("-", " ")}
+                      </option>
+                    ))}
+                </select>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={doc.frontStamp}
+                    onChange={(e) => change({ frontStamp: e.target.checked })}
+                  />
+                  <span>Show stamp on front too</span>
+                </label>
+              </div>
+
+              <div className="postcard-button-row" style={{ paddingTop: 8, borderTop: "1px dashed var(--line)" }}>
+                <button
+                  type="button"
+                  aria-pressed={tool === "draw"}
+                  className={tool === "draw" ? "active" : "secondary"}
+                  onClick={() => setTool(tool === "draw" ? "crop" : "draw")}
+                >
+                  <Pen size={16} /> {tool === "draw" ? "Drawing on back active" : "Draw doodle on back"}
+                </button>
+                {tool === "draw" && (
+                  <>
+                    <select
+                      aria-label="Pen style"
+                      value={pen}
+                      onChange={(e) => setPen(e.target.value)}
+                    >
+                      {["pen", "marker", "crayon", "glitter", "neon", "hearts", "eraser"].map((x) => (
+                        <option key={x} value={x}>{x.charAt(0).toUpperCase() + x.slice(1)}</option>
+                      ))}
+                    </select>
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+                      Size
+                      <input
+                        type="range"
+                        min={2}
+                        max={40}
+                        value={size}
+                        onChange={(e) => setSize(Number(e.target.value))}
+                      />
+                      <span>{size}px</span>
+                    </label>
+                    <input
+                      type="color"
+                      aria-label="Ink color"
+                      value={ink}
+                      onChange={(e) => setInk(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      disabled={!doc.backStrokes?.length}
+                      onClick={() => change({ backStrokes: doc.backStrokes.slice(0, -1) })}
+                      title="Undo stroke"
+                    >
+                      <Undo2 size={16} /> Undo doodle
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         )}
-        <div className="postcard-swatches">
-          {swatches.map((x, i) => (
-            <button
-              key={x}
-              style={{ background: x }}
-              aria-label={`Paper color ${i + 1}`}
-              onClick={() => change({ paper: x })}
-            />
-          ))}
-        </div>
+
+        {step === 3 && (
+          <div className="postcard-editor-section" style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className="postcard-tool-group">
+              <span className="postcard-group-title">Envelope & Reveal</span>
+              <fieldset className="postcard-swatches" style={{ border: 0, padding: 0 }}>
+                <legend style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Envelope color</legend>
+                {swatches
+                  .filter((x, i) => i < 2 || unlocked.includes("envelope-colors"))
+                  .map((color, i) => (
+                    <button
+                      key={color}
+                      type="button"
+                      style={{ background: color }}
+                      className={envelope === color ? "is-selected-swatch" : ""}
+                      aria-label={`Envelope color ${i + 1}`}
+                      aria-pressed={envelope === color}
+                      onClick={() => setEnvelope(color)}
+                    />
+                  ))}
+              </fieldset>
+
+              <div className="postcard-button-row" style={{ marginTop: 8 }}>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => {
+                    if (canvas.current)
+                      drawPostcard(
+                        canvas.current,
+                        doc,
+                        photo,
+                        canvas.current.dataset.back !== "true",
+                        canvasArt,
+                      );
+                    if (canvas.current)
+                      canvas.current.dataset.back =
+                        canvas.current.dataset.back === "true" ? "false" : "true";
+                  }}
+                >
+                  <RotateCcw size={18} /> Flip card preview
+                </button>
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+                  <span>Open on a date (optional)</span>
+                  <input
+                    type="datetime-local"
+                    value={unlock}
+                    onChange={(e) => setUnlock(e.target.value)}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="postcard-footer-nav">
         <button
-          aria-label="Undo design"
-          disabled={!history.length}
-          onClick={undo}
+          type="button"
+          className="secondary"
+          disabled={step === 0}
+          onClick={() => setStep((s) => Math.max(0, s - 1))}
         >
-          <Undo2 />
+          <ChevronLeft size={18} /> Previous
         </button>
-        <button
-          aria-label="Redo design"
-          disabled={!future.length}
-          onClick={redo}
-        >
-          <Redo2 />
-        </button>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--cherry)" }}>
+          Step {step + 1} of 4
+        </span>
+        {step < 3 ? (
+          <button
+            type="button"
+            onClick={() => setStep((s) => Math.min(3, s + 1))}
+          >
+            Next: {["Front Decor", "Note & Stamp", "Preview & Send"][step]} <ChevronRight size={18} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="postcard-hero-send"
+            disabled={busy}
+            onClick={() => void seal()}
+          >
+            <Send size={18} /> {busy ? "Sealing with love…" : "Seal & Send with Love"}
+          </button>
+        )}
       </div>
     </dialog>
   );
 }
+
 function PostcardViewer({
   row,
   close,
   reply,
   refresh,
+  onDelete,
 }: {
   row: Card;
   close: () => void;
   reply: () => void;
   refresh: () => Promise<void>;
+  onDelete?: (id: string) => void;
 }) {
   const c = useKeepsakes(),
     dialog = useRef<HTMLDialogElement | null>(null),
@@ -1391,6 +1674,7 @@ function PostcardViewer({
     [opening, setOpening] = useState(true),
     frontLayers = useRef<HTMLCanvasElement | null>(null),
     [layered, setLayered] = useState(false),
+    [deleting, setDeleting] = useState(false),
     [error, setError] = useState("");
   useEffect(() => {
     if (opening || back || !frontLayers.current || row.layers?.version !== 1)
@@ -1586,16 +1870,63 @@ function PostcardViewer({
         >
           <Download size={18} /> Download
         </button>
-        {["heart", "sparkle", "kiss"].map((x) => (
-          <button
-            key={x}
-            aria-label={`React ${x}`}
-            onClick={() => void action("react", x)}
-          >
-            {x === "sparkle" ? <Sparkles /> : <Heart />}
-          </button>
-        ))}
+        <button
+          className="secondary danger-btn"
+          onClick={() => setDeleting(true)}
+        >
+          <Trash2 size={18} /> Delete
+        </button>
       </div>
+      {deleting && (
+        <div
+          className="postcard-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Delete postcard"
+        >
+          <div className="postcard-confirm-dialog">
+            <h3>Delete this postcard?</h3>
+            <p>
+              This postcard will be permanently deleted from your postcard box.
+            </p>
+            <div className="postcard-confirm-actions">
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => setDeleting(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="danger"
+                onClick={async () => {
+                  if (c.preview) {
+                    onDelete?.(row.id);
+                    setDeleting(false);
+                    close();
+                    return;
+                  }
+                  const r = await c.db!.rpc("postcard_action", {
+                    i: row.id,
+                    a: "delete",
+                  });
+                  if (r.error) {
+                    setError(r.error.message);
+                    setDeleting(false);
+                  } else {
+                    await refresh();
+                    setDeleting(false);
+                    close();
+                  }
+                }}
+              >
+                <Trash2 size={16} /> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </dialog>
   );
 }

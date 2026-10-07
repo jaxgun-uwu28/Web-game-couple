@@ -151,6 +151,7 @@ export default function InstallSupport({
   const [preferencesReady, setPreferencesReady] = useState(preview),
     [loadError, setLoadError] = useState(""),
     [loadVersion, setLoadVersion] = useState(0);
+  const savedQuietHours = useRef({ start: 22, end: 8 });
   const native = Capacitor.isNativePlatform();
   useEffect(() => {
     const handler = (e: Event) => {
@@ -183,7 +184,18 @@ export default function InstallSupport({
           );
           return;
         }
-        setPrefs(r.data ? (r.data as Preferences) : defaults);
+        if (r.data) {
+          const loaded = r.data as Preferences;
+          setPrefs(loaded);
+          if (loaded.quiet_start !== loaded.quiet_end) {
+            savedQuietHours.current = {
+              start: loaded.quiet_start,
+              end: loaded.quiet_end,
+            };
+          }
+        } else {
+          setPrefs(defaults);
+        }
         setPreferencesReady(true);
       });
     return () => {
@@ -467,41 +479,88 @@ export default function InstallSupport({
               }
             </label>
           ))}
-          <div className="form-pair">
-            <label>
-              Quiet hours start
-              <select
-                value={prefs.quiet_start}
-                onChange={(e) =>
+          <label>
+            <input
+              type="checkbox"
+              checked={prefs.quiet_start !== prefs.quiet_end}
+              onChange={(e) => {
+                const enable = e.target.checked;
+                if (enable) {
+                  const s =
+                    savedQuietHours.current.start ===
+                    savedQuietHours.current.end
+                      ? 22
+                      : savedQuietHours.current.start;
+                  const end =
+                    savedQuietHours.current.end === s
+                      ? 8
+                      : savedQuietHours.current.end;
                   setPrefs((p) => ({
                     ...p,
-                    quiet_start: Number(e.target.value),
-                  }))
+                    quiet_start: s,
+                    quiet_end: end,
+                  }));
+                } else {
+                  if (prefs.quiet_start !== prefs.quiet_end) {
+                    savedQuietHours.current = {
+                      start: prefs.quiet_start,
+                      end: prefs.quiet_end,
+                    };
+                  }
+                  setPrefs((p) => ({
+                    ...p,
+                    quiet_end: p.quiet_start,
+                  }));
                 }
-              >
-                {Array.from({ length: 24 }, (_, n) => (
-                  <option key={n} value={n}>
-                    {String(n).padStart(2, "0")}:00
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Quiet hours end
-              <select
-                value={prefs.quiet_end}
-                onChange={(e) =>
-                  setPrefs((p) => ({ ...p, quiet_end: Number(e.target.value) }))
-                }
-              >
-                {Array.from({ length: 24 }, (_, n) => (
-                  <option key={n} value={n}>
-                    {String(n).padStart(2, "0")}:00
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+              }}
+            />{" "}
+            Quiet hours
+          </label>
+          {prefs.quiet_start !== prefs.quiet_end ? (
+            <div className="form-pair">
+              <label>
+                Quiet hours start
+                <select
+                  value={prefs.quiet_start}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    savedQuietHours.current.start = val;
+                    setPrefs((p) => ({
+                      ...p,
+                      quiet_start: val,
+                    }));
+                  }}
+                >
+                  {Array.from({ length: 24 }, (_, n) => (
+                    <option key={n} value={n}>
+                      {String(n).padStart(2, "0")}:00
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Quiet hours end
+                <select
+                  value={prefs.quiet_end}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    savedQuietHours.current.end = val;
+                    setPrefs((p) => ({ ...p, quiet_end: val }));
+                  }}
+                >
+                  {Array.from({ length: 24 }, (_, n) => (
+                    <option key={n} value={n}>
+                      {String(n).padStart(2, "0")}:00
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          ) : (
+            <p className="hint">
+              Quiet hours are turned off. Notifications will arrive at any time.
+            </p>
+          )}
           <label>
             Timezone
             <input

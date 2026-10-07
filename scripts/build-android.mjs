@@ -63,4 +63,8 @@ for (const type of ["debug", "release"])
     `android/app/build/outputs/apk/${type}/app-${type}.apk`,
     `dist-apk/our-little-arcade-${type}.apk`,
   );
+await copyFile(
+  "android/app/build/outputs/apk/release/app-release.apk",
+  "dist-apk/our-little-arcade-1.0.5.apk",
+);
 console.log("Debug and signed release APKs saved in dist-apk.");
