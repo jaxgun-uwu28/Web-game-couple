@@ -16,6 +16,8 @@ import { Game, GameKind, registry, trivia, know } from "@/lib/games";
 import { triviaV2, knowV2 } from "@/lib/extra-games";
 import type { Stroke } from "./Doodle";
 import { useGameMusic } from "./MusicControls";
+import { playGameSound } from "@/lib/game-feel";
+import { tactile } from "@/lib/music";
 const Doodle = dynamic(() => import("./Doodle"), {
   loading: () => <p>Opening the sketchbook…</p>,
 });
@@ -58,6 +60,11 @@ export default function GameSurface({
   const [guess, setGuess] = useState(""),
     [self, setSelf] = useState(""),
     [prediction, setPrediction] = useState("");
+  function responsiveMove(action: Record<string, unknown>) {
+    playGameSound("button-tap");
+    void tactile(10);
+    return move(action);
+  }
   useEffect(() => {
     setSelf("");
     setPrediction("");
@@ -127,7 +134,7 @@ export default function GameSurface({
                   disabled={
                     busy || finished || s.turn !== slot || s.board![i] !== 0
                   }
-                  onClick={() => void move({ cell: i })}
+                  onClick={() => void responsiveMove({ cell: i })}
                 >
                   {i + 1}
                   <span>↓</span>
@@ -143,7 +150,7 @@ export default function GameSurface({
                   className={`piece p${value} ${finished && value && s.winner !== null ? (winning.has(i) ? "winning-piece" : s.winner !== value - 1 ? "losing-piece" : "") : ""}`}
                   aria-label={`Row ${Math.floor(i / 3) + 1}, column ${(i % 3) + 1}: ${value === 0 ? "empty" : names[value - 1]}`}
                   disabled={busy || finished || s.turn !== slot || value !== 0}
-                  onClick={() => void move({ cell: i })}
+                  onClick={() => void responsiveMove({ cell: i })}
                 >
                   {value === 1 ? "×" : value === 2 ? "○" : ""}
                 </button>
@@ -185,7 +192,7 @@ export default function GameSurface({
               className="inline-form"
               onSubmit={(e) => {
                 e.preventDefault();
-                void move({ guess })
+                void responsiveMove({ guess })
                   .then(() => setGuess(""))
                   .catch(() => {});
               }}
@@ -276,14 +283,14 @@ export default function GameSurface({
               (game.kind === "know" && self === "")
             }
             onClick={() =>
-              void move(
+              void responsiveMove(
                 game.kind === "know"
                   ? { self, guess: prediction }
                   : { answer: prediction },
               ).catch(() => {})
             }
           >
-            Seal my answer <Heart size={17} />
+            {busy ? "Sealing…" : "Seal my answer"} <Heart size={17} />
           </button>
         </div>
       )}

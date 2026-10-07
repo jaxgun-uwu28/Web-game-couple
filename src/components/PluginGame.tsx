@@ -449,6 +449,7 @@ export default function PluginGame({
     setBusy(true);
     setError("");
     softSound("tap");
+    void tactile(20);
     try {
       if (preview) {
         if (!snapshot) {
@@ -564,7 +565,6 @@ export default function PluginGame({
           }).catch(() => {});
         if (action === "cancel" || action === "decline") close();
       }
-      tactile(20);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Game could not update.");
     } finally {

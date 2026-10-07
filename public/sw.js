@@ -1,4 +1,4 @@
-const VERSION="arcade-shell-1e500d36067f";
+const VERSION="arcade-shell-1aef6b77346e";
 const CORE=['/','/offline.html','/icons/icon-192.png','/icons/icon-512.png','/icons/maskable-512.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll(CORE)));});
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('arcade-shell-')&&k!==VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));

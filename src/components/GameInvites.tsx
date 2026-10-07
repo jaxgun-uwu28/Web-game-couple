@@ -23,19 +23,7 @@ export default function GameInvites() {
       .eq("couple_id", c.couple)
       .eq("status", "invited")
       .neq("host", c.user);
-    const h = await c.db
-      .from("heart_challenges")
-      .select("id,host,status")
-      .eq("couple_id", c.couple)
-      .eq("status", "invited")
-      .neq("host", c.user);
-    setRows([
-        ...(!r.error ? r.data || [] : []),
-        ...(h.data || []).map((x) => ({
-          ...x,
-          game_id: "heartblast" as const,
-        })),
-      ]);
+    setRows(!r.error ? r.data || [] : []);
   }, [c.db, c.preview, c.couple, c.user]);
   useEffect(() => {
     void load();

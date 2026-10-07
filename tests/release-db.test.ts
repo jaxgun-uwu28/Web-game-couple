@@ -123,7 +123,7 @@ test("Blackjack transactions escrow different buy-ins, cash out exactly once, an
     await db.close();
   }
 });
-test("Heart invites require partner acceptance, preserve sessions through 60-second grace, and claim a reconnect win", async () => {
+test("Heart rooms need both players Ready without acceptance, preserve 60-second grace, and claim a reconnect win", async () => {
   const db = new PGlite();
   try {
     await db.exec(
@@ -141,6 +141,7 @@ test("Heart invites require partner acceptance, preserve sessions through 60-sec
     ])
       await db.exec(await readFile(`supabase/migrations/${f}.sql`, "utf8"));
     await apply(db, "021_heart_challenges");
+    await apply(db, "028_heart_rooms");
     await apply(db, "018_plugin_games");
     await apply(db, "022_rivalry_stats");
     await db.exec(
@@ -154,13 +155,13 @@ test("Heart invites require partner acceptance, preserve sessions through 60-sec
       ).rows[0].v,
       mid = room.match.id;
     assert.equal(room.challenge.host, a);
+    assert.equal(room.challenge.status, "accepted");
     await assert.rejects(
       db.query('select heartblast_battle($1,\'{"type":"ready"}\')', [mid]),
-      /accept/,
+      /Waiting for your person/,
     );
     await db.query("select game_here($1,'block')", [mid]);
     await login(db, b);
-    await db.query('select heartblast_battle($1,\'{"type":"accept"}\')', [mid]);
     await db.query("select game_here($1,'block')", [mid]);
     await db.query('select heartblast_battle($1,\'{"type":"ready"}\')', [mid]);
     await login(db, a);

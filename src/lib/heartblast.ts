@@ -149,6 +149,12 @@ export type HeartState = {
     seat: number;
   };
 };
+export function heartRunFinished(state: HeartState, actor: number) {
+  return state.options.mode === "daily" && state.stuck[actor];
+}
+export function heartReplayPending(state: HeartState, seed: number, actor: number, moves: {piece: number; row: number; col: number}[]) {
+  return moves.reduce((s, m) => heartStep(s, seed, actor, m.piece, m.row, m.col), state);
+}
 export function initialHeartState(
   seed: number,
   options: HeartOptions,

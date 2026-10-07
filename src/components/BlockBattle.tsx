@@ -16,6 +16,8 @@ import {
   firstHeartPlacement,
   heartPlace,
   heartStep,
+  heartRunFinished,
+  heartReplayPending,
   heartWinner,
   initialHeartState,
   defaultHeartOptions,
@@ -99,10 +101,6 @@ export default function BlockBattle({
   onResult: (winner: number | null) => void;
 }) {
   const [options, setOptions] = useState<HeartOptions>(defaultHeartOptions),
-    [challenge, setChallenge] = useState<{
-      host: string;
-      status: string;
-    } | null>(null),
     [peerSeen, setPeerSeen] = useState<string | null>(null),
     [match, setMatch] = useState<Match | null>(null),
     [busy, setBusy] = useState(false),
@@ -143,7 +141,11 @@ export default function BlockBattle({
     lastPopup = useRef(""),
     seenResult = useRef(""),
     broadcast = useRef<ReturnType<SupabaseClient["channel"]> | null>(null),
-    lastBroadcast = useRef(0);
+    lastBroadcast = useRef(0),
+    pendingMoves = useRef<
+      { piece: number; row: number; col: number; move_id: string }[]
+    >([]),
+    syncingMoves = useRef(false);
   const dailyRequested = useRef(false);
   current.current = match;
   const opts = match?.state.options || options,
@@ -183,7 +185,7 @@ export default function BlockBattle({
       challenge?: { host: string; status: string } | null;
       peer_seen_at?: string | null;
     }) => {
-      setChallenge(r.challenge || null);
+      if (syncingMoves.current) return;
       setPeerSeen(r.peer_seen_at || null);
       setMatch((old) =>
         old?.id === r.match.id && (old.revision || 0) > (r.match.revision || 0)
@@ -241,7 +243,13 @@ export default function BlockBattle({
               .catch(() => {});
         });
     const refresh = () => {
-      if (!pageActive || !current.current) return;
+      if (
+        !pageActive ||
+        !current.current ||
+        syncingMoves.current ||
+        lock.current
+      )
+        return;
       void request(current.current.id)
         .then((r) => {
           if (live) adopt(r);
@@ -325,7 +333,10 @@ export default function BlockBattle({
       match?.status === "playing"
         ? Math.max(0, Math.ceil((start - now) / 1000))
         : 0,
-    terminal = !!match && ["won", "draw"].includes(match.status),
+    dailyFinished = !!match && heartRunFinished(match.state, actor),
+    dailyWaiting = dailyFinished && !["won", "draw"].includes(match!.status),
+    terminal =
+      !!match && (["won", "draw"].includes(match.status) || dailyFinished),
     board = match?.state.boards[seat] || Array(64).fill(0),
     shape = match?.state.hands[seat][piece],
     used = match?.state.used[seat] || [false, false, false],
@@ -386,7 +397,12 @@ export default function BlockBattle({
     adopt,
   ]);
   useEffect(() => {
-    if (!match || !terminal || seenResult.current === match.id) return;
+    if (
+      !match ||
+      !["won", "draw"].includes(match.status) ||
+      seenResult.current === match.id
+    )
+      return;
     seenResult.current = match.id;
     onResult(match.winner);
     const n = Math.max(opts.coop ? sharedBest : best, match.state.scores[seat]);
@@ -396,7 +412,7 @@ export default function BlockBattle({
       opts.coop ? "arcade-heart-shared-best" : "arcade-heart-best",
       String(n),
     );
-  }, [match?.id, terminal]);
+  }, [match?.id, match?.status, terminal]);
   useEffect(() => {
     if (!match) return;
     setPiece(match.state.used[seat].findIndex((v) => !v));
@@ -458,16 +474,6 @@ export default function BlockBattle({
       } else {
         const r = await request(null, {}, config);
         adopt(r);
-        if (
-          r.challenge?.host === session?.user.id &&
-          r.challenge.status === "invited"
-        )
-          void gameRequest(
-            db,
-            { kind: "heart-challenge", id: r.match.id },
-            fetch,
-            "/api/push/media",
-          ).catch(() => {});
       }
     });
   }
@@ -492,69 +498,122 @@ export default function BlockBattle({
     });
   }
   async function place(p = piece, target = anchor) {
+    const base = current.current;
     if (
       !playing ||
-      busy ||
-      !match ||
-      used[p] ||
-      !heartFits(board, match.state.hands[seat][p], target[0], target[1])
+      lock.current ||
+      !base ||
+      (opts.coop && base.state.turn !== actor) ||
+      base.state.used[seat][p] ||
+      !heartFits(
+        base.state.boards[seat],
+        base.state.hands[seat][p],
+        target[0],
+        target[1],
+      )
     )
       return;
-    await work(async () => {
-      let next: Match;
-      if (preview) {
-        const s = heartStep(
-          match.state,
-          match.seed,
-          actor,
-          p,
-          target[0],
-          target[1],
-        );
-        next = { ...match, state: s };
-        if (
-          (opts.mode === "race" && s.scores[seat] >= opts.target) ||
-          (opts.coop && s.stuck[0]) ||
-          (opts.mode !== "timed" && s.stuck.every(Boolean))
-        ) {
-          next.winner =
-            opts.mode === "race" && !opts.coop ? actor : heartWinner(s);
-          next.status = next.winner === null ? "draw" : "won";
-        }
-        setMatch(next);
-      } else {
-        const r = await request(match.id, {
-          type: "place",
-          piece: p,
-          row: target[0],
-          col: target[1],
-          move_id: crypto.randomUUID(),
-        });
-        adopt(r);
-        next = r.match;
+    const state = heartStep(
+      base.state,
+      base.seed,
+      actor,
+      p,
+      target[0],
+      target[1],
+    );
+    const projected: Match = { ...base, state };
+    if (
+      preview &&
+      ((opts.mode === "race" && state.scores[seat] >= opts.target) ||
+        (opts.coop && state.stuck[0]) ||
+        (opts.mode !== "timed" && state.stuck.every(Boolean)))
+    ) {
+      projected.winner =
+        opts.mode === "race" && !opts.coop ? actor : heartWinner(state);
+      projected.status = projected.winner === null ? "draw" : "won";
+    }
+    current.current = projected;
+    setMatch(projected);
+    setError("");
+    setPiece(
+      Math.max(
+        0,
+        state.used[seat].findIndex((v) => !v),
+      ),
+    );
+    setPlacedCells(
+      heartShapes[base.state.hands[seat][p]].map(
+        (o) => (target[0] + Math.floor(o / 8)) * 8 + target[1] + (o % 8),
+      ),
+    );
+    setTimeout(() => setPlacedCells([]), 180);
+    void feedback(state.last?.lines || 0, state.last?.combo || 0).catch(
+      () => {},
+    );
+    if (preview) return;
+    pendingMoves.current.push({
+      piece: p,
+      row: target[0],
+      col: target[1],
+      move_id: crypto.randomUUID(),
+    });
+    if (syncingMoves.current) return;
+    syncingMoves.current = true;
+    let accepted = base;
+    try {
+      while (pendingMoves.current.length) {
+        const move = pendingMoves.current[0];
+        const r = await request(base.id, { type: "place", ...move });
+        accepted = r.match;
+        pendingMoves.current.shift();
+        if (accepted.status !== "playing") pendingMoves.current = [];
+        const visible = {
+          ...accepted,
+          state: heartReplayPending(
+            accepted.state,
+            accepted.seed,
+            actor,
+            pendingMoves.current,
+          ),
+        };
+        current.current = visible;
+        setMatch(visible);
+        if (r.clientMid) setOffset(Date.parse(r.server_now) - r.clientMid);
         if (broadcast.current && Date.now() - lastBroadcast.current > 500) {
           lastBroadcast.current = Date.now();
           void broadcast.current.send({
             type: "broadcast",
             event: "heart-preview",
             payload: {
-              match: next.id,
+              match: accepted.id,
               seat: actor,
-              board: next.state.boards[seat],
-              score: next.state.scores[seat],
+              board: accepted.state.boards[seat],
+              score: accepted.state.scores[seat],
             },
           });
         }
       }
-      setPlacedCells(
-        heartShapes[match.state.hands[seat][p]].map(
-          (o) => (target[0] + Math.floor(o / 8)) * 8 + target[1] + (o % 8),
+    } catch (e) {
+      pendingMoves.current = [];
+      try {
+        accepted = (await request(base.id)).match;
+      } catch {
+        /* Keep last accepted state if reconnect fails. */
+      }
+      current.current = accepted;
+      setMatch(accepted);
+      setPiece(
+        Math.max(
+          0,
+          accepted.state.used[seat].findIndex((v) => !v),
         ),
       );
-      setTimeout(() => setPlacedCells([]), 350);
-      await feedback(next.state.last?.lines || 0, next.state.last?.combo || 0);
-      setPiece(next.state.used[seat].findIndex((v) => !v));
-    });
+      setError(
+        e instanceof Error ? e.message : "Move could not sync. Try again.",
+      );
+    } finally {
+      syncingMoves.current = false;
+    }
   }
   function aim(r: number, c: number, p = piece) {
     const s = match?.state.hands[seat][p];
@@ -782,7 +841,7 @@ export default function BlockBattle({
               ? "Opening…"
               : options.mode === "daily"
                 ? "Play today"
-                : "Create or join battle"}
+                : "Create or join room"}
           </button>
         </div>
       ) : (
@@ -906,28 +965,11 @@ export default function BlockBattle({
                   )}
                 </span>
               </div>
-              {!asyncMode && !preview && (!presence.paired || challenge?.status === "invited") && !terminal && (
+              {!asyncMode && !preview && !presence.paired && !terminal && (
                 <p role="status" className="notice">
                   {peerSeen
                     ? `Reconnecting · ${Math.max(0, 60 - Math.floor((clock + offset - Date.parse(peerSeen)) / 1000))}s grace`
                     : "Waiting for Partner."}
-                  {challenge?.status === "invited" &&
-                    challenge.host !== session?.user.id && (
-                      <button
-                        disabled={busy}
-                        onClick={() =>
-                          void work(async () =>
-                            adopt(await request(match.id, { type: "accept" })),
-                          )
-                        }
-                      >
-                        Accept challenge
-                      </button>
-                    )}
-                  {challenge?.status === "invited" &&
-                    challenge.host === session?.user.id && (
-                      <span> Challenge sent · waiting for acceptance.</span>
-                    )}
                   {match.status === "playing" &&
                     peerSeen &&
                     clock + offset - Date.parse(peerSeen) >= 60000 && (
@@ -1139,69 +1181,82 @@ export default function BlockBattle({
                     </>
                   )}
                 </div>
-                {opts.preview && !opts.coop && (!asyncMode || terminal) && (
-                  <aside
-                    className="opponent-block"
-                    aria-label="Opponent preview"
-                    data-expanded={opponentOpen}
-                  >
-                    <button
-                      className="hb-opponent-toggle"
-                      aria-label={
-                        opponentOpen
-                          ? "Hide opponent board"
-                          : "Show opponent board"
-                      }
-                      aria-expanded={opponentOpen}
-                      onClick={() => setOpponentOpen(!opponentOpen)}
+                {opts.preview &&
+                  !opts.coop &&
+                  !dailyWaiting &&
+                  (!asyncMode || terminal) && (
+                    <aside
+                      className="opponent-block"
+                      aria-label="Opponent preview"
+                      data-expanded={opponentOpen}
                     >
-                      <Eye size={16} />
-                    </button>
-                    <h2>{names[other]}</h2>
-                    <strong>
-                      {!terminal && peer?.id === match.id
-                        ? peer.score
-                        : match.state.scores[other]}
-                    </strong>
-                    <MiniBoard
-                      board={
-                        !terminal && peer?.id === match.id
-                          ? peer.board
-                          : match.state.boards[other]
-                      }
-                    />
-                  </aside>
-                )}
+                      <button
+                        className="hb-opponent-toggle"
+                        aria-label={
+                          opponentOpen
+                            ? "Hide opponent board"
+                            : "Show opponent board"
+                        }
+                        aria-expanded={opponentOpen}
+                        onClick={() => setOpponentOpen(!opponentOpen)}
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <h2>{names[other]}</h2>
+                      <strong>
+                        {!terminal && peer?.id === match.id
+                          ? peer.score
+                          : match.state.scores[other]}
+                      </strong>
+                      <MiniBoard
+                        board={
+                          !terminal && peer?.id === match.id
+                            ? peer.board
+                            : match.state.boards[other]
+                        }
+                      />
+                    </aside>
+                  )}
               </div>
               {terminal && (
                 <div className="block-result">
                   <h2>
-                    {opts.coop
-                      ? "Our shared score"
-                      : match.winner === null
-                        ? "A perfect match!"
-                        : `${names[match.winner]} wins!`}
+                    {dailyWaiting
+                      ? "Daily run complete"
+                      : opts.coop
+                        ? "Our shared score"
+                        : match.winner === null
+                          ? "A perfect match!"
+                          : `${names[match.winner]} wins!`}
                   </h2>
                   <div className="heart-final-boards">
-                    {(opts.coop ? [0] : [0, 1]).map((p) => (
-                      <div key={p}>
-                        <h3>
-                          {opts.coop ? "Together" : names[p]} ·{" "}
-                          {match.state.scores[p]}
-                        </h3>
-                        <MiniBoard board={match.state.boards[p]} />
-                        <p>{match.state.pieces[p]} pieces</p>
-                        <dl>
-                          <dt>Placement</dt>
-                          <dd>{match.state.breakdown[p][0]}</dd>
-                          <dt>Line clears</dt>
-                          <dd>{match.state.breakdown[p][1]}</dd>
-                          <dt>Clear-board bonus</dt>
-                          <dd>{match.state.breakdown[p][2]}</dd>
-                        </dl>
-                      </div>
-                    ))}
+                    {(dailyWaiting ? [seat] : opts.coop ? [0] : [0, 1]).map(
+                      (p) => (
+                        <div key={p}>
+                          <h3>
+                            {opts.coop ? "Together" : names[p]} ·{" "}
+                            {match.state.scores[p]}
+                          </h3>
+                          <MiniBoard board={match.state.boards[p]} />
+                          <p>{match.state.pieces[p]} pieces</p>
+                          <dl>
+                            <dt>Placement</dt>
+                            <dd>{match.state.breakdown[p][0]}</dd>
+                            <dt>Line clears</dt>
+                            <dd>{match.state.breakdown[p][1]}</dd>
+                            <dt>Clear-board bonus</dt>
+                            <dd>{match.state.breakdown[p][2]}</dd>
+                          </dl>
+                        </div>
+                      ),
+                    )}
                   </div>
+                  {dailyWaiting && (
+                    <p role="status">
+                      Your run has ended. The comparison appears when Partner
+                      finishes.
+                    </p>
+                  )}
                   <button
                     disabled={busy}
                     onClick={() =>
@@ -1215,6 +1270,7 @@ export default function BlockBattle({
             </>
           )}
           {terminal &&
+            !dailyWaiting &&
             (opts.coop || match.winner === actor || match.winner === null) && (
               <div className="wheel-confetti" aria-hidden="true">
                 {Array.from({ length: 30 }, (_, i) => (

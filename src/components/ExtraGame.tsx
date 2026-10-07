@@ -268,7 +268,7 @@ function ExtraGameInternal({
           )
         : ((await gameRequest(db, { id: current.current.id, action })) as Game);
       setGame(next);
-      feedback(next.state.status !== "playing");
+      if (next.state.status !== "playing") feedback(true);
       if (preview) {
         updateExtraPreview(kind, { game: next });
         recordPreview(next);

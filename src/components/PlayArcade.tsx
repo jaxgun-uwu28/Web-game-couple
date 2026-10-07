@@ -282,14 +282,32 @@ export default function PlayArcade({
   async function move(cell: number) {
     if (!game) return;
     await work(async () => {
-      const next = preview
-        ? previewMove(game, cell)
-        : await request(game.kind as BoardKind, game.id, cell);
+      tactile();
+      if (!preview) {
+        const predicted = previewMove(game, cell);
+        setGames((gs) =>
+          gs.map((g) =>
+            g.id === game.id
+              ? { ...g, state: { ...g.state, board: predicted.state.board } }
+              : g,
+          ),
+        );
+      }
+      let next: Game;
+      try {
+        next = preview
+          ? previewMove(game, cell)
+          : await request(game.kind as BoardKind, game.id, cell);
+      } catch (e) {
+        setGames((gs) => gs.map((g) => (g.id === game.id ? game : g)));
+        void refresh();
+        throw e;
+      }
       setGames((gs) => gs.map((g) => (g.id === next.id ? next : g)));
       if (preview) recordPreview(next);
       if (preview && next.state.status === "won")
         setScore((s) => s.map((n, i) => n + (i === next.state.winner ? 1 : 0)));
-      tactile(next.state.status !== "playing");
+      if (next.state.status !== "playing") tactile(true);
       if (!preview) {
         void refresh();
         void channel.current?.send({
