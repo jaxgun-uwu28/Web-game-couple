@@ -30,6 +30,7 @@ Visible copy is personal and useful: no stage labels, metadata/compression/priva
 
 Opened letters use cream stationery in both themes, a fine pink frame, heart seal and handwritten body; close/favorite controls follow the message and attachments. Read-once behavior and envelope opening remain unchanged. Personal wishlist labels distinguish My wishes from Partner’s wishes.
 Home's wish shortcut uses a responsive jar/title/action grid; wish cards use a full-width status picker and aligned action rows.
+Plugin rooms restore only active matches for that game and reject stale background responses from older revisions or another room; visible rooms refresh every five seconds and on focus with server-seen presence fallback. Blackjack reports wallet load failures separately from zero balances and offers the existing once-daily top-up before buy-in. Promise Ledger wallet resets offer 10/20/50/100 chips per player (migration 032), blocked during active wallet games.
 
 ## Data and security
 

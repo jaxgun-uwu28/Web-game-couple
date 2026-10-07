@@ -1,4 +1,5 @@
 "use client";
+import { acceptRoomSnapshot } from "@/lib/plugin-room";
 import BlackjackTable, { BlackjackBuyIn } from "./BlackjackTable";
 import type { BlackjackState } from "@/lib/plugin-games/blackjack";
 import { secureDeck } from "@/lib/cards";
@@ -261,7 +262,7 @@ export default function PluginGame({
   useEffect(() => {
     if (preview || !db || !couple || !user) return;
     let cancelled = false;
-    void gameRequest(db, "/api/game/plugin", { action: "list" })
+    void gameRequest(db, "/api/game/plugin", { action: "list", game: id })
       .then(async (data) => {
         const found = (
           data as unknown as { matches: Snapshot["match"][] }
@@ -275,7 +276,8 @@ export default function PluginGame({
             action: "get",
             id: found.id,
           });
-          if (!cancelled) setSnapshot(room as unknown as Snapshot);
+          if (!cancelled)
+            setSnapshot((old) => old || (room as unknown as Snapshot));
         }
       })
       .catch((e) => {
@@ -307,13 +309,8 @@ export default function PluginGame({
         () =>
           void call("get")
             .then((s) => {
-              if (s)
-                setSnapshot((old) =>
-                  old?.match.id === s.match.id &&
-                  old.match.revision > s.match.revision
-                    ? old
-                    : s,
-                );
+              if (s && !cancelled)
+                setSnapshot((old) => acceptRoomSnapshot(old, s));
             })
             .catch((e) => setError(e.message)),
       )
@@ -334,13 +331,8 @@ export default function PluginGame({
         if (payload?.matchId === ref.current?.match.id)
           void call("get")
             .then((s) => {
-              if (s)
-                setSnapshot((old) =>
-                  old?.match.id === s.match.id &&
-                  old.match.revision > s.match.revision
-                    ? old
-                    : s,
-                );
+              if (s && !cancelled)
+                setSnapshot((old) => acceptRoomSnapshot(old, s));
             })
             .catch(() => {});
       });
@@ -354,22 +346,23 @@ export default function PluginGame({
             void ch.track({ gameMatch: snapshot.match.id, here: true });
         });
     });
-    const t = setInterval(() => {
+    const refreshRoom = () => {
       if (document.visibilityState === "visible")
         void call("heartbeat")
           .then((s) => {
-            if (s)
-              setSnapshot((old) =>
-                old?.match.id === s.match.id &&
-                old.match.revision > s.match.revision
-                  ? old
-                  : s,
-              );
+            if (s && !cancelled)
+              setSnapshot((old) => acceptRoomSnapshot(old, s));
           })
           .catch((e) => setError(e.message));
-    }, 10000);
+    };
+    refreshRoom();
+    const t = setInterval(refreshRoom, 5000);
+    window.addEventListener("focus", refreshRoom);
+    document.addEventListener("visibilitychange", refreshRoom);
     return () => {
       clearInterval(t);
+      window.removeEventListener("focus", refreshRoom);
+      document.removeEventListener("visibilitychange", refreshRoom);
       cancelled = true;
       liveChannel.current = null;
       setPartnerHere(false);
@@ -712,6 +705,7 @@ export default function PluginGame({
               wallet={preview ? 100 : snapshot.wallet || 0}
               busy={busy}
               onBuyIn={(amount) => void act("buyin", { type: "buyin", amount })}
+              onTopUp={preview ? undefined : () => void act("topup")}
             />
           )}
           <button
@@ -730,7 +724,11 @@ export default function PluginGame({
           <p>{snapshot.match.ready.length}/2 ready</p>
           {!preview && (
             <p role="status">
-              {partnerHere
+              {partnerHere ||
+              snapshot.players.some(
+                (p) =>
+                  p.user_id !== user && now - Date.parse(p.seen_at) < 20000,
+              )
                 ? "Partner is here"
                 : "Waiting for Partner to join the room"}
             </p>
@@ -755,7 +753,7 @@ export default function PluginGame({
                 className="text-button"
                 onClick={() =>
                   void call("get").then((s) => {
-                    if (s) setSnapshot(s);
+                    if (s) setSnapshot((old) => acceptRoomSnapshot(old, s));
                   })
                 }
               >

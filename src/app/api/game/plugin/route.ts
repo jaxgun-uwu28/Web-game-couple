@@ -7,18 +7,26 @@ import type { LedgerState } from "@/lib/plugin-games/ledger";
 export const runtime = "nodejs";
 export async function POST(req: Request) {
   try {
-    const { user, profile, admin } = await serverUser(req, true),
+    const {
+        user,
+        profile,
+        admin,
+        db: authenticated,
+      } = await serverUser(req, true),
       db = admin!;
     const raw = await req.text();
     if (raw.length > 8192) throw new Error("Request too large.");
     const b = JSON.parse(raw);
     if (b.action === "list") {
-      const r = await db
+      let query = db
         .from("arcade_matches")
         .select("*")
-        .eq("couple_id", profile.couple_id)
-        .order("created_at", { ascending: false })
-        .limit(30);
+        .eq("couple_id", profile.couple_id);
+      if (b.game && isPlugin(b.game))
+        query = query
+          .eq("game_id", b.game)
+          .in("status", ["invited", "waiting", "playing"]);
+      const r = await query.order("created_at", { ascending: false }).limit(30);
       if (r.error) throw r.error;
       return Response.json({ matches: r.data });
     }
@@ -43,6 +51,7 @@ export async function POST(req: Request) {
         .eq("game_id", b.game)
         .in("status", ["invited", "waiting", "playing"])
         .maybeSingle();
+      if (existing.error) throw existing.error;
       if (existing.data) id = existing.data.id;
       else {
         if (b.game === "syncsteps" && config.daily) {
@@ -88,10 +97,17 @@ export async function POST(req: Request) {
     if (!p) throw new Error("403:This is not your match.");
     // Existing invitations become ordinary rooms on the first authorized visit.
     if (r.status === "invited") {
-      const opened = await db.from("arcade_matches")
-        .update({ status: "waiting" }).eq("id", id).eq("status", "invited");
+      const opened = await db
+        .from("arcade_matches")
+        .update({ status: "waiting" })
+        .eq("id", id)
+        .eq("status", "invited");
       if (opened.error) throw opened.error;
-      const fresh = await db.from("arcade_matches").select("*").eq("id", id).single();
+      const fresh = await db
+        .from("arcade_matches")
+        .select("*")
+        .eq("id", id)
+        .single();
       if (fresh.error) throw fresh.error;
       Object.assign(r, fresh.data);
     }
@@ -172,6 +188,16 @@ export async function POST(req: Request) {
       .single();
     if (secret.error) throw new Error("Match state unavailable.");
     let state = secret.data.state;
+    if (b.action === "topup") {
+      if (
+        r.game_id !== "blackjack" ||
+        r.status !== "waiting" ||
+        state.buyIns[p.seat] > 0
+      )
+        throw new Error("Top-up is available before your buy-in only.");
+      const topped = await authenticated.rpc("ledger_topup");
+      if (topped.error) throw topped.error;
+    }
     if (
       r.game_id === "blackjack" &&
       r.status === "playing" &&
@@ -195,7 +221,12 @@ export async function POST(req: Request) {
       b.move = { type: "timeout" };
       b.requestId = randomUUID();
     }
-    if(r.game_id==="ledger"&&b.move?.type==="reveal"&&!["flipping","suspense"].includes(state.status))b.action="get";
+    if (
+      r.game_id === "ledger" &&
+      b.move?.type === "reveal" &&
+      !["flipping", "suspense"].includes(state.status)
+    )
+      b.action = "get";
     const blackjackTimeout =
       r.game_id === "blackjack" &&
       r.status === "playing" &&
@@ -248,8 +279,12 @@ export async function POST(req: Request) {
       delete move.serverDeck;
       delete move.noteId;
       if (r.game_id === "blackjack") {
-        if(["match","accept_note"].includes(move.type)&&state.pending?.kind==="match") move.serverDeck=secureDeck();
-        if(move.type==="stake_note")move.noteId=randomUUID();
+        if (
+          ["match", "accept_note"].includes(move.type) &&
+          state.pending?.kind === "match"
+        )
+          move.serverDeck = secureDeck();
+        if (move.type === "stake_note") move.noteId = randomUUID();
       }
       if (r.game_id === "ledger" && move.type === "lock") {
         const max =
@@ -304,17 +339,22 @@ export async function POST(req: Request) {
         .single();
       if (updated.data) Object.assign(r, updated.data);
     }
+    let wallet: number | undefined;
+    if (r.game_id === "blackjack") {
+      const balance = await db
+        .from("ledger_wallets")
+        .select("balance")
+        .eq("user_id", user.id)
+        .single();
+      if (balance.error || typeof balance.data?.balance !== "number")
+        throw new Error(
+          "Your wallet could not load. Refresh the room and try again.",
+        );
+      wallet = balance.data.balance;
+      if (b.action === 'topup' && wallet < 10) throw new Error('Your daily top-up has already been used. End this room, then reset the wallets in the Promise Ledger.');
+    }
     return Response.json({
-      wallet:
-        r.game_id === "blackjack"
-          ? (
-              await db
-                .from("ledger_wallets")
-                .select("balance")
-                .eq("user_id", user.id)
-                .single()
-            ).data?.balance
-          : undefined,
+      wallet,
       serverTime: new Date().toISOString(),
       match: r,
       state: m.getPublicState(state as never, p.seat as Seat),

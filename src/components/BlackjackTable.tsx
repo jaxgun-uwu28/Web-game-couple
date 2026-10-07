@@ -19,12 +19,14 @@ export function BlackjackBuyIn({
   wallet,
   busy,
   onBuyIn,
+  onTopUp,
 }: {
   state: BlackjackState;
   seat: Seat;
   wallet: number;
   busy: boolean;
   onBuyIn: (amount: number) => void;
+  onTopUp?: () => void;
 }) {
   const [amount, setAmount] = useState(10);
   return (
@@ -35,6 +37,18 @@ export function BlackjackBuyIn({
         <p role="status">{state.buyIns[seat]} chips locked</p>
       ) : (
         <>
+          {wallet < 10 && (
+            <p role="status">
+              You need 10 chips to join.{" "}
+              {wallet < 3 && onTopUp ? (
+                <button disabled={busy} onClick={onTopUp}>
+                  Use daily top-up
+                </button>
+              ) : (
+                "Add chips in the Promise Ledger, or wait for your next daily top-up."
+              )}
+            </p>
+          )}
           <div className="chip-picker">
             {[10, 25, 50, 100, wallet]
               .filter((n, i, a) => n >= 10 && n <= wallet && a.indexOf(n) === i)
@@ -179,7 +193,9 @@ export default function BlackjackTable({
             ? total.soft
               ? `${total.hard} / ${total.total}`
               : total.total
-            : mine.length ? "Tap your hole card" : "Waiting for the deal"
+            : mine.length
+              ? "Tap your hole card"
+              : "Waiting for the deal"
           : s.status === "summary" || s.status === "done"
             ? handValue(s.hands[p]).total
             : `${s.hands[p].length} cards`}
