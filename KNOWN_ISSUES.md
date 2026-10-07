@@ -14,4 +14,4 @@ Do not store API keys, passwords, service-account data, raw private media or unn
 
 - Wishlist list deletion is implemented and local permission/cascade tests plus build passed; migration 029 awaits owner confirmation. Browser verification remains unavailable under the existing URL-policy block.
 
-- Ledger matched-bet and Draw & Guess round/timer update passed 14 local fixtures and production build. Migration 030 awaits owner confirmation before release; live visual/two-phone acceptance is unverified.
+- Ledger matched-bet and Draw & Guess round/timer update passed 14 local fixtures and production build. Migration 030 is owner-confirmed; live visual/two-phone acceptance is unverified.
