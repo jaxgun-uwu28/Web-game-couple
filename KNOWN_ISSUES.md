@@ -9,6 +9,7 @@ Updated 2026-10-07. Keep only actionable current facts; detailed evidence lives 
 - **Device/hosted acceptance incomplete:** signed APK and fixture/build checks passed for the previous implementation batch; real device camera/push and current authenticated two-account acceptance have not been certified.
 - **Historical records can be stale:** PRODUCT.md and DESIGN.md contain older stage checkpoints. Use PROJECT_SPEC.md for current intended behavior; exact code/schema and fresh evidence take precedence over summaries.
 - **Receiving alerts needs device setup:** read-only check found Elaine has no notification preferences/device registration. Local environment lacks Firebase/VAPID/webhook configuration; Vercel settings were not inspected. New direct tap dispatch is implemented, but actual alerts remain unverified. See docs/CONNECTION_CHECKPOINT.md.
+- Owner reported `/api/push/tap` HTTP 500 on October 7 at 23:29 Manila time. Safe stage/error-code logging is added; saved taps survive delivery exceptions. Exact hosted cause remains unverified until another attempt supplies the new log. Default quiet hours also cover that time, independently of the 500.
 
 Do not store API keys, passwords, service-account data, raw private media or unnecessary account identifiers in these notes.
 

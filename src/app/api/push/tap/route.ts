@@ -25,6 +25,7 @@ export async function POST(req: Request) {
       { error: "This account cannot send taps." },
       { status: 403 },
     );
+  let stage = "read_request", tapSaved = false;
   try {
     const body = await req.text();
     if (body.length > 1024)
@@ -38,9 +39,12 @@ export async function POST(req: Request) {
         { error: "Keep your message within 180 characters." },
         { status: 400 },
       );
+    stage = "save_tap";
     const saved = await db.rpc("send_thinking_of_you", { content });
     if (saved.error)
       return Response.json({ error: saved.error.message }, { status: 400 });
+    tapSaved = true;
+    stage = "find_tap";
     const tap = await db
       .from("connection_taps")
       .select("id")
@@ -54,6 +58,7 @@ export async function POST(req: Request) {
       !process.env.SUPABASE_SERVICE_ROLE_KEY
     )
       return Response.json({ saved: true, delivery: "unavailable", sent: 0 });
+    stage = "dispatch_push";
     const response = await deliver(
       new Request(new URL("/api/push", req.url), {
         method: "POST",
@@ -65,15 +70,19 @@ export async function POST(req: Request) {
         }),
       }),
     );
+    stage = "read_delivery_result";
     const result = await response.json();
     return Response.json({
       saved: true,
       ...result,
       delivery: response.ok && !result.failed ? "processed" : "unavailable",
     });
-  } catch {
+  } catch (error) {
+    // Log the failing step, never the message, token, request body or credentials.
+    console.error("push_tap_failed", { stage, name: error instanceof Error ? error.name : "UnknownError" });
+    if (tapSaved) return Response.json({ saved: true, delivery: "unavailable", sent: 0, stage });
     return Response.json(
-      { error: "Your tap could not send. Try again." },
+      { error: "Your tap could not send. Try again.", stage },
       { status: 500 },
     );
   }

@@ -21,12 +21,14 @@ export async function POST(req: Request) {
       { error: "Push server is not configured." },
       { status: 503 },
     );
+  let stage = "initialize_push_client";
+  try {
   const db = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY,
     { auth: { persistSession: false } },
   );
-  try {
+    stage = "read_event";
     const text = await req.text();
     if (text.length > 65536) throw new Error("Payload too large");
     const event = JSON.parse(text),
@@ -158,6 +160,7 @@ export async function POST(req: Request) {
         `${table}:${id}:${type}:${event.type}:${table === "games" ? JSON.stringify(row.state) : row.status || ""}`,
       )
       .digest("hex");
+    stage = "record_delivery";
     const claimed = await db
       .from("push_deliveries")
       .insert({ event_key: eventKey });
@@ -166,6 +169,7 @@ export async function POST(req: Request) {
     if (claimed.error) throw claimed.error;
     let sent = 0,
       failed = 0;
+    stage = "send_to_devices";
     for (const recipient of recipients) {
       const preference = await db
         .from("notification_preferences")
@@ -234,6 +238,7 @@ export async function POST(req: Request) {
           failed++;
           const status = (e as { statusCode?: number }).statusCode,
             code = (e as { code?: string }).code;
+          console.error("push_device_failed", { code: typeof code === "string" && /^[a-zA-Z0-9/_-]{1,80}$/.test(code) ? code : "unknown", status: typeof status === "number" ? status : undefined });
           if (
             [404, 410].includes(status || 0) ||
             [
@@ -248,7 +253,8 @@ export async function POST(req: Request) {
     if (!sent && failed)
       await db.from("push_deliveries").delete().eq("event_key", eventKey);
     return Response.json({ sent, failed });
-  } catch {
+  } catch (error) {
+    console.error("push_delivery_failed", { stage, name: error instanceof Error ? error.name : "UnknownError" });
     return Response.json(
       { error: "Notification delivery could not be processed." },
       { status: 500 },
