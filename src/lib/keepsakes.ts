@@ -4,6 +4,7 @@ export type WishList = {
   type: "shared" | "personal" | "secret" | "custom";
   title: string;
   cover: string;
+  color?: string;
 };
 export type Wish = {
   id: string;

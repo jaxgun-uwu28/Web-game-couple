@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { resolveWishList } from "./wish-defaults";
+import type { WishList } from "./keepsakes";
 type Pending = {
   id: string;
   user: string;
@@ -8,6 +10,7 @@ type Pending = {
   photo: Blob | null;
   path: string | null;
   created: number;
+  list?: WishList;
 };
 function store() {
   return new Promise<IDBDatabase>((resolve, reject) => {
@@ -45,6 +48,7 @@ export async function enqueueWish(
   couple: string,
   row: Record<string, unknown>,
   photo: Blob | null = null,
+  list?: WishList,
 ) {
   const id = String(row.id),
     path = photo ? `${couple}/${user}/${id}.webp` : null;
@@ -58,6 +62,7 @@ export async function enqueueWish(
       photo,
       path,
       created: Date.now(),
+      list,
     } satisfies Pending),
   );
 }
@@ -75,7 +80,14 @@ export async function flushWishes(
   if (data.user?.id !== user)
     throw new Error("Sign in again before syncing your queued wishes.");
   for (const job of await pendingWishes(user)) {
-    if (job.couple !== couple) continue;
+    if (job.couple && job.couple !== couple) continue;
+    const listId = await resolveWishList(
+      db,
+      user,
+      String(job.row.list_id),
+      job.list,
+    );
+    if (!job.couple && job.photo) job.path = `${couple}/${user}/${job.id}.webp`;
     if (job.photo && job.path) {
       const r = await db.storage
         .from("keepsakes")
@@ -90,8 +102,31 @@ export async function flushWishes(
       .maybeSingle();
     if (existing.error) throw new Error(existing.error.message);
     if (!existing.data) {
-      const r = await db.from("wishlist_items").insert(job.row);
-      if (r.error) throw new Error(r.error.message);
+      const r = await db
+        .from("wishlist_items")
+        .insert({
+          ...job.row,
+          list_id: listId,
+          image_path: job.path || job.row.image_path,
+        });
+      if (r.error?.code === "23503") {
+        const recovered = await resolveWishList(
+          db,
+          user,
+          String(job.row.list_id),
+          job.list,
+        );
+        const retry = await db
+          .from("wishlist_items")
+          .insert({
+            ...job.row,
+            list_id: recovered,
+            image_path: job.path || job.row.image_path,
+          });
+        if (retry.error && retry.error.code !== "23505")
+          throw new Error(retry.error.message);
+      } else if (r.error && r.error.code !== "23505")
+        throw new Error(r.error.message);
     }
     await transaction("readwrite", (s) => s.delete(job.id));
   }

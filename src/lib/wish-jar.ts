@@ -31,7 +31,7 @@ export function jarWishes(
 }
 // A bounded, staggered stack replaces continuous physics. Rotated note bounds
 // fit within the glass; stable IDs produce identical positions on both devices.
-export function jarLayout(wishes: Wish[]) {
+export function jarLayout(wishes: Wish[], lists: WishList[] = []) {
   const sorted = [...wishes]
     .sort(
       (a, b) =>
@@ -43,7 +43,11 @@ export function jarLayout(wishes: Wish[]) {
     x: 86 + (i % 5) * 37 + (wishSeed(wish.id) % 2),
     y: 300 - Math.floor(i / 5) * 25,
     angle: (wishSeed(wish.id) % 13) - 6,
-    color: wishColors[wishSeed(wish.list_id) % wishColors.length],
+    color: /^#[0-9a-f]{6}$/i.test(
+      lists.find((l) => l.id === wish.list_id)?.color || "",
+    )
+      ? lists.find((l) => l.id === wish.list_id)!.color!
+      : wishColors[wishSeed(wish.list_id) % wishColors.length],
   }));
 }
 export function jarFill(count: number) {

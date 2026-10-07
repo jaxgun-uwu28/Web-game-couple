@@ -22,7 +22,7 @@ export default function WishJar({
   onPick?: (wish: Wish) => void;
 }) {
   const active = jarWishes(wishes, lists, user),
-    layout = jarLayout(active);
+    layout = jarLayout(active, lists);
   const [displayCount, setDisplayCount] = useState(active.length);
   const previousCount = useRef(active.length);
   const [drops, setDrops] = useState<string[]>([]),

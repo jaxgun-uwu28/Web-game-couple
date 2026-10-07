@@ -13,7 +13,7 @@ Read the row relevant to the task, then follow actual imports. Paths are relativ
 | Daily Heartblast / Home comparison | src/components/DailyHeartChallenge.tsx | Heartblast files above |
 | Daily prompts, moods, taps | src/components/Connections.tsx | src/lib/connections.ts, src/app/connections.css, migrations 005/009/011 |
 | Memories / camera | src/components/MemoryAlbum.tsx | src/components/NativePhotoButton.tsx, src/components/Keepsakes.tsx, src/lib/memory-album.ts, src/lib/keepsakes.ts, src/app/keepsakes.css, migrations 006/013, tests/keepsakes.test.ts |
-| Notes / wishlists | src/components/Keepsakes.tsx, src/components/WishJar.tsx | src/lib/keepsakes.ts, src/lib/wish-jar.ts (deterministic layout/privacy), src/app/keepsakes.css, migration 006; tests/wish-jar.test.ts |
+| Notes / wishlists | src/components/Keepsakes.tsx, src/components/WishJar.tsx | src/lib/keepsakes.ts, wish-jar.ts (layout/privacy), wish-defaults.ts and outbox.ts (defaults/idempotent queue), src/app/keepsakes.css, migrations 006/031; tests/wish-jar.test.ts and wish-defaults.test.ts |
 | Activities / wheel | src/components/TogetherActivities.tsx | src/components/Activities.tsx, src/components/SpinWheel.tsx, src/lib/together.ts, src/app/together.css, migrations 008/012 |
 | Artwork | src/components/ArtSlots.tsx | scripts/asset-slots.mjs, public/drop-in, existing Slot/useAsset definitions and generated manifest |
 | Music | src/components/Ambience.tsx | public audio assets, existing preference controls |

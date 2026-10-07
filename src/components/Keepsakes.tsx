@@ -3,6 +3,12 @@ import WishJar from "./WishJar";
 import { armGameSounds } from "@/lib/game-feel";
 import { jarWishes } from "@/lib/wish-jar";
 import {
+  ensureWishlists,
+  resolveWishList,
+  temporaryDefaults,
+  writableLists,
+} from "@/lib/wish-defaults";
+import {
   createContext,
   useContext,
   useState,
@@ -119,6 +125,46 @@ export function KeepsakeProvider({
     bodies = useRef<Record<string, NoteBody>>({}),
     blobs = useRef<Record<string, string>>({});
   const user = preview ? `preview-${seat}` : session?.user.id || "";
+  useEffect(() => {
+    if (preview || !user) return;
+    setState(empty());
+    try {
+      const cached = JSON.parse(
+        localStorage.getItem(`arcade-wishlists:${user}`) || "[]",
+      );
+      if (Array.isArray(cached)) setState((s) => ({ ...s, lists: cached }));
+    } catch {
+      /* A stale cache never blocks wish creation. */
+    }
+    let active = true;
+    void pendingWishes(user).then((jobs) => {
+      if (!active) return;
+      setState((s) => {
+        const lists = [...s.lists];
+        for (const j of jobs)
+          if (j.list && !lists.some((l) => l.id === j.list!.id))
+            lists.push(j.list);
+        return {
+          ...s,
+          lists,
+          wishes: jobs.map(
+            (j) =>
+              ({
+                status: "wished",
+                done_at: null,
+                position: 0,
+                created_at: new Date(j.created).toISOString(),
+                image_path: null,
+                ...j.row,
+              }) as Wish,
+          ),
+        };
+      });
+    });
+    return () => {
+      active = false;
+    };
+  }, [user, preview]);
   useEffect(
     () => () => {
       delete document.documentElement.dataset.arcadeTheme;
@@ -129,6 +175,18 @@ export function KeepsakeProvider({
   );
   const refresh = useCallback(async () => {
     if (preview || !db || !session || !couple) return;
+    if (!navigator.onLine) return;
+    let defaults: WishList[];
+    try {
+      defaults = await ensureWishlists(db);
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Your lists could not load. You can still save a wish on this device.",
+      );
+      return;
+    }
     const tables = [
       "wishlists",
       "wishlist_items",
@@ -138,7 +196,11 @@ export function KeepsakeProvider({
       "wishlist_comments",
     ];
     const results = await Promise.all(
-      tables.map((t) => db.from(t).select("*")),
+      tables.map((t) =>
+        t === "wishlists"
+          ? Promise.resolve({ data: defaults, error: null })
+          : db.from(t).select("*"),
+      ),
     );
     const failed = results.find((r) => r.error);
     if (failed) {
@@ -149,9 +211,38 @@ export function KeepsakeProvider({
       );
       return;
     }
+    const queued = await pendingWishes(session.user.id);
+    const serverLists = results[0].data as WishList[];
+    localStorage.setItem(
+      `arcade-wishlists:${session.user.id}`,
+      JSON.stringify(serverLists),
+    );
+    const serverWishes = results[1].data as Wish[];
     setState({
-      lists: results[0].data as WishList[],
-      wishes: results[1].data as Wish[],
+      lists: [
+        ...serverLists,
+        ...queued.flatMap((j) =>
+          j.list && !serverLists.some((l) => l.id === j.list!.id)
+            ? [j.list]
+            : [],
+        ),
+      ].filter((l, i, a) => a.findIndex((x) => x.id === l.id) === i),
+      wishes: [
+        ...serverWishes,
+        ...queued
+          .filter((j) => !serverWishes.some((w) => w.id === j.id))
+          .map(
+            (j) =>
+              ({
+                status: "wished",
+                done_at: null,
+                position: 0,
+                created_at: new Date(j.created).toISOString(),
+                image_path: null,
+                ...j.row,
+              }) as Wish,
+          ),
+      ],
       memories: results[2].data as Memory[],
       letters: results[3].data as Letter[],
       claims: results[4].data as Claim[],
@@ -465,6 +556,14 @@ export function WishlistShortcut({ go }: { go: () => void }) {
       <button className="text-button" onClick={go}>
         Open wishlists
       </button>
+      <button
+        onClick={() => {
+          sessionStorage.setItem("arcade-open-wish", "1");
+          go();
+        }}
+      >
+        Make a wish <Plus size={18} />
+      </button>
     </div>
   );
 }
@@ -651,6 +750,11 @@ export function Wishlists() {
     [jarWish, setJarWish] = useState<Wish | null>(null),
     [optimistic, setOptimistic] = useState<Wish | null>(null);
   const [selected, setSelected] = useState(""),
+    [wishListId, setWishListId] = useState(""),
+    [inlineList, setInlineList] = useState(false),
+    [listColor, setListColor] = useState("#F8C9D8"),
+    [removingList, setRemovingList] = useState(false),
+    [moveTo, setMoveTo] = useState(""),
     [adding, setAdding] = useState(false),
     [listTitle, setListTitle] = useState(""),
     [listType, setListType] = useState<WishList["type"]>("shared"),
@@ -668,7 +772,8 @@ export function Wishlists() {
     [level, setLevel] = useState("all"),
     [comment, setComment] = useState(""),
     [commentFor, setCommentFor] = useState("");
-  const lists = c.lists.filter(
+  const sourceLists = c.lists.length ? c.lists : temporaryDefaults(c.user);
+  const lists = sourceLists.filter(
       (l) => l.type !== "secret" || l.owner_id === c.user,
     ),
     list = lists.find((l) => l.id === selected) || lists[0],
@@ -697,11 +802,25 @@ export function Wishlists() {
   useEffect(() => {
     setComment("");
     setCommentFor("");
-    setAdding(false);
-    setEditing(null);
     setFilter("all");
     setLevel("all");
   }, [list?.id]);
+  useEffect(() => {
+    if (!selected.startsWith("local:")) return;
+    const type = selected.startsWith("local:personal") ? "personal" : "shared";
+    const resolved = writableLists(c.lists, c.user).find(
+      (l) => l.type === type && !l.id.startsWith("local:"),
+    );
+    if (resolved) setSelected(resolved.id);
+  }, [c.lists, c.user, selected]);
+  useEffect(() => {
+    if (sessionStorage.getItem("arcade-open-wish")) {
+      sessionStorage.removeItem("arcade-open-wish");
+      edit(null);
+    }
+    // Open only on entry; later list recovery must not close the sheet.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     setAdding(false);
     setEditing(null);
@@ -770,17 +889,39 @@ export function Wishlists() {
         type: listType,
         owner_id: c.user,
         cover: "wish-jar",
+        color: listColor,
       };
       if (c.preview) c.local((s) => ({ ...s, lists: [...s.lists, data] }));
+      else if (!navigator.onLine)
+        c.local((s) => {
+          const lists = [...s.lists, data];
+          localStorage.setItem(
+            `arcade-wishlists:${c.user}`,
+            JSON.stringify(lists),
+          );
+          return { ...s, lists };
+        });
       else {
         const r = await c.db!.from("wishlists").insert(data);
         if (r.error) throw new Error(r.error.message);
       }
-      setSelected(data.id);
+      if (adding) {
+        setWishListId(data.id);
+        setInlineList(false);
+      } else setSelected(data.id);
       setListTitle("");
     });
   }
   function edit(w: Wish | null) {
+    const writable = writableLists(sourceLists, c.user);
+    const last = localStorage.getItem(`arcade-last-wishlist:${c.user}`);
+    setWishListId(
+      w?.list_id ||
+        writable.find((l) => l.id === selected)?.id ||
+        writable.find((l) => l.id === last)?.id ||
+        writable.find((l) => l.type === "shared")?.id ||
+        "local:shared",
+    );
     setEditing(w);
     setTitle(w?.title || "");
     setNote(w?.note || "");
@@ -797,21 +938,42 @@ export function Wishlists() {
     e.preventDefault();
     armGameSounds();
     const ok = await c.run(async () => {
-      if (!list) throw new Error("Create a list first.");
+      let target =
+        writableLists(sourceLists, c.user).find((l) => l.id === wishListId) ||
+        temporaryDefaults(c.user).find((l) => l.id === wishListId) ||
+        temporaryDefaults(c.user)[0];
       if (url && !safeLink(url)) throw new Error("Use an http or https link.");
       if (!title.trim()) throw new Error("Give your wish a title.");
-      if (!c.preview && !navigator.onLine) {
-        if (editing)
-          throw new Error(
-            "Wish edits need a connection. Your changes are still here.",
-          );
-        if (!title.trim()) throw new Error("Give your wish a title.");
+      if (editing && !c.preview && !navigator.onLine)
+        throw new Error(
+          "Wish edits need a connection. Your changes are still here.",
+        );
+      if (!c.preview && !editing) {
+        const queuedId = crypto.randomUUID();
+        const queued: Wish = {
+          id: queuedId,
+          list_id: target.id,
+          created_by: c.user,
+          title: title.trim(),
+          note,
+          url: safeLink(url),
+          price: price ? Number(price) : null,
+          currency: currency.toUpperCase(),
+          priority,
+          category,
+          planned_date: planned || null,
+          status: "wished",
+          done_at: null,
+          position: 0,
+          created_at: new Date().toISOString(),
+          image_path: null,
+        };
         await enqueueWish(
           c.user,
-          c.couple!,
+          c.couple || "",
           {
-            id: crypto.randomUUID(),
-            list_id: list.id,
+            id: queuedId,
+            list_id: target.id,
             created_by: c.user,
             title: title.trim(),
             note,
@@ -823,9 +985,33 @@ export function Wishlists() {
             planned_date: planned || null,
           },
           file ? await compressPhoto(file) : null,
+          target,
         );
+        c.local((s) => ({
+          ...s,
+          lists: s.lists.some((l) => l.id === target.id)
+            ? s.lists
+            : [...s.lists, target],
+          wishes: [queued, ...s.wishes],
+        }));
+        setSelected(target.id);
+        localStorage.setItem(`arcade-last-wishlist:${c.user}`, target.id);
+        if (navigator.onLine && c.couple) void c.retry();
         return;
       }
+      if (!c.preview) {
+        const resolved = await resolveWishList(
+          c.db!,
+          c.user,
+          target.id,
+          target,
+        );
+        target = { ...target, id: resolved };
+      } else if (target.id.startsWith("local:")) {
+        target = { ...target, id: crypto.randomUUID() };
+        c.local((s) => ({ ...s, lists: [...s.lists, target] }));
+      }
+      localStorage.setItem(`arcade-last-wishlist:${c.user}`, target.id);
       const data = {
         title: title.trim(),
         note,
@@ -841,7 +1027,7 @@ export function Wishlists() {
       if (!editing && !c.preview) {
         setOptimistic({
           id,
-          list_id: list.id,
+          list_id: target.id,
           created_by: c.user,
           status: "wished",
           done_at: null,
@@ -859,7 +1045,7 @@ export function Wishlists() {
             : [
                 {
                   id,
-                  list_id: list.id,
+                  list_id: target.id,
                   created_by: c.user,
                   status: "wished",
                   done_at: null,
@@ -875,8 +1061,19 @@ export function Wishlists() {
           ? await c.db!.from("wishlist_items").update(data).eq("id", editing.id)
           : await c
               .db!.from("wishlist_items")
-              .insert({ id, ...data, list_id: list.id });
-        if (r.error) throw new Error(r.error.message);
+              .insert({ id, ...data, list_id: target.id });
+        if (r.error && !editing && r.error.code === "23503") {
+          const recovered = await resolveWishList(
+            c.db!,
+            c.user,
+            target.id,
+            target,
+          );
+          const retried = await c
+            .db!.from("wishlist_items")
+            .insert({ id, ...data, list_id: recovered });
+          if (retried.error) throw new Error(retried.error.message);
+        } else if (r.error) throw new Error(r.error.message);
       }
     });
     if (ok) setAdding(false);
@@ -945,33 +1142,60 @@ export function Wishlists() {
     }
   }
   async function removeList() {
-    if (
-      !list ||
-      !editable ||
-      !window.confirm(`Delete “${list.title}” and all its wishes?`)
-    )
-      return;
+    if (!list || !editable) return;
     const removing = list.id;
     const saved = await c.run(async () => {
       if (c.preview) {
+        if (
+          (list.type === "secret" || list.type === "custom") &&
+          !c.lists.some(
+            (l) =>
+              l.id !== removing &&
+              l.type === list.type &&
+              l.owner_id === list.owner_id,
+          )
+        )
+          throw new Error("Keep at least one list.");
         c.local((s) => {
           const ids = new Set(
             s.wishes.filter((w) => w.list_id === removing).map((w) => w.id),
           );
+          const remaining = s.lists.filter((l) => l.id !== removing);
+          for (const fallback of temporaryDefaults(c.user)) {
+            if (
+              !remaining.some(
+                (l) =>
+                  l.type === fallback.type &&
+                  (l.type === "shared" || l.owner_id === c.user),
+              )
+            )
+              remaining.push({ ...fallback, id: crypto.randomUUID() });
+          }
           return {
             ...s,
-            lists: s.lists.filter((l) => l.id !== removing),
-            wishes: s.wishes.filter((w) => !ids.has(w.id)),
+            lists: remaining,
+            wishes: moveTo
+              ? s.wishes.map((w) =>
+                  ids.has(w.id) ? { ...w, list_id: moveTo } : w,
+                )
+              : s.wishes.filter((w) => !ids.has(w.id)),
             claims: s.claims.filter((i) => !ids.has(i.item_id)),
             comments: s.comments.filter((i) => !ids.has(i.item_id)),
           };
         });
       } else {
-        const r = await c.db!.rpc("delete_wishlist", { lid: removing });
+        const r = await c.db!.rpc("manage_wishlist", {
+          lid: removing,
+          destination: moveTo || null,
+        });
         if (r.error) throw new Error(r.error.message);
       }
     });
-    if (saved) setSelected("");
+    if (saved) {
+      setSelected("");
+      setRemovingList(false);
+      setMoveTo("");
+    }
   }
   const jarData = optimistic
     ? [...c.wishes.filter((w) => w.id !== optimistic.id), optimistic]
@@ -1074,16 +1298,12 @@ export function Wishlists() {
             <br />A jar of someday.
           </h2>
           <p>
-            {list
-              ? `Little dreams in ${list.title}.`
-              : "Make a list, then tuck your first wish inside."}
+            {list ? `Little dreams in ${list.title}.` : "Make your first wish."}
           </p>
           <div className="wish-hero-actions">
-            {editable && (
-              <button disabled={c.busy} onClick={() => edit(null)}>
-                Make a wish <Plus size={18} />
-              </button>
-            )}
+            <button onClick={() => edit(null)}>
+              Make a wish <Plus size={18} />
+            </button>
             <button className="secondary" onClick={() => setJarOpen(true)}>
               Open our jar <Heart size={18} />
             </button>
@@ -1157,7 +1377,10 @@ export function Wishlists() {
               <button
                 className="secondary"
                 disabled={c.busy}
-                onClick={() => void removeList()}
+                onClick={() => {
+                  setMoveTo("");
+                  setRemovingList(true);
+                }}
               >
                 Delete list <Trash2 size={18} />
               </button>
@@ -1401,8 +1624,16 @@ export function Wishlists() {
               <Slot name="wishlist-empty-mascot" alt="Wishlist artwork">
                 <Gift size={54} />
               </Slot>
-              <h3>A little dream starts here.</h3>
-              <p>Add a wish, or try another filter.</p>
+              <h3>
+                {all.length
+                  ? "No wishes match this filter."
+                  : "Make your first wish."}
+              </h3>
+              {!all.length && (
+                <button onClick={() => edit(null)}>
+                  Make a wish <Plus size={18} />
+                </button>
+              )}
             </div>
           )}
           <p className="wish-budget">
@@ -1425,10 +1656,64 @@ export function Wishlists() {
       ) : (
         <div className="keepsake-empty">
           <Gift size={54} />
-          <p>Create your first list above.</p>
+          <p>Make your first wish.</p>
         </div>
       )}
       {reveal}
+      {removingList && (
+        <div className="sheet-backdrop">
+          <section
+            className="keepsake-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Delete wishlist"
+          >
+            <h2>Delete {list?.title}?</h2>
+            <p>
+              {all.length
+                ? "Move your wishes to another list, or delete them with this list."
+                : "Your default wishlist will stay available."}
+            </p>
+            <div className="list-tabs">
+              <button
+                className={!moveTo ? "" : "secondary"}
+                onClick={() => setMoveTo("")}
+              >
+                Delete wishes too
+              </button>
+              {writableLists(lists, c.user)
+                .filter(
+                  (l) =>
+                    l.id !== list?.id &&
+                    (list?.type !== "secret" || l.type === "secret"),
+                )
+                .map((l) => (
+                  <button
+                    key={l.id}
+                    className={moveTo === l.id ? "" : "secondary"}
+                    onClick={() => setMoveTo(l.id)}
+                  >
+                    Move to {l.title}
+                  </button>
+                ))}
+            </div>
+            {c.error && (
+              <p role="alert" className="error">
+                {c.error}
+              </p>
+            )}
+            <button disabled={c.busy} onClick={() => void removeList()}>
+              Confirm deletion
+            </button>
+            <button
+              className="secondary"
+              onClick={() => setRemovingList(false)}
+            >
+              Cancel
+            </button>
+          </section>
+        </div>
+      )}
       {adding && (
         <div className="sheet-backdrop">
           <section
@@ -1456,6 +1741,72 @@ export function Wishlists() {
               </p>
             )}
             <form onSubmit={save}>
+              {!editing && (
+                <>
+                  <div className="list-tabs" aria-label="Save wish to">
+                    {writableLists(sourceLists, c.user).map((l) => (
+                      <button
+                        type="button"
+                        key={l.id}
+                        aria-pressed={wishListId === l.id}
+                        className={wishListId === l.id ? "" : "secondary"}
+                        onClick={() => setWishListId(l.id)}
+                      >
+                        {l.title}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => setInlineList(!inlineList)}
+                    >
+                      + New list
+                    </button>
+                  </div>
+                  {inlineList && (
+                    <div className="new-list-inline">
+                      <label>
+                        List name
+                        <input
+                          maxLength={80}
+                          value={listTitle}
+                          onChange={(e) => setListTitle(e.target.value)}
+                        />
+                      </label>
+                      <div className="list-tabs" aria-label="List type">
+                        {(["shared", "personal", "secret"] as const).map(
+                          (type, i) => (
+                            <button
+                              type="button"
+                              key={type}
+                              aria-pressed={listType === type}
+                              className={listType === type ? "" : "secondary"}
+                              onClick={() => setListType(type)}
+                            >
+                              {["Ours", "Mine", "Secret"][i]}
+                            </button>
+                          ),
+                        )}
+                      </div>
+                      <label>
+                        Color
+                        <input
+                          type="color"
+                          value={listColor}
+                          onChange={(e) => setListColor(e.target.value)}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        disabled={!listTitle.trim() || c.busy}
+                        onClick={(e) => void createList(e)}
+                      >
+                        Create and select
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
               <label>
                 Wish title
                 <input

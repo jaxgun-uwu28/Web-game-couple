@@ -50,6 +50,12 @@ test("offline wishes stay scoped to their author, survive failed sync and retry 
     inserts = 0,
     exists = false;
   const db = {
+    rpc: async () => ({
+      data: [
+        { id: "list", type: "shared", owner_id: "one", title: "Our wishlist" },
+      ],
+      error: null,
+    }),
     auth: { getUser: async () => ({ data: { user: { id: "one" } } }) },
     from: () => ({
       select: () => ({
