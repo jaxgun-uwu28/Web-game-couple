@@ -327,10 +327,37 @@
   width: 100%;
 }
 .wish-shortcut {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  box-sizing: border-box;
+  border-radius: 24px;
   width: 100%;
   margin-block: 28px;
   justify-content: flex-start;
   flex-wrap: wrap;
+}
+.wish-shortcut > span { min-width: 0; overflow-wrap: anywhere; font-weight: 700; }
+.wish-shortcut > button { margin: 0; white-space: nowrap; }
+.wish-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 10px;
+}
+.wish-actions label { grid-column: 1 / -1; min-width: 0; max-width: none; margin: 0; }
+.wish-actions label select { width: 100%; box-sizing: border-box; margin-top: 8px; }
+.wish-actions > button { width: 100%; padding: 12px; box-sizing: border-box; }
+.wish-actions > button:last-child { grid-column: 1 / -1; }
+.wish-pages > li > details { border-top: 1px solid var(--line); padding-top: 18px; }
+@media (max-width: 760px) {
+  .wish-shortcut { grid-template-columns: 76px minmax(0, 1fr); gap: 12px 16px; padding: 18px; }
+  .wish-shortcut .wish-jar.mini { width: 76px; grid-row: span 2; }
+  .wish-shortcut > span { align-self: end; }
+  .wish-shortcut > .text-button { justify-self: start; padding: 0; min-height: 44px; }
+  .wish-shortcut > button:last-child { grid-column: 1 / -1; justify-self: stretch; }
 }
 .wish-shortcut span:last-child {
   margin-left: auto;

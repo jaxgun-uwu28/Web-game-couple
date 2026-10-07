@@ -29,6 +29,7 @@ Supplied kitty-couple.jpg is the default web/PWA/Android/sign-in identity; prese
 Visible copy is personal and useful: no stage labels, metadata/compression/privacy commentary, developer notes, folder paths or technical artwork annotations. Keep necessary game instructions, permission choices and actionable errors. Anniversary/nicknames are editable data, not baked into active UI. Music/sounds are opt-in. No ads, analytics or paid-service additions.
 
 Opened letters use cream stationery in both themes, a fine pink frame, heart seal and handwritten body; close/favorite controls follow the message and attachments. Read-once behavior and envelope opening remain unchanged. Personal wishlist labels distinguish My wishes from Partner’s wishes.
+Home's wish shortcut uses a responsive jar/title/action grid; wish cards use a full-width status picker and aligned action rows.
 
 ## Data and security
 

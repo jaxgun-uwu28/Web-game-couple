@@ -1507,6 +1507,7 @@ export function Wishlists() {
                         }
                       >
                         <ArrowUp size={18} />
+                        Move up
                       </button>
                       <button
                         className="secondary wish-delete"
