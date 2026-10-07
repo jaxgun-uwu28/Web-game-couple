@@ -1306,7 +1306,8 @@ export function Notes() {
       title: string;
       favorite: boolean;
     } | null>(null),
-    [voiceUrl, setVoiceUrl] = useState("");
+    [voiceUrl, setVoiceUrl] = useState(""),
+    [letterOpening, setLetterOpening] = useState(false);
   const recorder = useRef<MediaRecorder | null>(null),
     stream = useRef<MediaStream | null>(null),
     letterDialog = useRef<HTMLElement | null>(null);
@@ -1342,7 +1343,8 @@ export function Notes() {
   }
   const closeLetter = useRef(() => {});
   closeLetter.current = () => {
-    if (!c.busy) void finishLetter();
+    if (letterOpening) setLetterOpening(false);
+    else if (!c.busy) void finishLetter();
   };
   useEffect(() => {
     if (!opened) return;
@@ -1380,6 +1382,19 @@ export function Notes() {
       previous?.focus();
     };
   }, [opened?.id]);
+  useEffect(() => {
+    if (!letterOpening) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reduced.matches) {
+      setLetterOpening(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setLetterOpening(false), 2400);
+    return () => window.clearTimeout(timer);
+  }, [letterOpening, opened?.id]);
+  useEffect(() => {
+    if (opened && !letterOpening) letterDialog.current?.focus();
+  }, [letterOpening, opened?.id]);
   useEffect(() => {
     setOpened(null);
     setBody("");
@@ -1601,15 +1616,20 @@ export function Notes() {
                   className="secondary"
                   disabled={sealed || c.busy}
                   onClick={() =>
-                    void c.run(async () =>
+                    void c.run(async () => {
+                      const content = await c.open(n.id);
+                      setLetterOpening(
+                        !window.matchMedia("(prefers-reduced-motion: reduce)")
+                          .matches,
+                      );
                       setOpened({
                         id: n.id,
-                        content: await c.open(n.id),
+                        content,
                         author: n.author,
                         title: n.title,
                         favorite: !!n.recipient_favorite,
-                      }),
-                    )
+                      });
+                    })
                   }
                 >
                   {sealed ? <Lock size={18} /> : <Heart size={18} />}{" "}
@@ -1622,49 +1642,91 @@ export function Notes() {
       {opened && (
         <div className="letter-reveal-backdrop">
           <article
-            className="open-letter"
+            className={`open-letter ${letterOpening ? "is-opening" : "is-reading"}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="open-letter-title"
             tabIndex={-1}
             ref={letterDialog}
           >
-            <h2 id="open-letter-title">{opened.title}</h2>
-            <div className="letter-reader-actions">
-              <button
-                className="secondary"
-                disabled={c.busy}
-                onClick={() => void finishLetter()}
-              >
-                Close letter <X size={17} />
-              </button>
-              {opened.author !== c.user && (
+            {letterOpening ? (
+              <>
+                <h2 id="open-letter-title" className="sr-only">
+                  {opened.title}
+                </h2>
+                <div className="letter-envelope-scene" aria-hidden="true">
+                  <div className="letter-envelope-shadow" />
+                  <div className="letter-envelope">
+                    <div className="letter-envelope-back" />
+                    <div className="letter-envelope-flap" />
+                    <div className="letter-envelope-paper">
+                      <span>{opened.title}</span>
+                      <i />
+                      <i />
+                      <i />
+                      <Heart size={22} />
+                    </div>
+                    <div className="letter-envelope-pocket" />
+                    <div className="letter-envelope-seal">
+                      <Heart size={24} fill="currentColor" />
+                    </div>
+                  </div>
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <Heart
+                      key={i}
+                      className={`letter-floating-heart heart-${i}`}
+                      fill="currentColor"
+                      size={24 + i * 3}
+                    />
+                  ))}
+                </div>
                 <button
-                  disabled={c.busy || opened.favorite}
-                  onClick={() => void finishLetter(true)}
+                  className="secondary letter-skip"
+                  onClick={() => setLetterOpening(false)}
                 >
-                  <Heart
-                    size={17}
-                    fill={opened.favorite ? "currentColor" : "none"}
-                  />
-                  {opened.favorite ? "Favorited" : "Favorite to keep"}
+                  Read letter
                 </button>
-              )}
-            </div>
-            {opened.author !== c.user && !opened.favorite && (
-              <p className="letter-read-once">
-                This letter disappears when you close it. Favorite it to keep
-                it.
-              </p>
+              </>
+            ) : (
+              <>
+                <h2 id="open-letter-title">{opened.title}</h2>
+                <div className="letter-reader-actions">
+                  <button
+                    className="secondary"
+                    disabled={c.busy}
+                    onClick={() => void finishLetter()}
+                  >
+                    Close letter <X size={17} />
+                  </button>
+                  {opened.author !== c.user && (
+                    <button
+                      disabled={c.busy || opened.favorite}
+                      onClick={() => void finishLetter(true)}
+                    >
+                      <Heart
+                        size={17}
+                        fill={opened.favorite ? "currentColor" : "none"}
+                      />
+                      {opened.favorite ? "Favorited" : "Favorite to keep"}
+                    </button>
+                  )}
+                </div>
+                {opened.author !== c.user && !opened.favorite && (
+                  <p className="letter-read-once">
+                    This letter disappears when you close it. Favorite it to
+                    keep it.
+                  </p>
+                )}
+                <p className="handwritten">{opened.content.body}</p>
+                {opened.content.media_kind === "photo" && (
+                  <Photo
+                    path={opened.content.media_path}
+                    alt="Photo enclosed in your letter"
+                  />
+                )}
+                {voiceUrl && <audio controls src={voiceUrl} />}
+              </>
             )}
-            <p className="handwritten">{opened.content.body}</p>
-            {opened.content.media_kind === "photo" && (
-              <Photo
-                path={opened.content.media_path}
-                alt="Photo enclosed in your letter"
-              />
-            )}
-            {voiceUrl && <audio controls src={voiceUrl} />}
           </article>
         </div>
       )}

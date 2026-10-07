@@ -601,3 +601,213 @@
     animation: none;
   }
 }
+
+/* Envelope opening: seal lifts, flap folds back, paper emerges, hearts rise. */
+.letter-reveal-backdrop .open-letter.is-opening {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  overflow: visible;
+  padding: 0;
+  animation: none;
+  text-align: center;
+}
+.open-letter.is-reading {
+  animation: letter-unfold 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.letter-envelope-scene {
+  position: relative;
+  width: min(78vw, 360px);
+  height: min(90vw, 360px);
+  margin: auto;
+  perspective: 1000px;
+}
+.letter-envelope {
+  position: absolute;
+  inset: 36% 4% 8%;
+  filter: drop-shadow(0 16px 16px #261c2b40);
+  animation: letter-envelope-arrive 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.letter-envelope-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: #792541;
+}
+.letter-envelope-flap {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: #b94060;
+  clip-path: polygon(0 0, 100% 0, 50% 58%);
+  transform-origin: top;
+  backface-visibility: visible;
+  animation: letter-flap-lift 650ms 450ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.letter-envelope-paper {
+  position: absolute;
+  left: 9%;
+  right: 9%;
+  top: 9%;
+  height: 82%;
+  z-index: 2;
+  box-sizing: border-box;
+  padding: 18px;
+  border-radius: 4px;
+  color: #7e2945;
+  background: #fff8ed;
+  box-shadow: 0 3px 10px #261c2b26;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  align-items: center;
+  animation: letter-paper-lift 1100ms 950ms cubic-bezier(0.16, 1, 0.3, 1)
+    forwards;
+}
+.letter-envelope-paper span {
+  font: 500 clamp(18px, 4vw, 25px) var(--hand);
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.letter-envelope-paper i {
+  display: block;
+  height: 2px;
+  width: 80%;
+  background: #7e29452b;
+}
+.letter-envelope-paper i:nth-of-type(2) {
+  width: 90%;
+}
+.letter-envelope-paper i:nth-of-type(3) {
+  width: 60%;
+}
+.letter-envelope-pocket {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: 0 0 8px 8px;
+  background: linear-gradient(145deg, #a42e50, #882340);
+  clip-path: polygon(0 0, 50% 55%, 100% 0, 100% 100%, 0 100%);
+}
+.letter-envelope-pocket::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #ad3657;
+  clip-path: polygon(0 100%, 50% 45%, 100% 100%);
+}
+.letter-envelope-seal {
+  position: absolute;
+  z-index: 6;
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #f5d588;
+  color: #842b45;
+  box-shadow:
+    0 3px 6px #261c2b40,
+    inset 0 0 0 3px #e8bd66;
+  animation: letter-seal-release 400ms 250ms ease-out forwards;
+}
+.letter-floating-heart {
+  position: absolute;
+  z-index: 7;
+  bottom: 25%;
+  left: 20%;
+  color: #f49bbb;
+  opacity: 0;
+  filter: drop-shadow(0 3px 3px #261c2b30);
+  animation: letter-heart-rise 1300ms 1000ms ease-out both;
+}
+.letter-floating-heart.heart-1 {
+  left: 76%;
+  animation-delay: 1100ms;
+  color: #e25178;
+}
+.letter-floating-heart.heart-2 {
+  left: 10%;
+  bottom: 42%;
+  animation-delay: 1200ms;
+}
+.letter-floating-heart.heart-3 {
+  left: 84%;
+  bottom: 38%;
+  animation-delay: 1300ms;
+  color: #ffb9cc;
+}
+.letter-floating-heart.heart-4 {
+  left: 48%;
+  bottom: 18%;
+  animation-delay: 1150ms;
+}
+.letter-skip {
+  margin-top: 16px;
+}
+@keyframes letter-envelope-arrive {
+  from {
+    transform: translateY(22px) rotate(-5deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) rotate(-2deg);
+    opacity: 1;
+  }
+}
+@keyframes letter-seal-release {
+  to {
+    opacity: 0;
+    transform: translate(-50%, 20px) scale(0.7) rotate(20deg);
+  }
+}
+@keyframes letter-flap-lift {
+  49% {
+    z-index: 5;
+  }
+  50%,
+  100% {
+    z-index: 1;
+  }
+  to {
+    transform: rotateX(180deg);
+  }
+}
+@keyframes letter-paper-lift {
+  65% {
+    transform: translateY(-64%) rotate(2deg);
+  }
+  to {
+    transform: translateY(-76%) rotate(0deg);
+  }
+}
+@keyframes letter-heart-rise {
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-160px) rotate(15deg);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .letter-envelope,
+  .letter-envelope-flap,
+  .letter-envelope-paper,
+  .letter-envelope-seal,
+  .letter-floating-heart,
+  .open-letter.is-reading {
+    animation: none;
+  }
+  .letter-floating-heart {
+    display: none;
+  }
+}
