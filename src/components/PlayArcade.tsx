@@ -364,6 +364,7 @@ export default function PlayArcade({
   if (pluginOpen)
     return (
       <PluginGame
+        key={`${pluginOpen}:${session?.user.id || "preview"}`}
         startConfig={pluginOpen === invitedGame ? invitedConfig : undefined}
         active={active}
         id={pluginOpen}

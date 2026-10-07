@@ -14,7 +14,10 @@ export default function GameInvites() {
       }[]
     >([]);
   const load = useCallback(async () => {
-    if (!c.db || c.preview) return;
+    if (!c.db || c.preview || !c.couple || !c.user) {
+      setRows([]);
+      return;
+    }
     const r = await c.db
       .from("arcade_matches")
       .select("id,game_id,host,status")
@@ -26,7 +29,7 @@ export default function GameInvites() {
   }, [c.db, c.preview, c.couple, c.user]);
   useEffect(() => {
     void load();
-    if (!c.db || c.preview) return;
+    if (!c.db || c.preview || !c.couple || !c.user) return;
     const ch = c.db
       .channel("home-game-invites")
       .on(
@@ -48,7 +51,7 @@ export default function GameInvites() {
       window.removeEventListener("arcade:couple-update", refresh);
       void c.db!.removeChannel(ch);
     };
-  }, [load, c.db, c.preview, c.couple]);
+  }, [load, c.db, c.preview, c.couple, c.user]);
   return rows.length ? (
     <section className="game-invites">
       <h2>Partner’s game room</h2>

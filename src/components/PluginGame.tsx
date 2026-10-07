@@ -256,9 +256,10 @@ export default function PluginGame({
     [db, preview],
   );
   useEffect(() => {
-    if (preview) return;
+    if (preview || !db || !couple || !user) return;
+    let cancelled = false;
     void gameRequest(db, "/api/game/plugin", { action: "list" })
-      .then((data) => {
+      .then(async (data) => {
         const found = (
           data as unknown as { matches: Snapshot["match"][] }
         ).matches.find(
@@ -266,14 +267,19 @@ export default function PluginGame({
             x.game_id === id &&
             ["invited", "waiting", "playing"].includes(x.status),
         );
-        if (found)
-          void gameRequest(db, "/api/game/plugin", {
+        if (found) {
+          const room = await gameRequest(db, "/api/game/plugin", {
             action: "get",
             id: found.id,
-          }).then((s) => setSnapshot(s as unknown as Snapshot));
+          });
+          if (!cancelled) setSnapshot(room as unknown as Snapshot);
+        }
       })
-      .catch((e) => setError(e.message));
-  }, [db, id, preview]);
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Room could not load. Try again.");
+      });
+    return () => { cancelled = true; };
+  }, [db, id, preview, couple, user]);
   useEffect(() => {
     if (!snapshot || preview || !db || !active || !couple) return;
     let cancelled = false;
