@@ -405,6 +405,8 @@ main {
   gap: 4px;
 }
 .countdown strong {
+  white-space: nowrap;
+  overflow-wrap: normal;
   font-family: var(--display);
   font-size: clamp(38px, 4.3vw, 59px);
   font-weight: 500;
@@ -1110,7 +1112,6 @@ html[data-time="dusk"] .anniversary-page {
   .countdown {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
   }
   .anniversary-page {
     min-height: 365px;
@@ -1128,11 +1129,11 @@ html[data-time="dusk"] .anniversary-page {
     width: 44px;
   }
   .countdown {
-    gap: 28px;
+    gap: 12px;
     margin-bottom: 24px;
   }
   .countdown strong {
-    font-size: 49px;
+    font-size: clamp(32px, 10vw, 49px);
   }
   .anniversary-bottom strong {
     font-size: 13px;
