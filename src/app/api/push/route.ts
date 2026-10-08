@@ -149,6 +149,8 @@ export async function POST(req: Request) {
                     title: "A little cassette",
                     body: "You have a new voice message.",
                   }
+                : table === "love_notes"
+                  ? { title: "A little letter", body: "Your partner has sent you a letter." }
                 : table === "postcards"
                   ? { title: "A little postcard", body: "You have a postcard." }
                   : {

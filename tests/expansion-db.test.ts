@@ -245,3 +245,37 @@ function ledgerMove(
   }
   return next;
 }
+
+test("Read-once postcards delete only after recipient closes and preserve recipient favorites", async () => {
+  const db = await fixture();
+  try {
+    await db.exec(await readFile('supabase/migrations/017_postcards.sql','utf8'));
+    const sql=await readFile('supabase/migrations/034_read_once_postcards.sql','utf8');
+    await db.exec(sql); await db.exec(sql);
+    await db.query(`insert into postcards(id,couple_id,sender_id,front_path,back_path,layers,message,envelope_color,stamp_id) values($1,$2,$3,'front','back','{}','Hello','#F8C9D8','heart')`,[id,c,a]);
+    await as(db,a);
+    await assert.rejects(db.query('select finish_postcard($1,false)',[id]));
+    await as(db,b);
+    await assert.rejects(db.query('select finish_postcard($1,false)',[id]));
+    await db.query('select open_postcard($1)',[id]);
+    await db.query('select finish_postcard($1,true)',[id]);
+    await db.query('select finish_postcard($1,true)',[id]);
+    assert.equal((await db.query('select favorite_by from postcards')).rows.length,1);
+    await db.query('select finish_postcard($1,false)',[id]);
+    assert.equal((await db.query('select id from postcards')).rows.length,1);
+    await db.query("select postcard_action($1,'favorite')",[id]);
+    await db.query('select finish_postcard($1,false)',[id]);
+    assert.equal((await db.query('select id from postcards')).rows.length,0);
+    await db.query('select finish_postcard($1,false)',[id]);
+    await db.exec('reset role');
+    await db.query(`insert into postcards(id,couple_id,sender_id,front_path,back_path,layers,message,envelope_color,stamp_id,unlock_at,opened_at) values($1,$2,$3,'front','back','{}','Sealed','#F8C9D8','heart',now()+interval '1 day',now())`,[id,c,a]);
+    await as(db,b);
+    await assert.rejects(db.query('select finish_postcard($1,false)',[id]));
+    await db.query("select set_config('request.jwt.claim.sub','30000000-0000-4000-8000-000000000001',false)");
+    await db.query('select finish_postcard($1,false)',[id]);
+    await db.exec('reset role');
+    assert.equal((await db.query('select id from postcards')).rows.length,1);
+    await db.exec('set role anon');
+    await assert.rejects(db.query('select finish_postcard($1,false)',[id]));
+  } finally { await db.close(); }
+});

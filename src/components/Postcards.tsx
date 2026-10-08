@@ -1650,6 +1650,8 @@ function PostcardViewer({
     frontLayers = useRef<HTMLCanvasElement | null>(null),
     [layered, setLayered] = useState(false),
     [deleting, setDeleting] = useState(false),
+    [keeping, setKeeping] = useState(row.favorite_by.includes(c.user)),
+    [finishing, setFinishing] = useState(false),
     [error, setError] = useState("");
   useEffect(() => {
     if (opening || back || !frontLayers.current || row.layers?.version !== 1)
@@ -1746,10 +1748,33 @@ function PostcardViewer({
     };
   }, [c.db, c.preview, row]);
   async function action(a: string, v = "") {
-    if (c.preview) return;
-    const r = await c.db!.rpc("postcard_action", { i: row.id, a, v });
-    if (r.error) setError(r.error.message);
-    else void refresh();
+    if (finishing) return;
+    setFinishing(true);
+    try {
+      if (c.preview) { if (a === "favorite") setKeeping(!keeping); return; }
+      const r = await c.db!.rpc("postcard_action", { i: row.id, a, v });
+      if (r.error) throw r.error;
+      if (a === "favorite") setKeeping(!keeping);
+      void refresh();
+    } catch { setError("Your postcard could not update. Please try again."); }
+    finally { setFinishing(false); }
+  }
+  async function finish(after = close) {
+    if (finishing) return;
+    setFinishing(true);
+    try {
+      if (row.sender_id !== c.user && !opening && urls.length > 0) {
+        if (c.preview) { if (!keeping) onDelete?.(row.id); }
+        else {
+          const { gameRequest } = await import("@/lib/game-request");
+          const r = await gameRequest(c.db!, { id: row.id, keep: keeping }, fetch, "/api/postcard/finish");
+          if (r.deleted) onDelete?.(row.id);
+          await refresh();
+        }
+      }
+      after();
+    } catch { setError("Your postcard could not close. Please try again; it is still saved."); }
+    finally { setFinishing(false); }
   }
   async function save() {
     await c.run(async () => {
@@ -1773,20 +1798,21 @@ function PostcardViewer({
       ref={dialog}
       className="postcard-viewer"
       aria-label="Opened postcard"
-      onCancel={close}
+      onCancel={e => { e.preventDefault(); void finish(); }}
     >
       {!opening && <Celebration />}
       <button
         className="icon-button"
         aria-label="Close postcard"
-        onClick={close}
+        onClick={() => void finish()}
+        disabled={finishing}
       >
         <X />
       </button>
       {error && <p role="alert">{error}</p>}
       {opening && !error && (
         <div className="postcard-open-scene" role="status">
-          <EnvelopeAnimation color={row.envelope_color} />
+          <EnvelopeAnimation color={row.envelope_color} front={urls[0]} />
           <span>Opening your postcard…</span>
         </div>
       )}
@@ -1814,12 +1840,13 @@ function PostcardViewer({
         />
       </button>
       <p>Tap your postcard to flip it.</p>
+      {row.sender_id !== c.user && <p className="postcard-keep-hint">{keeping ? "Saved in your postcard box." : "This postcard disappears when you close it. Favorite it to keep."}</p>}
       <div className="postcard-actions">
-        <button onClick={reply}>
+        <button disabled={finishing || opening} onClick={() => void finish(reply)}>
           <Mail size={18} /> Reply
         </button>
-        <button onClick={() => void action("favorite")}>
-          <Star size={18} /> Favorite
+        <button aria-pressed={keeping} disabled={finishing} onClick={() => void action("favorite")}>
+          <Heart size={18} fill={keeping ? "currentColor" : "none"} /> {keeping ? "Kept in favorites" : "Favorite to keep"}
         </button>
         <button
           disabled={!urls.length || c.preview}
@@ -1907,9 +1934,11 @@ function PostcardViewer({
 function EnvelopeAnimation({
   color,
   sending = false,
+  front,
 }: {
   color: string;
   sending?: boolean;
+  front?: string;
 }) {
   return (
     <div
@@ -1918,7 +1947,7 @@ function EnvelopeAnimation({
       aria-hidden="true"
     >
       <div className="postcard-envelope-letter">
-        <Heart />
+        {front ? <img src={front} alt="" /> : <Heart />}
       </div>
       <div className="postcard-envelope-flap" />
       <div className="postcard-envelope-seal">

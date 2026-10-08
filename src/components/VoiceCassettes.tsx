@@ -97,8 +97,10 @@ function Tape({
 }
 export default function VoiceCassettes({
   latest = false,
+  replyRequest = 0,
 }: {
   latest?: boolean;
+  replyRequest?: number;
 }) {
   const artwork = useArtworkLibrary();
   const unlocked = useCosmetics();
@@ -125,6 +127,13 @@ export default function VoiceCassettes({
     [maxSeconds, setMaxSeconds] = useState(60),
     [usage, setUsage] = useState({ used: 0, cap: 314572800 });
   const previewUrls = useRef(new Set<string>());
+  const recordButton = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (!latest && replyRequest) {
+      recordButton.current?.scrollIntoView({ block: "center", behavior: "instant" });
+      recordButton.current?.focus({ preventScroll: true });
+    }
+  }, [latest, replyRequest]);
   useEffect(
     () => () => {
       for (const url of previewUrls.current) URL.revokeObjectURL(url);
@@ -513,12 +522,13 @@ export default function VoiceCassettes({
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
+  const incoming = rows.find(row => row.sender_id !== c.user);
   if (latest)
-    return rows.length ? (
+    return incoming ? (
       <section className="latest-cassette">
         <h2>A voice from your person</h2>
-        <button className="cassette-open" onClick={() => setSelected(rows[0])}>
-          <Tape row={rows[0]} />
+        <button className="cassette-open" onClick={() => setSelected(incoming)}>
+          <Tape row={incoming} />
         </button>
         {selected && (
           <CassettePlayer
@@ -578,6 +588,7 @@ export default function VoiceCassettes({
           </span>
           <button
             className="record-pad"
+            ref={recordButton}
             aria-label="Hold to record a cassette"
             onPointerDown={(e) => {
               gesture.current = { x: e.clientX, y: e.clientY };
@@ -960,6 +971,8 @@ function CassettePlayer({
     ),
     [rate, setRate] = useState(1),
     [loop, setLoop] = useState(false),
+    [hearted, setHearted] = useState(row.reactions?.[c.user] === "heart"),
+    [heartPulse, setHeartPulse] = useState(0),
     owner = useRef(`cassette-${row.id}`),
     heard = useRef(Boolean(row.listened_at));
   const markHeard = () => {
@@ -1189,29 +1202,13 @@ function CassettePlayer({
         {Math.round(row.duration_ms / 1000)} seconds
       </p>
       <div className="cassette-reactions">
-        {[
-          ["heart", Heart],
-          ["sparkle", Sparkles],
-          ["laugh", Smile],
-        ].map(([name, Icon]) => {
-          const I = Icon as typeof Heart;
-          return (
-            <button
-              key={String(name)}
-              aria-label={`React ${name}`}
-              onClick={() => {
-                tactile(20);
-                void action(row, "react", String(name));
-              }}
-            >
-              <I size={22} />
-            </button>
-          );
-        })}
+        <button aria-label="Heart this cassette" aria-pressed={hearted} className="cassette-heart" onClick={async () => {
+          if (await action(row, "react", "heart")) { setHearted(true); setHeartPulse(n=>n+1); tactile(20); }
+        }}><Heart key={heartPulse} size={24} fill={hearted ? "currentColor" : "none"} className={heartPulse ? "cassette-heart-pop" : ""} /></button>
         <button
           onClick={() => {
             close();
-            window.dispatchEvent(new Event("arcade-open-notes"));
+            window.dispatchEvent(new CustomEvent("arcade-open-notes", { detail: { record: true } }));
           }}
         >
           Send one back

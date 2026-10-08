@@ -73,6 +73,7 @@ export default function StageOne() {
     [anniversary, setAnniversary] = useState<string | null>(null),
     [loaded, setLoaded] = useState(false),
     [tab, setTab] = useState("home"),
+    [cassetteReply, setCassetteReply] = useState(0),
     [invitedGame, setInvitedGame] = useState<GameId | null>(null),
     [invitedConfig, setInvitedConfig] = useState<
       Record<string, string | number | boolean>
@@ -110,7 +111,10 @@ export default function StageOne() {
     };
   }, []);
   useEffect(() => {
-    const open = () => setTab("notes");
+    const open = (event: Event) => {
+      setTab("notes");
+      if ((event as CustomEvent<{record?: boolean}>).detail?.record) setCassetteReply(n=>n+1);
+    };
     window.addEventListener("arcade-open-notes", open);
     return () => window.removeEventListener("arcade-open-notes", open);
   }, []);
@@ -695,7 +699,7 @@ export default function StageOne() {
                   <Memories />
                 ) : tab === "notes" ? (
                   <>
-                    <VoiceCassettes />
+                    <VoiceCassettes replyRequest={cassetteReply} />
                     <Postcards shortcut />
                     <Notes />
                   </>

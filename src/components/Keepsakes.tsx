@@ -2127,6 +2127,8 @@ export function Notes() {
                   media: content.media_kind,
                 });
                 if (r.error) throw new Error(r.error.message);
+                const { gameRequest } = await import("@/lib/game-request");
+                void gameRequest(c.db!, { kind: "letter", id }, fetch, "/api/push/media").catch(() => {});
               }
               setTitle("");
               setBody("");
