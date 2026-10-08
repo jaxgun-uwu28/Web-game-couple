@@ -20,3 +20,5 @@ Do not store API keys, passwords, service-account data, raw private media or unn
 - Wish Jar redesign passed four focused fixtures and production build; geometry, secret filtering and 100-wish render cap are tested. Responsive screenshots, physical motion input and two-phone animation acceptance remain pending under the browser-policy block. No new migration is required.
 
 
+
+- Phone Home overflow: supplied video shows sideways page movement and widened navigation. Shell horizontal clipping, shrinkable Home/choice tracks, wrapping and bounded phone navigation are implemented; physical WebView reproduction remains to be checked after deployment.
