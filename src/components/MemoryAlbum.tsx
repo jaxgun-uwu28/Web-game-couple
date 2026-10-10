@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Archive,
+  Trash2,
   RotateCcw,
   X,
 } from "lucide-react";
@@ -159,6 +160,17 @@ export default function MemoryAlbum() {
         if (r.error) throw new Error(r.error.message);
       }
     });
+  }
+  async function removePhoto(m: Memory) {
+    if (!window.confirm("Permanently delete this photo and its comments from your shared Memories?")) return;
+    const saved = await c.run(async () => {
+      if(c.preview) c.local(s=>({...s,memories:s.memories.filter(photo=>photo.id!==m.id)}));
+      else {
+        const {gameRequest}=await import("@/lib/game-request");
+        await gameRequest(c.db!,{id:m.id},fetch,"/api/memory/delete");
+      }
+    });
+    if(saved) setSelected(null);
   }
   const dateLabel = (value: string) =>
     new Date(`${value}T12:00:00+08:00`).toLocaleDateString(undefined, {
@@ -443,6 +455,7 @@ export default function MemoryAlbum() {
                     )}{" "}
                     {current.archived_at ? "Restore" : "Archive"}
                   </button>
+                  <button type="button" className="secondary" disabled={c.busy} onClick={()=>void removePhoto(current)}><Trash2 size={18}/> Delete photo</button>
                 </div>
               </form>
             ) : (
