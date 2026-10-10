@@ -12,7 +12,7 @@ type InstallEvent = Event & {
 async function prepareChimeChannels() {
   const { PushNotifications } = await import("@capacitor/push-notifications");
   for (const chime of notificationChimes) await PushNotifications.createChannel({
-    id:`little-${chime.id}-v1`, name:chime.label, importance:4, sound:chime.id, vibration:true,
+    id:`little-${chime.id}-v2`, name:chime.label, importance:4, sound:chime.id, vibration:true,
   });
 }
 type Preferences = {
@@ -225,6 +225,19 @@ export default function InstallSupport({
       setBusy(false);
     }
   }
+  async function repairChimeChannel() {
+    const {App} = await import("@capacitor/app");
+    const info = await App.getInfo();
+    if (Number(info.build)<7) throw new Error("Install APK 1.0.6 or newer to hear custom notification chimes.");
+    await prepareChimeChannels();
+    if(db && session) {
+      const key=localStorage.getItem("arcade-device-key");
+      if(key) {
+        const updated=await db.from("push_devices").update({notification_channel_version:2}).eq("user_id",session.user.id).eq("device_key",key).eq("platform","android");
+        if(updated.error) throw new Error("Your phone's notification sound channel could not update. Try enabling this device again.");
+      }
+    }
+  }
   async function save() {
     if (!preferencesReady)
       throw new Error("Load your saved choices before changing them.");
@@ -232,7 +245,7 @@ export default function InstallSupport({
       setMessage("Preferences updated for this preview.");
       return;
     }
-    if (native) await prepareChimeChannels();
+    if (native) await repairChimeChannel();
     const r = await db!
       .from("notification_preferences")
       .upsert({ user_id: session!.user.id, ...prefs });
@@ -247,7 +260,7 @@ export default function InstallSupport({
     const sound = previewNotificationChime(chime.id);
     await work(async () => {
       await sound;
-      if (native) await prepareChimeChannels();
+      if (native) await repairChimeChannel();
       if (!preview) {
         if (!db || !session) throw new Error("Sign in to save your chime.");
         const saved = await db.from("notification_preferences").upsert({user_id:session.user.id,chime:chime.id},{onConflict:"user_id"});
@@ -262,12 +275,12 @@ export default function InstallSupport({
     const {App} = await import("@capacitor/app");
     const info = await App.getInfo();
     if (Number(info.build)<7) throw new Error("Install APK 1.0.6 or newer first. This installed APK does not contain the custom chime sounds.");
-    await prepareChimeChannels();
+    await repairChimeChannel();
     const {LocalNotifications} = await import("@capacitor/local-notifications");
     const permission = await LocalNotifications.requestPermissions();
     if(permission.display!=="granted") throw new Error("Allow notifications in your phone settings first.");
     const chime=notificationChime(prefs.chime);
-    await LocalNotifications.schedule({notifications:[{id:713,title:"A little sound check",body:`${chime.label} · your notification chime`,channelId:`little-${chime.id}-v1`,sound:`${chime.id}.wav`,schedule:{at:new Date(Date.now()+1500)}}]});
+    await LocalNotifications.schedule({notifications:[{id:713,title:"A little sound check",body:`${chime.label} · your notification chime`,channelId:`little-${chime.id}-v2`,sound:`${chime.id}.wav`,schedule:{at:new Date(Date.now()+1500)}}]});
     setMessage("Test notification scheduled. If it arrives silently, check this sound channel in Android notification settings and turn off Silent/Do Not Disturb.");
   }
   async function enable() {
@@ -282,7 +295,7 @@ export default function InstallSupport({
       localStorage.getItem("arcade-device-key") || crypto.randomUUID();
     localStorage.setItem("arcade-device-key", deviceKey);
     if (native) {
-      await prepareChimeChannels();
+      await repairChimeChannel();
       const { PushNotifications } =
         await import("@capacitor/push-notifications");
       await PushNotifications.createChannel({
@@ -331,6 +344,7 @@ export default function InstallSupport({
             platform: "android",
             token,
             json_subscription: null,
+            notification_channel_version: 2,
           },
           { onConflict: "user_id,device_key" },
         );

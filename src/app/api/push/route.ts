@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { timingSafeEqual, createHash } from "node:crypto";
-import { notificationChime } from "@/lib/notification-chimes";
+import { notificationChime, notificationChannel } from "@/lib/notification-chimes";
 import {
   isQuietHour,
   permittedPushEndpoint,
@@ -242,7 +242,7 @@ export async function POST(req: Request) {
               android: {
                 priority: "high",
                 ttl: 900000,
-                notification: { channelId: `little-${chime.id}-v1`, sound: chime.id, ...(imageUrl ? {imageUrl} : {}) },
+                notification: { channelId: notificationChannel(chime.id, device.notification_channel_version), sound: chime.id, ...(imageUrl ? {imageUrl} : {}) },
               },
             });
           }

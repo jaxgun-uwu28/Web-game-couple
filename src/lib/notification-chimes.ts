@@ -6,6 +6,9 @@ export const notificationChimes = [
 export function notificationChime(value: unknown) {
   return notificationChimes.find(chime => chime.id === value) || notificationChimes[0];
 }
+export function notificationChannel(value: unknown, version: unknown = 1) {
+  return `little-${notificationChime(value).id}-v${version === 2 ? 2 : 1}`;
+}
 let previewAudio: HTMLAudioElement | undefined;
 export function previewNotificationChime(value: unknown) {
   previewAudio?.pause();
