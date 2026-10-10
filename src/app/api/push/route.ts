@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { timingSafeEqual, createHash } from "node:crypto";
+import { notificationChime } from "@/lib/notification-chimes";
 import {
   isQuietHour,
   permittedPushEndpoint,
@@ -123,6 +124,12 @@ export async function POST(req: Request) {
     const recipients = (profiles.data || []).filter((p) =>
       table === "games" ? p.slot === Number(row.state.turn) : p.id !== author,
     );
+    let imageUrl: string | undefined;
+    // Sealed photo swaps must never appear before their paired reveal.
+    if (table === "memories" && !row.swap_day && !row.archived_at && typeof row.image_path === "string" && row.image_path.startsWith(`${couple}/${author}/`)) {
+      const signed = await db.storage.from("keepsakes").createSignedUrl(row.image_path, 900);
+      imageUrl = signed.data?.signedUrl;
+    }
     const notification =
       table === "connection_taps"
         ? thinkingNotification(
@@ -149,6 +156,8 @@ export async function POST(req: Request) {
                     title: "A little cassette",
                     body: "You have a new voice message.",
                   }
+                : table === "memories"
+                  ? { title: "A little snap", body: "Your partner sent you a photo." }
                 : table === "love_notes"
                   ? { title: "A little letter", body: "Your partner has sent you a letter." }
                 : table === "postcards"
@@ -179,6 +188,7 @@ export async function POST(req: Request) {
         .eq("user_id", recipient.id)
         .maybeSingle();
       const p = preference.data;
+      const chime = notificationChime(p?.chime);
       if (
         !p?.enabled ||
         !p[type] ||
@@ -203,7 +213,7 @@ export async function POST(req: Request) {
             const webpush = (await import("web-push")).default;
             await webpush.sendNotification(
               subscription,
-              JSON.stringify({ type, ...notification }),
+              JSON.stringify({ type, ...notification, image: imageUrl }),
               {
                 vapidDetails: {
                   subject:
@@ -227,11 +237,12 @@ export async function POST(req: Request) {
             const { getMessaging } = await import("firebase-admin/messaging");
             await getMessaging(app).send({
               token: device.token,
-              notification,
+              notification: {...notification, ...(imageUrl ? {imageUrl} : {})},
               data: { type },
               android: {
                 priority: "high",
-                notification: { channelId: "little-updates" },
+                ttl: 900000,
+                notification: { channelId: `little-${chime.id}-v1`, sound: chime.id, ...(imageUrl ? {imageUrl} : {}) },
               },
             });
           }

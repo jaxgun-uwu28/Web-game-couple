@@ -4,11 +4,19 @@ import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { Download, Bell, Smartphone, RefreshCw, Moon } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { readAudio } from "@/lib/music";
+import { notificationChimes, notificationChime, previewNotificationChime } from "@/lib/notification-chimes";
 type InstallEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: string }>;
 };
+async function prepareChimeChannels() {
+  const { PushNotifications } = await import("@capacitor/push-notifications");
+  for (const chime of notificationChimes) await PushNotifications.createChannel({
+    id:`little-${chime.id}-v1`, name:chime.label, importance:4, sound:chime.id, vibration:true,
+  });
+}
 type Preferences = {
+  chime: string;
   enabled: boolean;
   wishes: boolean;
   memories: boolean;
@@ -23,6 +31,7 @@ type Preferences = {
   timezone: string;
 };
 const defaults: Preferences = {
+  chime: "sweet_bell",
   enabled: false,
   wishes: true,
   memories: true,
@@ -186,7 +195,7 @@ export default function InstallSupport({
         }
         if (r.data) {
           const loaded = r.data as Preferences;
-          setPrefs(loaded);
+          setPrefs({...defaults,...loaded});
           if (loaded.quiet_start !== loaded.quiet_end) {
             savedQuietHours.current = {
               start: loaded.quiet_start,
@@ -223,6 +232,7 @@ export default function InstallSupport({
       setMessage("Preferences updated for this preview.");
       return;
     }
+    if (native) await prepareChimeChannels();
     const r = await db!
       .from("notification_preferences")
       .upsert({ user_id: session!.user.id, ...prefs });
@@ -244,6 +254,7 @@ export default function InstallSupport({
       localStorage.getItem("arcade-device-key") || crypto.randomUUID();
     localStorage.setItem("arcade-device-key", deviceKey);
     if (native) {
+      await prepareChimeChannels();
       const { PushNotifications } =
         await import("@capacitor/push-notifications");
       await PushNotifications.createChannel({
@@ -580,6 +591,11 @@ export default function InstallSupport({
               }
             />
           </label>
+          <fieldset className="notification-chimes">
+            <legend>Your notification chime</legend>
+            <div className="list-tabs">{notificationChimes.map(chime => <button type="button" key={chime.id} aria-pressed={notificationChime(prefs.chime).id===chime.id} className={notificationChime(prefs.chime).id===chime.id ? "" : "secondary"} onClick={()=>{setPrefs(p=>({...p,chime:chime.id})); void previewNotificationChime(chime.id).catch(()=>setError("Sound preview could not play. Try again."));}}>{chime.label}</button>)}</div>
+            <p className="hint">Tap to preview. Custom background chimes require the updated Android APK. Browsers use their device notification sound.</p>
+          </fieldset>
           <button disabled={busy || !preferencesReady}>
             Save notification choices
           </button>

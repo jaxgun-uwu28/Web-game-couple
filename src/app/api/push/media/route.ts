@@ -26,6 +26,8 @@ export async function POST(req: Request) {
           ? "voice_messages"
           : b.kind === "letter"
             ? "love_notes"
+            : b.kind === "snap"
+              ? "memories"
           : b.kind === "postcard"
             ? "postcards"
             : b.kind === "heart-challenge"
@@ -39,7 +41,7 @@ export async function POST(req: Request) {
       .select(
         table === "arcade_matches" || table === "heart_challenges"
           ? "host"
-          : table === "love_notes" ? "author" : "sender_id",
+          : table === "love_notes" || table === "memories" ? "author" : "sender_id",
       )
       .eq("id", b.id)
       .single();
@@ -48,7 +50,7 @@ export async function POST(req: Request) {
       (r.data as unknown as { sender_id?: string; host?: string; author?: string })[
         table === "arcade_matches" || table === "heart_challenges"
           ? "host"
-          : table === "love_notes" ? "author" : "sender_id"
+          : table === "love_notes" || table === "memories" ? "author" : "sender_id"
       ] !== data.user.id
     )
       return Response.json({ error: "Message unavailable." }, { status: 403 });

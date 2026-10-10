@@ -127,6 +127,8 @@ export default function MemoryAlbum() {
       else {
         const r = await c.db!.from("memories").insert(rows);
         if (r.error) throw new Error(r.error.message);
+        const { gameRequest } = await import("@/lib/game-request");
+        for (const row of rows) void gameRequest(c.db!, {kind:"snap",id:row.id},fetch,"/api/push/media").catch(()=>{});
       }
     });
     setProgress("");

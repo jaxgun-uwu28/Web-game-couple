@@ -65,6 +65,6 @@ for (const type of ["debug", "release"])
   );
 await copyFile(
   "android/app/build/outputs/apk/release/app-release.apk",
-  "dist-apk/our-little-arcade-1.0.5.apk",
+  "dist-apk/our-little-arcade-1.0.6.apk",
 );
 console.log("Debug and signed release APKs saved in dist-apk.");

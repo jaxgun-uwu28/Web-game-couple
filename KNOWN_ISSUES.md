@@ -24,3 +24,5 @@ Do not store API keys, passwords, service-account data, raw private media or unn
 - Phone Home overflow: supplied video shows sideways page movement and widened navigation. Shell horizontal clipping, shrinkable Home/choice tracks, wrapping and bounded phone navigation are implemented; physical WebView reproduction remains to be checked after deployment.
 
 - Letter/cassette/postcard updates: five focused tests and production build passed; migration 034 is owner-confirmed applied. Physical push delivery, microphone, and postcard animation/editor acceptance remain pending. Existing quiet hours and recipient opt-in still govern notifications.
+
+- Notification chimes/snap previews: production build and two asset/preference migration tests passed. Migration 035 is owner-confirmed applied. APK 1.0.6/code 7 builds custom Android channels; real foreground/background delivery, image display, and sound acceptance remain device checks. Snap signed URLs expire after 15 minutes; browser sound is OS-controlled.

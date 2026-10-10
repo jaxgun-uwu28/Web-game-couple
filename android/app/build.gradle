@@ -7,8 +7,8 @@ android {
         applicationId "com.ourlittlearcade.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode Integer.parseInt(System.getenv('ARCADE_VERSION_CODE') ?: '6')
-        versionName System.getenv('ARCADE_VERSION_NAME') ?: '1.0.5'
+        versionCode Integer.parseInt(System.getenv('ARCADE_VERSION_CODE') ?: '7')
+        versionName System.getenv('ARCADE_VERSION_NAME') ?: '1.0.6'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

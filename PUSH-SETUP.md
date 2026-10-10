@@ -13,3 +13,8 @@ The current sender is best effort: it deduplicates event IDs, deletes expired de
 If the settings work but no push arrives, check Vercel function logs, Supabase webhook logs, the device opt-in and quiet hours, Firebase package/config, and server environment variables. Missing configuration does not prevent ordinary app use.
 
 References: https://capacitorjs.com/docs/apis/push-notifications and https://firebase.google.com/docs/cloud-messaging/send/admin-sdk
+
+### Cute chimes and snap previews
+Run migration 035_notification_chimes.sql. Install APK 1.0.6 or newer, open it once to create the sound channels, then use Settings > notification chime, preview a sound and Save notification choices. Each recipient chooses their own chime. Android system notification settings can override channel sound or silence it. Browser/PWA background sound is controlled by the browser/OS; custom chimes are previewable in Settings.
+Letter, postcard and ordinary snap sends call the authenticated /api/push/media endpoint, so they do not require extra database webhooks. Existing webhook retries are deduplicated. Snap previews use private signed URLs valid for 15 minutes and FCM messages expire after 15 minutes. Sealed swaps omit images. Photos may appear on the lock screen depending on OS privacy settings.
+Device checklist: send a letter, postcard and ordinary snap from the partner account with the recipient app foreground, background, then locked; check only the recipient gets each notification, snap shows a photo, each selected chime sounds, disabled types/quiet hours remain quiet, and sealed swaps show no private preview.
