@@ -1535,7 +1535,7 @@ export function Wishlists() {
                       >
                         Already bought
                       </button>
-                      <span>
+                      <span className="wish-claim-status" role="status">
                         {c.claims.find(
                           (i) => i.item_id === w.id && i.claimed_by === c.user,
                         )?.status === "bought"

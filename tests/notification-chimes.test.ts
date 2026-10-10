@@ -2,7 +2,22 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {PGlite} from '@electric-sql/pglite';
 import {readFile} from 'node:fs/promises';
-import {notificationChime,notificationChimes} from '../src/lib/notification-chimes';
+import {notificationChime,notificationChimes,previewNotificationChime} from '../src/lib/notification-chimes';
+test('chime previews replace earlier audio and play the chosen sound at full volume',async()=>{
+ const old=globalThis.Audio;
+ const clips:{src:string,paused:boolean,volume:number}[]=[];
+ class AudioFixture {
+  volume=0;paused=false;
+  constructor(public src:string){clips.push(this);}
+  pause(){this.paused=true;}
+  async play(){}
+ }
+ globalThis.Audio=AudioFixture as unknown as typeof Audio;
+ try{
+  await previewNotificationChime('sweet_bell');await previewNotificationChime('soft_hearts');
+  assert.equal(clips[0].paused,true);assert.equal(clips[1].src,'/audio/notifications/soft_hearts.wav');assert.equal(clips[1].volume,1);
+ }finally{globalThis.Audio=old;}
+});
 test('unknown chimes fall back and bundled sounds are valid PCM WAVs',async()=>{
  assert.equal(notificationChime('../bad').id,'sweet_bell');
  for(const chime of notificationChimes){

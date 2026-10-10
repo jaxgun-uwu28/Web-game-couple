@@ -6,7 +6,10 @@ export const notificationChimes = [
 export function notificationChime(value: unknown) {
   return notificationChimes.find(chime => chime.id === value) || notificationChimes[0];
 }
+let previewAudio: HTMLAudioElement | undefined;
 export function previewNotificationChime(value: unknown) {
-  const audio = new Audio(`/audio/notifications/${notificationChime(value).id}.wav`);
-  return audio.play();
+  previewAudio?.pause();
+  previewAudio = new Audio(`/audio/notifications/${notificationChime(value).id}.wav`);
+  previewAudio.volume = 1;
+  return previewAudio.play();
 }

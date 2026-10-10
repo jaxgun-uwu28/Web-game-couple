@@ -242,6 +242,34 @@ export default function InstallSupport({
       );
     setMessage("Your quiet hours and notification choices are saved.");
   }
+  async function chooseChime(id: string) {
+    const chime = notificationChime(id);
+    const sound = previewNotificationChime(chime.id);
+    await work(async () => {
+      await sound;
+      if (native) await prepareChimeChannels();
+      if (!preview) {
+        if (!db || !session) throw new Error("Sign in to save your chime.");
+        const saved = await db.from("notification_preferences").upsert({user_id:session.user.id,chime:chime.id},{onConflict:"user_id"});
+        if (saved.error) throw new Error("Your chime could not save. Please try again.");
+      }
+      setPrefs(p=>({...p,chime:chime.id}));
+      setMessage(`${chime.label} saved. Use Test notification to check your phone's notification sound.`);
+    });
+  }
+  async function testChime() {
+    if (!native) { await previewNotificationChime(prefs.chime); setMessage("Sound preview played. Browser background notification sounds are controlled by your device."); return; }
+    const {App} = await import("@capacitor/app");
+    const info = await App.getInfo();
+    if (Number(info.build)<7) throw new Error("Install APK 1.0.6 or newer first. This installed APK does not contain the custom chime sounds.");
+    await prepareChimeChannels();
+    const {LocalNotifications} = await import("@capacitor/local-notifications");
+    const permission = await LocalNotifications.requestPermissions();
+    if(permission.display!=="granted") throw new Error("Allow notifications in your phone settings first.");
+    const chime=notificationChime(prefs.chime);
+    await LocalNotifications.schedule({notifications:[{id:713,title:"A little sound check",body:`${chime.label} · your notification chime`,channelId:`little-${chime.id}-v1`,sound:`${chime.id}.wav`,schedule:{at:new Date(Date.now()+1500)}}]});
+    setMessage("Test notification scheduled. If it arrives silently, check this sound channel in Android notification settings and turn off Silent/Do Not Disturb.");
+  }
   async function enable() {
     if (preview) {
       setMessage(
@@ -593,7 +621,8 @@ export default function InstallSupport({
           </label>
           <fieldset className="notification-chimes">
             <legend>Your notification chime</legend>
-            <div className="list-tabs">{notificationChimes.map(chime => <button type="button" key={chime.id} aria-pressed={notificationChime(prefs.chime).id===chime.id} className={notificationChime(prefs.chime).id===chime.id ? "" : "secondary"} onClick={()=>{setPrefs(p=>({...p,chime:chime.id})); void previewNotificationChime(chime.id).catch(()=>setError("Sound preview could not play. Try again."));}}>{chime.label}</button>)}</div>
+            <div className="list-tabs">{notificationChimes.map(chime => <button type="button" disabled={busy || !preferencesReady} key={chime.id} aria-pressed={notificationChime(prefs.chime).id===chime.id} className={notificationChime(prefs.chime).id===chime.id ? "" : "secondary"} onClick={()=>void chooseChime(chime.id)}>{chime.label}</button>)}</div>
+            <button type="button" className="secondary" disabled={busy || !preferencesReady} onClick={()=>void work(testChime)}>Test notification</button>
             <p className="hint">Tap to preview. Custom background chimes require the updated Android APK. Browsers use their device notification sound.</p>
           </fieldset>
           <button disabled={busy || !preferencesReady}>
